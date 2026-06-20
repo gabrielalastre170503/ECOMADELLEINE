@@ -637,9 +637,14 @@
     }
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: 1.5fr 1fr 1fr;
+        grid-auto-rows: 1fr;
         gap: 16px;
     }
+    .stat-card--feature { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
+    .stat-card--feature .ico { width: 54px; height: 54px; font-size: 20px; }
+    .stat-card--feature .num { font-size: clamp(52px, 6.5vw, 80px); }
+    .stat-card--wide { grid-column: 2 / 4; }
     .stat-card {
         background: var(--glass);
         backdrop-filter: blur(22px) saturate(1.8);
@@ -723,18 +728,23 @@
        NOSOTROS — 3 cards glass con icono coloreado
        ════════════════════════════════════════════════════════════════ */
     #nosotros { padding-top: 80px; }
-    .mvv-grid {
+    .nosotros-split { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 60px; align-items: start; }
+    .nosotros-aside { position: sticky; top: 110px; }
+    .nosotros-aside .section-title { margin-top: 0; }
+    .nosotros-signature { display: flex; align-items: center; gap: 14px; margin-top: 30px; font-weight: 600; color: var(--azul-dark); font-size: 15px; }
+    .nosotros-signature .ns-line { width: 46px; height: 2px; background: linear-gradient(90deg, var(--azul), transparent); border-radius: 2px; }
+    .nosotros-list { display: flex; flex-direction: column; gap: 18px; }
+    .mvv-item {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: auto 1fr;
         gap: 22px;
-    }
-    .mvv-card {
+        align-items: start;
         background: var(--glass);
         backdrop-filter: blur(24px) saturate(1.8);
         -webkit-backdrop-filter: blur(24px) saturate(1.8);
         border: 1px solid var(--silver-edge);
         border-radius: var(--r-xl);
-        padding: 40px 34px;
+        padding: 28px 30px;
         position: relative;
         overflow: hidden;
         transition: transform .4s var(--ease), box-shadow .4s;
@@ -743,26 +753,27 @@
             inset 0 -1px 0 var(--silver-bot),
             var(--sh-soft);
     }
-    .mvv-card::before {
+    .mvv-item:nth-child(2) { margin-left: 44px; }
+    .mvv-item::before {
         content: '';
         position: absolute;
         top: 0; left: 0;
-        width: 100%; height: 4px;
-        background: linear-gradient(90deg, var(--azul), var(--azul-dark));
-        transform: scaleX(0);
-        transform-origin: left;
+        width: 4px; height: 100%;
+        background: linear-gradient(180deg, var(--azul), var(--azul-dark));
+        transform: scaleY(0);
+        transform-origin: top;
         transition: transform .5s var(--ease);
     }
-    .mvv-card:hover {
-        transform: translateY(-6px);
+    .mvv-item:hover {
+        transform: translateY(-4px);
         box-shadow:
             inset 0 1px 0 var(--silver-top),
             inset 0 -1px 0 var(--silver-bot),
             var(--sh-glow);
     }
-    .mvv-card:hover::before { transform: scaleX(1); }
+    .mvv-item:hover::before { transform: scaleY(1); }
     .mvv-icon {
-        width: 56px; height: 56px;
+        width: 54px; height: 54px;
         border-radius: 16px;
         background: linear-gradient(135deg, rgba(2,177,244,.15), rgba(2,177,244,.05));
         border: 1px solid var(--silver-edge);
@@ -770,18 +781,17 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
-        margin-bottom: 22px;
+        font-size: 21px;
         box-shadow: inset 0 1px 0 var(--silver-top);
     }
-    .mvv-card h3 {
-        font-size: 24px;
+    .mvv-body h3 {
+        font-size: 21px;
         font-weight: 700;
-        margin-bottom: 14px;
+        margin-bottom: 8px;
         letter-spacing: -0.02em;
     }
-    .mvv-card p {
-        font-size: 15px;
+    .mvv-body p {
+        font-size: 14.5px;
         color: var(--gris);
         line-height: 1.7;
     }
@@ -790,62 +800,44 @@
        PROCESO CLÍNICO — 3 pasos conectados
        ════════════════════════════════════════════════════════════════ */
     #proceso { padding-bottom: 130px; }
-    .proceso-grid {
+    .proceso-timeline {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
+        gap: 36px;
         position: relative;
     }
-    .proceso-card {
-        background: var(--glass);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    .proceso-timeline::before {
+        content: '';
+        position: absolute;
+        top: 38px; left: 16%; right: 16%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--azul-soft), var(--azul), var(--azul-soft));
+        z-index: 0;
+    }
+    .proceso-step { position: relative; z-index: 1; text-align: center; padding: 0 8px; }
+    .ps-node {
+        width: 76px; height: 76px; border-radius: 50%;
+        margin: 0 auto 24px;
+        display: grid; place-items: center; position: relative;
+        background: var(--glass-strong);
+        backdrop-filter: blur(20px) saturate(1.8);
+        -webkit-backdrop-filter: blur(20px) saturate(1.8);
         border: 1px solid var(--silver-edge);
-        border-radius: var(--r-xl);
-        padding: 36px 30px;
-        position: relative;
-        text-align: left;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-        transition: transform .4s var(--ease), box-shadow .4s;
+        box-shadow: inset 0 1px 0 var(--silver-top), 0 12px 28px rgba(2, 177, 244, .18);
+        transition: transform .4s var(--ease-spring), box-shadow .4s var(--ease);
     }
-    .proceso-card:hover {
-        transform: translateY(-4px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-glow);
+    .proceso-step:hover .ps-node { transform: translateY(-6px) scale(1.06); box-shadow: inset 0 1px 0 var(--silver-top), 0 20px 40px rgba(2, 177, 244, .32); }
+    .ps-node i { font-size: 26px; color: var(--azul); }
+    .ps-node span {
+        position: absolute; top: -8px; right: -8px;
+        width: 28px; height: 28px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--azul), var(--azul-dark));
+        color: #fff; font-size: 12px; font-weight: 700;
+        display: grid; place-items: center;
+        box-shadow: 0 6px 14px rgba(2, 177, 244, .4);
     }
-    .proceso-num {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--azul-dark);
-        background: linear-gradient(135deg, rgba(2,177,244,.15), transparent);
-        border: 1px solid var(--silver-edge);
-        padding: 5px 12px;
-        border-radius: 999px;
-        display: inline-block;
-        margin-bottom: 18px;
-        letter-spacing: 1.5px;
-    }
-    .proceso-card .ico {
-        font-size: 28px;
-        color: var(--azul);
-        margin-bottom: 18px;
-        display: block;
-    }
-    .proceso-card h4 {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    .proceso-card p {
-        font-size: 14.5px;
-        color: var(--gris);
-        line-height: 1.65;
-    }
+    .proceso-step h4 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .proceso-step p { font-size: 14.5px; color: var(--gris); line-height: 1.65; max-width: 300px; margin: 0 auto; }
 
     /* ════════════════════════════════════════════════════════════════
        SERVICIOS — Grid con glow por categoría
@@ -1367,13 +1359,13 @@
     .btn-primary:hover::after { left: 150%; }
 
     /* Spotlight-follow en tarjetas (vars --mx/--my desde JS) */
-    .stat-card, .proceso-card, .beneficio { position: relative; }
-    .stat-card::after, .proceso-card::after, .beneficio::after {
+    .stat-card, .beneficio { position: relative; }
+    .stat-card::after, .beneficio::after {
         content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
         opacity: 0; transition: opacity .45s var(--ease);
         background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(2, 177, 244, .15), transparent 60%);
     }
-    .stat-card:hover::after, .proceso-card:hover::after, .beneficio:hover::after { opacity: 1; }
+    .stat-card:hover::after, .beneficio:hover::after { opacity: 1; }
 
     /* Subrayado animado en enlaces del nav */
     .navbar a:not(.nav-cta) { position: relative; }
@@ -1400,8 +1392,13 @@
         .hero-grid { grid-template-columns: 1fr; gap: 60px; }
         .hero-visual { margin: 0 auto; max-width: 440px; }
         .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        .mvv-grid { grid-template-columns: 1fr; }
-        .proceso-grid { grid-template-columns: 1fr; }
+        .stat-card--feature { grid-row: auto; }
+        .stat-card--wide { grid-column: auto; }
+        .nosotros-split { grid-template-columns: 1fr; gap: 40px; }
+        .nosotros-aside { position: static; }
+        .mvv-item:nth-child(2) { margin-left: 0; }
+        .proceso-timeline { grid-template-columns: 1fr; gap: 30px; }
+        .proceso-timeline::before { display: none; }
         .beneficios-grid { grid-template-columns: repeat(2, 1fr); }
         .contacto-grid { grid-template-columns: 1fr; gap: 22px; }
         .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
@@ -1559,7 +1556,7 @@
             <h2 class="section-title">Cifras del centro,<br><span class="grad">extraídas del sistema.</span></h2>
         </div>
         <div class="stats-grid">
-            <div class="stat-card reveal">
+            <div class="stat-card stat-card--feature reveal">
                 <div class="ico"><i class="fa-solid fa-user-group"></i></div>
                 <div class="num"><span class="grad" data-counter="<?php echo $total_pacientes; ?>" data-suffix="<?php echo $total_pacientes > 0 ? '+' : ''; ?>"><?php echo $total_pacientes > 0 ? '0' : '-'; ?></span></div>
                 <div class="lbl"><?php echo htmlspecialchars($f_pac['label']); ?></div>
@@ -1583,7 +1580,7 @@
                     <div class="sub-meta">SLA garantizado</div>
                 <?php endif; ?>
             </div>
-            <div class="stat-card reveal" data-delay="3">
+            <div class="stat-card stat-card--wide reveal" data-delay="3">
                 <div class="ico"><i class="fa-solid fa-heart-pulse"></i></div>
                 <div class="num"><span class="grad" data-counter="<?php echo $tasa_conclusion > 0 ? $tasa_conclusion : 100; ?>" data-suffix="%"><?php echo $tasa_conclusion > 0 ? '0' : '100'; ?></span></div>
                 <div class="lbl"><?php echo htmlspecialchars($f_tasa['label']); ?></div>
@@ -1614,7 +1611,6 @@
 <section id="analiticas" class="analytics-section">
     <div class="container">
         <div class="section-head section-head--center reveal" style="margin-bottom:48px;">
-            <span class="eyebrow"><i class="fa-solid fa-chart-pie"></i> Analíticas en vivo</span>
             <h2 class="section-title">El pulso del centro,<br><span class="grad">en datos reales.</span></h2>
         </div>
         <div class="analytics-grid">
@@ -1638,28 +1634,37 @@
 
 <!-- ══════════ NOSOTROS ══════════ -->
 <section id="nosotros">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-stethoscope"></i> Sobre nosotros</span>
+    <div class="container nosotros-split">
+        <div class="nosotros-aside reveal">
             <h2 class="section-title">Compromiso clínico,<br><span class="grad">criterio humano.</span></h2>
             <p class="section-sub">Un centro especializado donde cada estudio es realizado por la doctora y entregado con el detalle que tu salud merece.</p>
+            <div class="nosotros-signature">
+                <span class="ns-line"></span>
+                <span>Dra. Madelleine Toro</span>
+            </div>
         </div>
 
-        <div class="mvv-grid">
-            <article class="mvv-card reveal" data-delay="1">
+        <div class="nosotros-list">
+            <article class="mvv-item reveal" data-delay="1">
                 <div class="mvv-icon"><i class="fa-solid fa-bullseye"></i></div>
-                <h3>Misión</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['mision'] ?? 'Brindar diagnóstico ecográfico de excelencia con calidez humana y precisión médica, acompañando a cada paciente desde el agendamiento hasta la entrega del informe.')); ?></p>
+                <div class="mvv-body">
+                    <h3>Misión</h3>
+                    <p><?php echo nl2br(htmlspecialchars($contenido_web['mision'] ?? 'Brindar diagnóstico ecográfico de excelencia con calidez humana y precisión médica, acompañando a cada paciente desde el agendamiento hasta la entrega del informe.')); ?></p>
+                </div>
             </article>
-            <article class="mvv-card reveal" data-delay="2">
+            <article class="mvv-item reveal" data-delay="2">
                 <div class="mvv-icon"><i class="fa-solid fa-eye"></i></div>
-                <h3>Visión</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['vision'] ?? 'Ser referencia regional en diagnóstico por imagen, integrando tecnología, criterio clínico y un trato profundamente humano en cada estudio.')); ?></p>
+                <div class="mvv-body">
+                    <h3>Visión</h3>
+                    <p><?php echo nl2br(htmlspecialchars($contenido_web['vision'] ?? 'Ser referencia regional en diagnóstico por imagen, integrando tecnología, criterio clínico y un trato profundamente humano en cada estudio.')); ?></p>
+                </div>
             </article>
-            <article class="mvv-card reveal" data-delay="3">
+            <article class="mvv-item reveal" data-delay="3">
                 <div class="mvv-icon"><i class="fa-solid fa-heart"></i></div>
-                <h3>Valores</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['valores'] ?? 'Integridad. Precisión. Confidencialidad. Empatía. Excelencia en cada informe que firmamos.')); ?></p>
+                <div class="mvv-body">
+                    <h3>Valores</h3>
+                    <p><?php echo nl2br(htmlspecialchars($contenido_web['valores'] ?? 'Integridad. Precisión. Confidencialidad. Empatía. Excelencia en cada informe que firmamos.')); ?></p>
+                </div>
             </article>
         </div>
     </div>
@@ -1669,27 +1674,23 @@
 <section id="proceso">
     <div class="container">
         <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-route"></i> Cómo trabajamos</span>
             <h2 class="section-title">Tres pasos.<br><span class="grad">Cero fricción.</span></h2>
             <p class="section-sub">Desde el agendamiento hasta el informe firmado, el proceso está pensado para que tu única preocupación sea tu salud.</p>
         </div>
 
-        <div class="proceso-grid">
-            <div class="proceso-card reveal" data-delay="1">
-                <span class="proceso-num">PASO 01</span>
-                <i class="fa-regular fa-calendar-check ico"></i>
+        <div class="proceso-timeline">
+            <div class="proceso-step reveal" data-delay="1">
+                <div class="ps-node"><span>01</span><i class="fa-regular fa-calendar-check"></i></div>
                 <h4>Agendas en línea</h4>
                 <p>Reserva tu cita 24/7 desde el panel. Recibes confirmación por correo y recordatorio antes del estudio.</p>
             </div>
-            <div class="proceso-card reveal" data-delay="2">
-                <span class="proceso-num">PASO 02</span>
-                <i class="fa-solid fa-wave-square ico"></i>
+            <div class="proceso-step reveal" data-delay="2">
+                <div class="ps-node"><span>02</span><i class="fa-solid fa-wave-square"></i></div>
                 <h4>Estudio con la doctora</h4>
                 <p>La Dra. Madelleine Toro realiza personalmente la ecografía y captura los hallazgos en el formulario clínico estructurado.</p>
             </div>
-            <div class="proceso-card reveal" data-delay="3">
-                <span class="proceso-num">PASO 03</span>
-                <i class="fa-regular fa-file-lines ico"></i>
+            <div class="proceso-step reveal" data-delay="3">
+                <div class="ps-node"><span>03</span><i class="fa-regular fa-file-lines"></i></div>
                 <h4>Informe en 24 horas</h4>
                 <p>Recibes el informe en PDF profesional listo para tu médico tratante, con esquema clínico detallado por tipo de estudio.</p>
             </div>
@@ -1745,7 +1746,6 @@
 <section id="beneficios">
     <div class="container">
         <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-medal"></i> Por qué EcoMadelleine</span>
             <h2 class="section-title">La diferencia<br><span class="grad">está en el detalle.</span></h2>
             <p class="section-sub">Cuatro pilares que separan nuestro enfoque del de un centro tradicional.</p>
         </div>
@@ -1779,7 +1779,6 @@
 <section id="contacto">
     <div class="container">
         <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-regular fa-calendar"></i> Agenda tu cita</span>
             <h2 class="section-title">Crea tu cuenta<br><span class="grad">y solicita tu estudio.</span></h2>
             <p class="section-sub">Te contactaremos en menos de 24 horas para confirmar el día y la hora de tu ecografía.</p>
         </div>
@@ -2088,7 +2087,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.matchMedia('(hover: none)').matches) return; // sin efectos en táctil
 
-    document.querySelectorAll('.stat-card, .proceso-card, .beneficio').forEach(function (card) {
+    document.querySelectorAll('.stat-card, .beneficio').forEach(function (card) {
         card.addEventListener('pointermove', function (e) {
             var r = card.getBoundingClientRect();
             card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
