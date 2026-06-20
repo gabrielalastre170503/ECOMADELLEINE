@@ -44,11 +44,11 @@
 
     /* Helpers de visualización honesta — si el dato real es 0, se muestra etiqueta de compromiso */
     $f_pac = [
-        'value' => $total_pacientes > 0 ? number_format($total_pacientes, 0, ',', '.') . '+' : '—',
+        'value' => $total_pacientes > 0 ? number_format($total_pacientes, 0, ',', '.') . '+' : '-',
         'label' => $total_pacientes > 0 ? 'Pacientes registrados' : 'Próximos pacientes',
     ];
     $f_tip = [
-        'value' => $total_tipos > 0 ? $total_tipos . '+' : '—',
+        'value' => $total_tipos > 0 ? $total_tipos . '+' : '-',
         'label' => 'Tipos de estudio',
     ];
     $f_hrs = [
@@ -117,7 +117,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EcoMadelleine — Centro de diagnóstico ecográfico premium. Dra. Madelleine Toro. Informes digitales en 24 horas.">
+    <meta name="description" content="EcoMadelleine · Centro de diagnóstico ecográfico premium. Dra. Madelleine Toro. Informes digitales en 24 horas.">
     <meta name="theme-color" content="#eaf3ff">
     <title>EcoMadelleine · Diagnóstico Ecográfico Premium</title>
 
@@ -434,7 +434,7 @@
        HERO — Split 60/40 con visual abstracto + métricas glass
        ════════════════════════════════════════════════════════════════ */
     .hero {
-        padding-top: 116px;
+        padding-top: 110px;
         padding-bottom: 100px;
         position: relative;
     }
@@ -1316,8 +1316,77 @@
             animation-duration: .01ms !important;
             transition-duration: .01ms !important;
         }
-        .reveal { opacity: 1; transform: none; }
+        .reveal { opacity: 1; transform: none; filter: none; }
+        .scroll-progress, .hero-aurora { display: none; }
     }
+
+    /* ════════════════════════════════════════════════════════════════
+       PREMIUM ENHANCE — capa de pulido (movimiento + materialidad)
+       Aditiva: conserva azul/glass. Respeta prefers-reduced-motion.
+       ════════════════════════════════════════════════════════════════ */
+
+    /* Barra de progreso de scroll (CSS scroll-driven, sin JS) */
+    .scroll-progress {
+        position: fixed; top: 0; left: 0; height: 3px; width: 100%;
+        transform: scaleX(0); transform-origin: 0 50%; z-index: 1200;
+        background: linear-gradient(90deg, var(--azul), var(--azul-deep));
+        box-shadow: 0 0 12px rgba(2, 177, 244, .5);
+        animation: scrollGrow linear both;
+        animation-timeline: scroll(root);
+    }
+    @keyframes scrollGrow { to { transform: scaleX(1); } }
+
+    /* Aurora azul viva detrás del hero */
+    .hero { overflow: hidden; }
+    .hero > .container { position: relative; z-index: 1; }
+    .hero-aurora { position: absolute; inset: -25% -12% auto -12%; height: 135%; z-index: 0; pointer-events: none; opacity: .85; }
+    .hero-aurora::before, .hero-aurora::after { content: ""; position: absolute; border-radius: 50%; filter: blur(10px); }
+    .hero-aurora::before {
+        width: 54vw; height: 54vw; top: -12vw; right: -4vw;
+        background: radial-gradient(circle at center, rgba(2, 177, 244, .26), transparent 62%);
+        animation: auroraDrift 20s ease-in-out infinite;
+    }
+    .hero-aurora::after {
+        width: 42vw; height: 42vw; bottom: -14vw; left: -2vw;
+        background: radial-gradient(circle at center, rgba(1, 74, 130, .16), transparent 60%);
+        animation: auroraDrift 28s ease-in-out infinite reverse;
+    }
+    @keyframes auroraDrift {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        33%      { transform: translate3d(3vw, 2vw, 0) scale(1.08); }
+        66%      { transform: translate3d(-2vw, 1vw, 0) scale(.95); }
+    }
+
+    /* Sheen (brillo) que cruza el CTA primario al hover */
+    .btn-primary { position: relative; overflow: hidden; }
+    .btn-primary::after {
+        content: ""; position: absolute; top: 0; bottom: 0; left: -120%; width: 55%;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .5), transparent);
+        transform: skewX(-18deg); transition: left .75s var(--ease); pointer-events: none;
+    }
+    .btn-primary:hover::after { left: 150%; }
+
+    /* Spotlight-follow en tarjetas (vars --mx/--my desde JS) */
+    .stat-card, .proceso-card, .beneficio { position: relative; }
+    .stat-card::after, .proceso-card::after, .beneficio::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        opacity: 0; transition: opacity .45s var(--ease);
+        background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(2, 177, 244, .15), transparent 60%);
+    }
+    .stat-card:hover::after, .proceso-card:hover::after, .beneficio:hover::after { opacity: 1; }
+
+    /* Subrayado animado en enlaces del nav */
+    .navbar a:not(.nav-cta) { position: relative; }
+    .navbar a:not(.nav-cta)::after {
+        content: ""; position: absolute; left: 12px; right: 12px; bottom: 5px; height: 2px;
+        background: var(--azul); border-radius: 2px; transform: scaleX(0); transform-origin: 0 50%;
+        transition: transform .35s var(--ease); pointer-events: none;
+    }
+    .navbar a:not(.nav-cta):hover::after { transform: scaleX(1); }
+
+    /* Reveal mejorado: blur-in con el mismo easing */
+    .reveal { filter: blur(7px); transition: opacity .9s var(--ease), transform .9s var(--ease), filter .9s var(--ease); }
+    .reveal.in { filter: blur(0); }
 
     /* ════════════════════════════════════════════════════════════════
        RESPONSIVE
@@ -1405,7 +1474,9 @@
 </header>
 
 <!-- ══════════ HERO ══════════ -->
+<div class="scroll-progress" aria-hidden="true"></div>
 <section class="hero">
+    <div class="hero-aurora" aria-hidden="true"></div>
     <div class="container hero-grid">
         <div class="hero-copy reveal">
             <span class="hero-tag">
@@ -1490,7 +1561,7 @@
         <div class="stats-grid">
             <div class="stat-card reveal">
                 <div class="ico"><i class="fa-solid fa-user-group"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $total_pacientes; ?>" data-suffix="<?php echo $total_pacientes > 0 ? '+' : ''; ?>"><?php echo $total_pacientes > 0 ? '0' : '—'; ?></span></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $total_pacientes; ?>" data-suffix="<?php echo $total_pacientes > 0 ? '+' : ''; ?>"><?php echo $total_pacientes > 0 ? '0' : '-'; ?></span></div>
                 <div class="lbl"><?php echo htmlspecialchars($f_pac['label']); ?></div>
                 <?php if ($total_pacientes == 0): ?>
                     <div class="sub-meta">Sistema recién activo</div>
@@ -1498,7 +1569,7 @@
             </div>
             <div class="stat-card reveal" data-delay="1">
                 <div class="ico"><i class="fa-solid fa-wave-square"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $total_tipos; ?>" data-suffix="<?php echo $total_tipos > 0 ? '+' : ''; ?>"><?php echo $total_tipos > 0 ? '0' : '—'; ?></span></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $total_tipos; ?>" data-suffix="<?php echo $total_tipos > 0 ? '+' : ''; ?>"><?php echo $total_tipos > 0 ? '0' : '-'; ?></span></div>
                 <div class="lbl"><?php echo htmlspecialchars($f_tip['label']); ?></div>
                 <div class="sub-meta">Esquema clínico dinámico</div>
             </div>
@@ -1743,7 +1814,7 @@
                     <i class="fa-regular fa-clock"></i>
                     <div>
                         <div class="lbl">Horario</div>
-                        <div class="val">Lun — Vie · 8:00 a 17:00</div>
+                        <div class="val">Lun a Vie · 8:00 a 17:00</div>
                     </div>
                 </div>
 
@@ -1830,7 +1901,7 @@
                 <ul>
                     <li><i class="fa-solid fa-phone"></i> 0412-8517770</li>
                     <li><i class="fa-regular fa-envelope"></i> contacto@ecomadelleine.com</li>
-                    <li><i class="fa-regular fa-clock"></i> Lun — Vie · 8:00 — 17:00</li>
+                    <li><i class="fa-regular fa-clock"></i> Lun a Vie · 8:00 a 17:00</li>
                 </ul>
             </div>
         </div>
@@ -2008,6 +2079,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { threshold: .25 });
         io.observe(sec);
     } else { build(); }
+})();
+</script>
+
+<!-- Pulido premium: spotlight en tarjetas + CTA magnético -->
+<script>
+(function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia('(hover: none)').matches) return; // sin efectos en táctil
+
+    document.querySelectorAll('.stat-card, .proceso-card, .beneficio').forEach(function (card) {
+        card.addEventListener('pointermove', function (e) {
+            var r = card.getBoundingClientRect();
+            card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+            card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+        });
+    });
+
+    var mag = document.querySelector('.hero-ctas .btn-primary');
+    if (mag) {
+        mag.addEventListener('pointermove', function (e) {
+            var r = mag.getBoundingClientRect();
+            var x = (e.clientX - r.left - r.width / 2) * 0.16;
+            var y = (e.clientY - r.top - r.height / 2) * 0.26;
+            mag.style.transform = 'translate(' + x.toFixed(2) + 'px,' + (y - 2).toFixed(2) + 'px)';
+        });
+        mag.addEventListener('pointerleave', function () { mag.style.transform = ''; });
+    }
 })();
 </script>
 </body>
