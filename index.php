@@ -983,18 +983,27 @@
             var(--sh-glow);
     }
     .beneficio-icon {
-        width: 58px; height: 58px;
-        margin: 0 auto 18px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        color: #fff;
+        width: 64px; height: 64px;
+        margin: 0 auto 22px;
+        border-radius: 20px;
+        background: linear-gradient(160deg, #ffffff, #e0f5fe);
+        border: 1px solid rgba(2, 177, 244, .22);
+        color: var(--azul-dark);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
+        font-size: 25px;
         box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 10px 22px rgba(2, 177, 244, .3);
+            inset 0 1px 0 rgba(255, 255, 255, .9),
+            0 10px 24px rgba(2, 177, 244, .16);
+        transition: transform .5s var(--ease-spring), box-shadow .5s var(--ease), color .4s var(--ease);
+    }
+    .beneficio:hover .beneficio-icon {
+        transform: translateY(-4px) scale(1.08) rotate(-3deg);
+        color: var(--azul);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, .9),
+            0 18px 36px rgba(2, 177, 244, .3);
     }
     .beneficio h4 {
         font-size: 16px;
