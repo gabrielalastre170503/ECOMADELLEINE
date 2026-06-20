@@ -637,14 +637,15 @@
     }
     .stats-grid {
         display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr;
-        grid-auto-rows: 1fr;
+        grid-template-columns: 1.3fr 1fr;
         gap: 16px;
     }
-    .stat-card--feature { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
-    .stat-card--feature .ico { width: 54px; height: 54px; font-size: 20px; }
-    .stat-card--feature .num { font-size: clamp(52px, 6.5vw, 80px); }
-    .stat-card--wide { grid-column: 2 / 4; }
+    .stat-card--feature {
+        background: linear-gradient(150deg, rgba(2, 177, 244, .09), var(--glass));
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    .stat-card--feature .ico { width: 52px; height: 52px; font-size: 19px; }
+    .stat-card--feature .num { font-size: clamp(46px, 5.5vw, 66px); }
     .stat-card {
         background: var(--glass);
         backdrop-filter: blur(22px) saturate(1.8);
@@ -1392,8 +1393,6 @@
         .hero-grid { grid-template-columns: 1fr; gap: 60px; }
         .hero-visual { margin: 0 auto; max-width: 440px; }
         .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        .stat-card--feature { grid-row: auto; }
-        .stat-card--wide { grid-column: auto; }
         .nosotros-split { grid-template-columns: 1fr; gap: 40px; }
         .nosotros-aside { position: static; }
         .mvv-item:nth-child(2) { margin-left: 0; }
@@ -1580,7 +1579,7 @@
                     <div class="sub-meta">SLA garantizado</div>
                 <?php endif; ?>
             </div>
-            <div class="stat-card stat-card--wide reveal" data-delay="3">
+            <div class="stat-card reveal" data-delay="3">
                 <div class="ico"><i class="fa-solid fa-heart-pulse"></i></div>
                 <div class="num"><span class="grad" data-counter="<?php echo $tasa_conclusion > 0 ? $tasa_conclusion : 100; ?>" data-suffix="%"><?php echo $tasa_conclusion > 0 ? '0' : '100'; ?></span></div>
                 <div class="lbl"><?php echo htmlspecialchars($f_tasa['label']); ?></div>
