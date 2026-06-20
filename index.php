@@ -730,6 +730,10 @@
     .nosotros-aside .section-title { margin-top: 0; }
     .nosotros-signature { display: flex; align-items: center; gap: 14px; margin-top: 30px; font-weight: 600; color: var(--azul-dark); font-size: 15px; }
     .nosotros-signature .ns-line { width: 46px; height: 2px; background: linear-gradient(90deg, var(--azul), transparent); border-radius: 2px; }
+    .nosotros-highlights { list-style: none; margin: 28px 0 0; display: flex; flex-direction: column; gap: 14px; }
+    .nosotros-highlights li { display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; color: var(--ink); font-weight: 500; line-height: 1.45; }
+    .nosotros-highlights i { color: var(--azul); font-size: 16px; margin-top: 2px; flex-shrink: 0; }
+    .nosotros-cta { margin-top: 32px; }
     .nosotros-list { display: flex; flex-direction: column; gap: 18px; }
     .mvv-item {
         display: grid;
@@ -1633,10 +1637,17 @@
         <div class="nosotros-aside reveal">
             <h2 class="section-title">Compromiso clínico,<br><span class="grad">criterio humano.</span></h2>
             <p class="section-sub">Un centro especializado donde cada estudio es realizado por la doctora y entregado con el detalle que tu salud merece.</p>
+            <ul class="nosotros-highlights">
+                <li><i class="fa-solid fa-circle-check"></i> Estudios realizados personalmente por la doctora</li>
+                <li><i class="fa-solid fa-circle-check"></i> Informes digitales detallados en 24 horas</li>
+                <li><i class="fa-solid fa-circle-check"></i> Firma electrónica verificable en cada informe</li>
+                <li><i class="fa-solid fa-circle-check"></i> Datos clínicos tratados con total confidencialidad</li>
+            </ul>
             <div class="nosotros-signature">
                 <span class="ns-line"></span>
                 <span>Dra. Madelleine Toro</span>
             </div>
+            <a href="#contacto" class="btn btn-primary nosotros-cta">Agendar estudio <i class="fa-solid fa-arrow-right"></i></a>
         </div>
 
         <div class="nosotros-list">
@@ -2069,7 +2080,7 @@ document.addEventListener('DOMContentLoaded', () => {
             new Chart(ec, {
                 type: 'doughnut',
                 data: { labels: <?php echo json_encode($an_citas_lbl); ?>,
-                        datasets: [{ data: <?php echo json_encode($an_citas_val); ?>, backgroundColor: <?php echo json_encode($an_citas_col); ?>, borderColor: '#ffffff', borderWidth: 3, borderRadius: 8, hoverOffset: 12 }] },
+                        datasets: [{ data: <?php echo json_encode($an_citas_val); ?>, backgroundColor: ['#02b1f4', '#014a82', '#38bdf8', '#0369a1', '#7dd3fc', '#075985'], borderColor: '#ffffff', borderWidth: 3, borderRadius: 8, hoverOffset: 12 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false, cutout: '72%',
                     layout: { padding: 6 },
