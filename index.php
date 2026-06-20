@@ -2046,21 +2046,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        /* Estado de las citas — dona */
+        /* Estado de las citas: dona moderna con total al centro */
         var ec = document.getElementById('anChartCitas');
         if (ec) {
+            var centerTotal = {
+                id: 'centerTotal',
+                afterDraw: function (chart) {
+                    var m = chart.getDatasetMeta(0);
+                    if (!m.data.length) return;
+                    var c = chart.ctx, x = m.data[0].x, y = m.data[0].y;
+                    c.save();
+                    c.textAlign = 'center'; c.textBaseline = 'middle';
+                    c.fillStyle = '#003a66';
+                    c.font = '800 34px Inter, system-ui, sans-serif';
+                    c.fillText('<?php echo $an_total_citas; ?>', x, y - 9);
+                    c.fillStyle = '#94a3b8';
+                    c.font = '600 12px Inter, system-ui, sans-serif';
+                    c.fillText('citas totales', x, y + 18);
+                    c.restore();
+                }
+            };
             new Chart(ec, {
                 type: 'doughnut',
                 data: { labels: <?php echo json_encode($an_citas_lbl); ?>,
-                        datasets: [{ data: <?php echo json_encode($an_citas_val); ?>, backgroundColor: <?php echo json_encode($an_citas_col); ?>, borderWidth: 0, hoverOffset: 10 }] },
+                        datasets: [{ data: <?php echo json_encode($an_citas_val); ?>, backgroundColor: <?php echo json_encode($an_citas_col); ?>, borderColor: '#ffffff', borderWidth: 3, borderRadius: 8, hoverOffset: 12 }] },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '62%',
-                    animation: { animateRotate: true, duration: 1100 },
+                    responsive: true, maintainAspectRatio: false, cutout: '72%',
+                    layout: { padding: 6 },
+                    animation: { animateRotate: true, animateScale: true, duration: 1200, easing: 'easeOutQuart' },
                     plugins: {
-                        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 14, color: '#475569', font: { size: 12, weight: '600' } } },
-                        tooltip: { backgroundColor: '#014a82', padding: 10, cornerRadius: 10, usePointStyle: true }
+                        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, color: '#475569', font: { size: 12.5, weight: '600' } } },
+                        tooltip: { backgroundColor: '#014a82', padding: 11, cornerRadius: 12, usePointStyle: true, boxPadding: 6 }
                     }
-                }
+                },
+                plugins: [centerTotal]
             });
         }
     }
