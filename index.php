@@ -1246,6 +1246,16 @@
         margin-top: 16px;
         line-height: 1.5;
     }
+    .form-check {
+        display: flex; align-items: flex-start; gap: 10px;
+        margin-top: 16px; font-size: 12px; color: var(--gris); line-height: 1.5;
+        cursor: pointer;
+    }
+    .form-check input {
+        width: 16px; height: 16px; margin-top: 2px;
+        accent-color: var(--azul); flex-shrink: 0; cursor: pointer;
+    }
+    .form-check a { color: var(--azul-dark); font-weight: 600; text-decoration: underline; }
 
     /* ════════════════════════════════════════════════════════════════
        FOOTER
@@ -1298,6 +1308,9 @@
         color: var(--gris-soft);
     }
     .footer-bottom .made { font-weight: 500; color: var(--azul-dark); }
+    .footer-legal-links { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+    .footer-legal-links a { color: var(--gris-soft); font-weight: 500; transition: color .25s; }
+    .footer-legal-links a:hover { color: var(--azul); }
 
     /* ════════════════════════════════════════════════════════════════
        REVEAL ANIMATIONS
@@ -1814,7 +1827,7 @@
                     <i class="fa-regular fa-envelope"></i>
                     <div>
                         <div class="lbl">Correo</div>
-                        <div class="val">contacto@ecomadelleine.com</div>
+                        <div class="val">madelleine.toro8@gmail.com</div>
                     </div>
                 </div>
                 <div class="contacto-info-item">
@@ -1861,6 +1874,14 @@
                             <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="input-container">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="tel" name="telefono" placeholder="Teléfono" required pattern="[0-9()+\-\s]{7,20}" title="Número de teléfono (7 a 20 caracteres)">
+                        </div>
+                        <div class="input-container">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <input type="text" name="direccion" placeholder="Dirección" required maxlength="255">
+                        </div>
+                        <div class="input-container">
                             <i class="fa-regular fa-envelope"></i>
                             <input type="email" name="email" placeholder="Correo electrónico" required>
                         </div>
@@ -1873,7 +1894,10 @@
                         <button type="submit" name="send" class="btn-submit">
                             Registrarme y solicitar estudio <i class="fa-solid fa-arrow-right"></i>
                         </button>
-                        <p class="form-legal">Al registrarte aceptas el tratamiento confidencial de tus datos clínicos.</p>
+                        <label class="form-check">
+                            <input type="checkbox" name="acepto_privacidad" value="1" required>
+                            <span>He leído y acepto el <a href="<?= eco_url('privacidad') ?>" target="_blank" rel="noopener">aviso de privacidad</a> y los <a href="<?= eco_url('terminos') ?>" target="_blank" rel="noopener">términos y condiciones</a>.</span>
+                        </label>
                     </div>
                 </form>
             </div>
@@ -1914,13 +1938,17 @@
                 <h5>Contacto</h5>
                 <ul>
                     <li><i class="fa-solid fa-phone"></i> 0412-8517770</li>
-                    <li><i class="fa-regular fa-envelope"></i> contacto@ecomadelleine.com</li>
+                    <li><i class="fa-regular fa-envelope"></i> madelleine.toro8@gmail.com</li>
                     <li><i class="fa-regular fa-clock"></i> Lun a Vie · 8:00 a 17:00</li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
             <span>&copy; <?php echo date('Y'); ?> EcoMadelleine · Centro de Diagnóstico Ecográfico</span>
+            <span class="footer-legal-links">
+                <a href="<?= eco_url('privacidad') ?>">Aviso de privacidad</a>
+                <a href="<?= eco_url('terminos') ?>">Términos y condiciones</a>
+            </span>
             <span class="made">Diseñado con criterio clínico · Dra. Madelleine Toro</span>
         </div>
     </div>

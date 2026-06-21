@@ -11,8 +11,11 @@ $nacionalidad  = trim($_POST['nacionalidad'] ?? 'V');
 $cedula_numero = trim($_POST['cedula_numero'] ?? '');
 $correo        = trim($_POST['email'] ?? '');
 $password      = $_POST['password'] ?? '';
+$telefono      = trim($_POST['telefono'] ?? '');
+$direccion     = trim($_POST['direccion'] ?? '');
+$acepto        = isset($_POST['acepto_privacidad']);
 
-if ($nombre === '' || $fecha_nac === '' || $cedula_numero === '' || $correo === '' || $password === '') {
+if ($nombre === '' || $fecha_nac === '' || $cedula_numero === '' || $correo === '' || $password === '' || $telefono === '' || $direccion === '' || !$acepto) {
     header('Location: index.php?status=error');
     exit();
 }
@@ -50,8 +53,8 @@ $hash = password_hash($password, PASSWORD_DEFAULT);
 $rol = 'paciente';
 $estado = 'aprobado';
 
-$stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, correo, contrasena, rol, estado) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("sssssss", $nombre, $fecha_mysql, $cedula, $correo, $hash, $rol, $estado);
+$stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, correo, telefono, contrasena, rol, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("sssssssss", $nombre, $fecha_mysql, $cedula, $direccion, $correo, $telefono, $hash, $rol, $estado);
 
 if ($stmt->execute()) {
     $new_user_id = $stmt->insert_id;

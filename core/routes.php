@@ -69,3 +69,6 @@ $r->get('/preparacion',     'paciente/preparacion_estudios_paciente.php');
 $r->get('/precios',         'paciente/precios_ecografias_paciente.php');
 $r->get('/faq',             'paciente/paciente_faq.php');
 $r->get('/ayuda',           'paciente/paciente_ayuda.php');
+
+/* Términos y condiciones (público) */
+$r->get('/terminos',      'auth/terminos.php');
