@@ -28,6 +28,13 @@ if (isset($conex) && $conex instanceof mysqli) {
 // para el selector de facturacion del flujo de informe del ecografista.
 require_once __DIR__ . '/../../lib/facturacion/facturacion.php';
 $eco_servicios_facturacion = eco_servicios_adicionales();
+// En la UI del ecografista el combo no se muestra como tarjeta (fue reemplazado
+// por la tarjeta "Ecografías"); el catálogo completo sigue yendo a JS porque
+// los cálculos de bundle/promos lo necesitan para citas ya existentes.
+$eco_servicios_ui = array_values(array_filter(
+    $eco_servicios_facturacion,
+    static fn($s) => $s['key'] !== 'combo_cito'
+));
 
 // Mismo mapa que panel.php para colores por categoría
 $eco_colores_shell = [
@@ -461,6 +468,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 .eco-serv-chip__icon { width:34px; height:34px; flex-shrink:0; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; color:#02b1f4; background:rgba(2,177,244,.1); }
 .eco-serv-chip__label { font-size:12.5px; font-weight:600; color:var(--text-primary, #0f172a); line-height:1.3; padding-right:42px; }
 .eco-serv-chip__price { position:absolute; top:11px; right:11px; font-size:11.5px; font-weight:800; color:#15803d; background:rgba(34,197,94,.12); padding:2px 8px; border-radius:999px; }
+.eco-serv-chip__price--estudio { color:#0369a1; background:rgba(2,177,244,.12); }
 .eco-serv-chip__check { position:absolute; bottom:11px; right:11px; transform:scale(.6); font-size:14px; color:#02b1f4; opacity:0; transition:opacity .18s ease, transform .18s ease; }
 .eco-serv-chip input:checked + .eco-serv-chip__box .eco-serv-chip__check { opacity:1; transform:scale(1); }
 .eco-serv-chip.is-locked { opacity:.45; }
@@ -549,11 +557,23 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 
             <div class="eco-exp-servicios">
                 <div class="eco-exp-serv-head">
-                    <span class="eco-exp-serv-head__title"><i class="fa-solid fa-plus-circle"></i> Servicios adicionales</span>
-                    <span class="eco-exp-serv-head__hint">opcionales · se suman al total</span>
+                    <span class="eco-exp-serv-head__title"><i class="fa-solid fa-plus-circle"></i> Servicios</span>
+                    <span class="eco-exp-serv-head__hint">elige uno o varios · puedes combinarlos</span>
                 </div>
                 <div class="eco-exp-serv-grid" id="eco-exp-serv-grid">
-                    <?php foreach ($eco_servicios_facturacion as $s): ?>
+                    <label class="eco-serv-chip">
+                        <input type="checkbox" class="eco-serv-input" id="eco-serv-input-eco"
+                               value="eco"
+                               data-label="Ecografías"
+                               data-price="0" checked>
+                        <span class="eco-serv-chip__box">
+                            <span class="eco-serv-chip__icon"><i class="fa-solid fa-wave-square"></i></span>
+                            <span class="eco-serv-chip__label">Ecografías</span>
+                            <span class="eco-serv-chip__price eco-serv-chip__price--estudio">según tipo</span>
+                            <span class="eco-serv-chip__check"><i class="fa-solid fa-check"></i></span>
+                        </span>
+                    </label>
+                    <?php foreach ($eco_servicios_ui as $s): ?>
                         <label class="eco-serv-chip">
                             <input type="checkbox" class="eco-serv-input"
                                    value="<?= htmlspecialchars($s['key'], ENT_QUOTES, 'UTF-8') ?>"
@@ -572,7 +592,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
                     <span class="eco-exp-serv-foot__label"><i class="fa-solid fa-receipt"></i> Subtotal servicios</span>
                     <span class="eco-exp-serv-foot__total" id="eco-exp-serv-subtotal">$0</span>
                 </div>
-                <p class="eco-exp-serv-note"><i class="fa-solid fa-circle-info"></i> El total final (estudio + servicios + promociones) se calcula al elegir la ecografía.</p>
+                <p class="eco-exp-serv-note"><i class="fa-solid fa-circle-info"></i> Con "Ecografías" pasarás a elegir el estudio; el total final (estudio + servicios + promociones) se calcula en ese paso. Sin ecografía, los servicios se registran y facturan directamente.</p>
             </div>
 
             <div class="eco-exp-cards-label">Tipo de expediente</div>
@@ -634,7 +654,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
                          data-eco-tipo-nombre="<?= htmlspecialchars($t['nombre'], ENT_QUOTES, 'UTF-8') ?>"
                          data-eco-tipo-precio="<?= htmlspecialchars((string)($t['precio'] ?? 0), ENT_QUOTES, 'UTF-8') ?>"
                          data-eco-tipo-icono="<?= htmlspecialchars($iconoClase, ENT_QUOTES, 'UTF-8') ?>">
-                        <div class="eco-card-icon" style="background:<?= htmlspecialchars($col['bg'], ENT_QUOTES, 'UTF-8') ?>;">
+                        <div class="eco-card-icon" style="background:<?= htmlspecialchars($col['badge'], ENT_QUOTES, 'UTF-8') ?>;color:<?= htmlspecialchars($col['text'], ENT_QUOTES, 'UTF-8') ?>;">
                             <i class="<?= $icono ?>"></i>
                         </div>
                         <?php if ($cat !== ''): ?>
@@ -850,6 +870,41 @@ if (!function_exists('eco_estilo_tipo_shell')) {
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- ── Modal: registro/facturación de servicios sin ecografía (consulta, citología, procesamiento) ──
+     Va DESPUÉS del formulario de estudio en el DOM a propósito: en modo "registro" ambas quedan
+     abiertas a la vez y esta debe pintarse por encima (mismo z-index; gana el orden en el DOM). ── -->
+<div id="eco-modal-servicio-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-servicio-title" data-eco-modal-static>
+    <div class="eco-modal__dialog" style="max-width:560px;width:100%;">
+        <div class="eco-modal__main">
+            <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            <h4 class="eco-modal__title" id="eco-servicio-title"><i class="fa-solid fa-stethoscope" style="color:var(--accent);margin-right:7px;"></i>Registro de servicios</h4>
+            <p class="eco-modal__body-text" id="eco-servicio-paciente" style="margin:0 0 14px;">Paciente: —</p>
+
+            <div class="eco-fact-banner" style="margin:0 0 14px;">
+                <div class="eco-fact-banner__head"><i class="fa-solid fa-receipt"></i> <span id="eco-servicio-fact-head">Facturación de servicios</span></div>
+                <ul class="eco-fact-banner__lines" id="eco-servicio-lineas"></ul>
+                <div class="eco-fact-banner__total" id="eco-servicio-total-wrap"><span>Total a facturar</span><strong id="eco-servicio-total">$0</strong></div>
+                <p class="eco-exp-serv-note" id="eco-servicio-nota-registro" style="display:none;margin-top:9px;"><i class="fa-solid fa-circle-info"></i> Estos servicios se facturan junto con el informe del estudio; aquí solo se registra la atención.</p>
+            </div>
+
+            <label for="eco-servicio-obs" style="display:block;font-size:12.5px;font-weight:700;color:var(--text-secondary);margin:0 0 6px;">Motivo / observaciones <span id="eco-servicio-obs-req" style="font-weight:500;color:var(--text-muted);">(opcional)</span></label>
+            <textarea id="eco-servicio-obs" rows="4" placeholder="Ej.: control post-estudio, revisión de resultados, toma de muestra…"
+                      style="width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-surface);color:var(--text-primary);font-family:inherit;font-size:13.5px;resize:vertical;"></textarea>
+            <p class="eco-modal__body-text" style="margin:7px 0 0;font-size:11.5px;color:var(--text-muted);"><i class="fa-solid fa-notes-medical" style="margin-right:4px;"></i>Si escribes observaciones, quedan guardadas como nota de sesión del paciente.</p>
+
+            <div id="eco-servicio-feedback" style="display:none;margin-top:12px;padding:10px 13px;border-radius:10px;font-size:13px;"></div>
+
+            <div class="eco-modal__footer" style="margin-top:18px;display:flex;gap:10px;justify-content:space-between;align-items:center;">
+                <button type="button" class="btn-secondary" id="eco-servicio-volver" style="margin-left:0;"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                <div style="display:flex;gap:10px;">
+                    <button type="button" class="btn-secondary" data-eco-modal-close style="margin-left:0;">Cancelar</button>
+                    <button type="button" class="btn-primary" id="eco-servicio-guardar"><i class="fa-solid fa-circle-check"></i> <span id="eco-servicio-guardar-txt">Guardar y facturar</span></button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

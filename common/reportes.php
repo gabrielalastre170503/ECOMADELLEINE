@@ -28,6 +28,32 @@ $top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10, $ecoId);
 $comparativa  = eco_reporte_comparativa_meses($conex, 6, $ecoId);
 $satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
 
+// Notas de sesión registradas en el periodo (scopeado al ecografista si aplica)
+$total_notas = 0;
+$sqlNotas = "SELECT COUNT(*) c FROM notas_clinicas WHERE DATE(fecha_sesion) BETWEEN ? AND ?"
+    . ($ecoId ? " AND ecografista_id = ?" : "");
+if ($stN = $conex->prepare($sqlNotas)) {
+    if ($ecoId) { $stN->bind_param('ssi', $desde, $hasta, $ecoId); }
+    else        { $stN->bind_param('ss', $desde, $hasta); }
+    $stN->execute();
+    $total_notas = (int)($stN->get_result()->fetch_assoc()['c'] ?? 0);
+    $stN->close();
+}
+
+// Informes firmados en el periodo (por fecha de firma; scopeado al ecografista si aplica)
+$total_firmados = 0;
+$sqlFirm = "SELECT COUNT(*) c FROM informes_estudios
+            WHERE estado = 'firmado'
+              AND DATE(COALESCE(fecha_firma, finalizado_en, creado_en)) BETWEEN ? AND ?"
+    . ($ecoId ? " AND ecografista_id = ?" : "");
+if ($stF = $conex->prepare($sqlFirm)) {
+    if ($ecoId) { $stF->bind_param('ssi', $desde, $hasta, $ecoId); }
+    else        { $stF->bind_param('ss', $desde, $hasta); }
+    $stF->execute();
+    $total_firmados = (int)($stF->get_result()->fetch_assoc()['c'] ?? 0);
+    $stF->close();
+}
+
 // Análisis clínico (solo ecografista): gráficos de su actividad y pacientes.
 $clin = null;
 if ($ecoId) {
@@ -65,6 +91,8 @@ $kpis = [
     ['Tasa de cobro', $resumen['tasa_cobro'] . '%',          'fa-percent',        '#0284c7'],
     ['No-show (' . $resumen['no_show'] . ')', $resumen['tasa_no_show'] . '%', 'fa-user-clock', '#b45309'],
     ['Satisfacción (' . $satisf['respuestas'] . ')', ($satisf['respuestas'] > 0 ? $satisf['promedio'] . '/5' : '—'), 'fa-star', '#d97706'],
+    ['Notas de sesión',   number_format($total_notas),    'fa-notes-medical',  '#0d9488'],
+    ['Informes firmados', number_format($total_firmados),  'fa-file-signature', '#0369a1'],
 ];
 
 ob_start();
@@ -80,7 +108,7 @@ ob_start();
             <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;">Hasta</label>
             <input type="date" name="hasta" value="<?= htmlspecialchars($hasta) ?>" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);">
         </div>
-        <button type="submit" class="btn-primary" style="padding:9px 16px;"><i class="fa-solid fa-filter"></i> Aplicar</button>
+        <button type="submit" class="btn-secondary" style="padding:9px 16px;"><i class="fa-solid fa-filter" style="color:var(--accent-text);"></i> Aplicar</button>
         <div style="flex:1;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('api/exportar_reporte.php') ?>?formato=pdf&<?= $qs ?>"><i class="fa-solid fa-file-pdf" style="color:#b91c1c;"></i> PDF</a>

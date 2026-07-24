@@ -486,6 +486,9 @@ backup_err.txt
 uploads/*
 !uploads/.htaccess
 
+##### EcoMadelleine - informes/adjuntos subidos (PDF de pacientes en lib/uploads, NO subir)
+lib/uploads/
+
 ##### EcoMadelleine - tooling local y artefactos generados (NO subir)
 .claude/
 .agents/

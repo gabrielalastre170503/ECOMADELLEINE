@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
 .fc .fc-col-header-cell-cushion { color: var(--text-secondary); font-weight: 600; font-size: 12px; text-transform: uppercase; }
 .fc .fc-daygrid-day-number { color: var(--text-primary); font-size: 12.5px; padding: 6px 8px; }
 .fc .fc-event { border-radius: 4px; padding: 2px 6px; font-size: 11.5px; cursor: pointer; }
+.fc .fc-event-time, .fc .fc-event-title { font-size: 10.5px; }
 </style>
 
 <?php
@@ -107,7 +108,7 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-<script src="assets/js/panel/ecografista-modals.js?v=25"></script>
+<script src="assets/js/panel/ecografista-modals.js?v=26"></script>
 <script src="assets/js/agenda/recordatorios-ui.js"></script>
 HTML;
 include __DIR__ . '/../layouts/shell.php';

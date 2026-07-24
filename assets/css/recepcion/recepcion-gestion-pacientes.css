@@ -122,6 +122,8 @@ body.rx-gestion-pacientes-page .page-header-actions {
     font-size: 14px;
     table-layout: fixed;
 }
+/* Mis Pacientes tiene una columna más (Teléfono): más ancho mínimo */
+.rx-pac-wrap .eco-mis-pac-table { min-width: 1040px; }
 .rx-pac-wrap .rx-pac-table th,
 .rx-pac-wrap .rx-pac-table td {
     padding: 15px 11px;
@@ -306,24 +308,52 @@ body.rx-gestion-pacientes-page .page-header-actions {
     min-width: 1220px;
     table-layout: fixed;
 }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-paciente { width: 18%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-cedula { width: 9%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-edad { width: 6%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-correo { width: 15%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-direccion { width: 9%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-citas { width: 7%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-informes { width: 8%; }
-.rx-pac-wrap .eco-mis-pac-table col.col-eco-ingreso { width: 9%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-paciente { width: 15%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-cedula { width: 8%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-edad { width: 7%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-correo { width: 13%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-telefono { width: 9%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-direccion { width: 7%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-citas { width: 6%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-informes { width: 7%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-ingreso { width: 8%; }
 .rx-pac-wrap .eco-mis-pac-table col.col-eco-acciones { width: 18%; }
 .rx-pac-wrap .eco-mis-pac-table .rx-pac-td-nombre {
     text-transform: capitalize;
     overflow: visible;
 }
-/* Encabezado "PACIENTE" un poco más a la derecha */
-.rx-pac-wrap .eco-mis-pac-table thead th:first-child {
-    padding-left: 20px;
+/* Primera columna (encabezado y celdas) un poco más a la derecha */
+.rx-pac-wrap .eco-mis-pac-table thead th:first-child,
+.rx-pac-wrap .eco-mis-pac-table tbody td:first-child {
+    padding-left: 24px;
 }
-.rx-pac-wrap .eco-mis-pac-table .rx-pac-td-direccion {
+.rx-pac-wrap .eco-mis-pac-table .rx-pac-td-direccion,
+.rx-pac-wrap .eco-mis-pac-table .rx-pac-td-telefono {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Notas de Sesión: misma tabla con todas las columnas (12) ───────── */
+.rx-pac-wrap .eco-notas-table { min-width: 1200px; }
+.rx-pac-wrap .eco-notas-table col.col-notas-paciente { width: 18%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-cedula { width: 8%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-edad { width: 7%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-correo { width: 12%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-telefono { width: 9%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-direccion { width: 7%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-citas { width: 5%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-informes { width: 6%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-ingreso { width: 7%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-notas { width: 5%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-ultima { width: 8%; }
+.rx-pac-wrap .eco-notas-table col.col-notas-accion { width: 13%; }
+.rx-pac-wrap .eco-notas-table thead th:first-child,
+.rx-pac-wrap .eco-notas-table tbody td:first-child {
+    padding-left: 24px;
+}
+.rx-pac-wrap .eco-notas-table .rx-pac-td-direccion,
+.rx-pac-wrap .eco-notas-table .rx-pac-td-telefono {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

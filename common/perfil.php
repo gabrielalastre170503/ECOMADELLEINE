@@ -43,29 +43,51 @@ if ($telefonoUsuario === null || $telefonoUsuario === '') {
     }
 }
 
-/* Estado de identidad: 2FA y verificación de correo */
+/* Estado de identidad: 2FA, verificación de correo y estado de la cuenta */
 $dosFactorActivo = false;
 $correoVerificado = true;
-if ($st2 = $conex->prepare('SELECT two_factor_enabled, email_verificado FROM usuarios WHERE id = ? LIMIT 1')) {
+$estadoCuenta = '';
+if ($st2 = $conex->prepare('SELECT two_factor_enabled, email_verificado, estado FROM usuarios WHERE id = ? LIMIT 1')) {
     $st2->bind_param('i', $usuario_id);
     $st2->execute();
-    $st2->bind_result($tfDb, $evDb);
+    $st2->bind_result($tfDb, $evDb, $estDb);
     if ($st2->fetch()) {
         $dosFactorActivo  = ((int)$tfDb === 1);
         $correoVerificado = ((int)$evDb === 1);
+        $estadoCuenta     = (string)$estDb;
     }
     $st2->close();
 }
 
 $fechaRegistroTexto = '—';
+$antiguedadTexto = '';
 if (!empty($fechaRegistro)) {
     $ts = strtotime($fechaRegistro);
     if ($ts > 0) {
         $fechaRegistroTexto = date('d/m/Y', $ts);
+        $dias = (int) floor((time() - $ts) / 86400);
+        if ($dias <= 0) {
+            $antiguedadTexto = 'desde hoy';
+        } elseif ($dias < 30) {
+            $antiguedadTexto = 'hace ' . $dias . ' día' . ($dias === 1 ? '' : 's');
+        } elseif ($dias < 365) {
+            $meses = (int) floor($dias / 30);
+            $antiguedadTexto = 'hace ' . $meses . ' mes' . ($meses === 1 ? '' : 'es');
+        } else {
+            $anios = (int) floor($dias / 365);
+            $antiguedadTexto = 'hace ' . $anios . ' año' . ($anios === 1 ? '' : 's');
+        }
     } else {
         $fechaRegistroTexto = (string)$fechaRegistro;
     }
 }
+
+/* Etiqueta legible del estado de la cuenta */
+$estadoCuentaTexto = [
+    'aprobado'     => 'Activa y aprobada',
+    'pendiente'    => 'Pendiente de aprobación',
+    'inhabilitado' => 'Inhabilitada',
+][$estadoCuenta] ?? 'Activa';
 
 $ultimaActividad = $_SESSION['ultimo_acceso'] ?? null;
 $ultimaActividadTexto = 'Esta es tu primera sesión';

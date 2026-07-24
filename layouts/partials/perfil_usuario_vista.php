@@ -124,16 +124,26 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
         <?php if (in_array($rol_usuario, ['administrador', 'ecografista', 'recepcionista', 'paciente'], true)): ?>
         <div class="profile-card">
             <h4><i class="fa-solid fa-shield-halved"></i> Verificación en dos pasos (2FA)</h4>
-            <p style="font-size:13px;color:var(--text-secondary,#64748b);line-height:1.55;margin:0 0 14px;">
-                <?php if (!empty($dosFactorActivo)): ?>
+            <?php if (!empty($dosFactorActivo)): ?>
+                <p style="font-size:13px;color:var(--text-secondary,#64748b);line-height:1.55;margin:0 0 12px;">
                     <span style="display:inline-flex;align-items:center;gap:6px;color:#15803d;font-weight:600;">
                         <i class="fa-solid fa-circle-check"></i> Activada
                     </span><br>
                     Al iniciar sesión te pediremos un código de 6 dígitos enviado a tu correo.
-                <?php else: ?>
+                </p>
+                <ul class="perfil-checklist">
+                    <li><i class="fa-solid fa-envelope-open-text"></i> El código llega a tu correo registrado.</li>
+                    <li><i class="fa-solid fa-clock"></i> Caduca a los pocos minutos por seguridad.</li>
+                    <li><i class="fa-solid fa-toggle-off"></i> Puedes desactivarla cuando quieras desde aquí.</li>
+                </ul>
+            <?php else: ?>
+                <p style="font-size:13px;color:var(--text-secondary,#64748b);line-height:1.55;margin:0 0 12px;">
                     Añade una capa extra de seguridad: un código de un solo uso enviado a tu correo en cada inicio de sesión.
-                <?php endif; ?>
-            </p>
+                </p>
+                <ul class="perfil-checklist" style="margin-top:10px;">
+                    <li><i class="fa-solid fa-envelope" style="color:var(--accent-text);"></i> Recibirás un código de 6 dígitos en tu correo.</li>
+                </ul>
+            <?php endif; ?>
             <form action="<?= eco_url('api/actualizar_perfil.php') ?>" method="POST">
                 <?= csrf_field() ?>
                 <input type="hidden" name="accion" value="toggle_2fa">
@@ -151,6 +161,9 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
             <h4><i class="fa-solid fa-timeline"></i> Actividad reciente</h4>
             <ul>
                 <li><i class="fa-solid fa-clock-rotate-left"></i> Último acceso: <?= htmlspecialchars($ultimaActividadTexto) ?></li>
+                <li><i class="fa-solid fa-calendar-check"></i> En el sistema desde: <?= htmlspecialchars($fechaRegistroTexto) ?><?php if (!empty($antiguedadTexto)): ?> <span style="color:var(--text-muted);">(<?= htmlspecialchars($antiguedadTexto) ?>)</span><?php endif; ?>.</li>
+                <li><i class="fa-solid fa-user-tag"></i> Tipo de cuenta: <?= htmlspecialchars(ucfirst($rol_usuario)) ?>.</li>
+                <li><i class="fa-solid fa-circle-check" style="color:#15803d;"></i> Estado de la cuenta: <?= htmlspecialchars($estadoCuentaTexto ?? 'Activa') ?>.</li>
                 <?php if (!empty($correoVerificado)): ?>
                     <li><i class="fa-solid fa-envelope-circle-check" style="color:#15803d;"></i> Correo verificado.</li>
                 <?php else: ?>

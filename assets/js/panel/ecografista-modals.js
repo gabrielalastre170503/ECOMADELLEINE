@@ -1043,6 +1043,12 @@
 
             _ecoResetServicios();
             _ecoPreseleccionarServicios(patientState.serviciosCita);
+            // Si la solicitud del paciente pedía SOLO servicios (sin estudios),
+            // se desmarca "Ecografías" para llevarlo directo al registro de servicios.
+            var chipEco = byId('eco-serv-input-eco');
+            if (chipEco && (patientState.serviciosCita || []).length && !(patientState.estudiosCita || []).length) {
+                chipEco.checked = false;
+            }
             _ecoRefreshServicios();
             EcoModal.close('eco-modal-gestionar-paciente-eco');
             EcoModal.close('eco-modal-informes-paciente-eco');
@@ -1167,8 +1173,14 @@
         var grid = byId('eco-exp-serv-grid');
         if (!grid) return [];
         return Array.prototype.slice.call(grid.querySelectorAll('.eco-serv-input'))
-            .filter(function (i) { return i.checked; })
+            .filter(function (i) { return i.checked && i.value !== 'eco'; })
             .map(function (i) { return i.value; });
+    }
+    // ¿Está marcada la tarjeta "Ecografías"? (no es un servicio del catálogo:
+    // decide si el flujo pasa por el selector de tipos de ecografía)
+    function _ecoEcoSeleccionada() {
+        var chip = byId('eco-serv-input-eco');
+        return !!(chip && chip.checked);
     }
     function _ecoAplicarLockCombo() {
         var grid = byId('eco-exp-serv-grid');
@@ -1206,7 +1218,8 @@
         var grid = byId('eco-exp-serv-grid');
         if (grid) {
             Array.prototype.slice.call(grid.querySelectorAll('.eco-serv-input')).forEach(function (i) {
-                i.checked = false; i.disabled = false;
+                // "Ecografías" queda marcada por defecto (el caso más común).
+                i.checked = (i.value === 'eco'); i.disabled = false;
                 var chip = i.closest('.eco-serv-chip');
                 if (chip) { chip.classList.remove('is-locked', 'is-today'); chip.title = ''; }
             });
@@ -1313,13 +1326,167 @@
             return;
         }
 
+        // Sincronizar selección y decidir el camino: con "Ecografías" se pasa al
+        // selector de tipos; sin ella, directo al registro/facturación de servicios.
+        _ecoRefreshServicios();
+        var conEco = _ecoEcoSeleccionada();
+        var soloServicios = studyState.servicios || [];
+        if (!conEco && !soloServicios.length) {
+            ecoToast({
+                type: 'error',
+                title: 'Sin servicios seleccionados',
+                message: 'Selecciona al menos un servicio (o la tarjeta Ecografías) para continuar.',
+                duration: 5000
+            });
+            return;
+        }
+
         studyState.expediente = expediente;
+
+        if (!conEco) {
+            EcoModal.close('eco-modal-expediente-informe-eco');
+            abrirModalServicioEco('facturar');
+            return;
+        }
+
         var info = byId('eco-modal-paciente-info');
         var ageText = patientState.age ? ' · ' + patientState.age + ' anos' : '';
         var expText = expediente === 'infantil' ? 'Expediente infantil' : 'Expediente adulto';
         if (info) info.textContent = 'Paciente: ' + (patientState.name || '-') + ageText + ' · ' + expText;
         EcoModal.close('eco-modal-expediente-informe-eco');
         EcoModal.open('eco-modal-seleccionar-ecografia-eco');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Modal de servicios sin ecografía (consulta / citología / procesamiento).
+    // Modo 'facturar': asienta el cobro (flujo sin estudio).
+    // Modo 'registro': solo registra la atención (la facturación va con el
+    // informe del estudio que está abierto debajo).
+    // ─────────────────────────────────────────────────────────────────────
+    var _servicioCtx = { mode: 'facturar' };
+
+    var _servicioAcciones = {
+        consulta:      'Realizar consulta',
+        citologia:     'Realizar citología',
+        procesamiento: 'Realizar procesamiento de muestra'
+    };
+    function _ecoServicioAccionLabel(keys) {
+        keys = keys || [];
+        if (keys.length === 1) {
+            var cat = _ecoServiciosCatalogo();
+            return _servicioAcciones[keys[0]] ||
+                ('Realizar ' + ((cat[keys[0]] && cat[keys[0]].label) || 'servicio').toLowerCase());
+        }
+        return 'Realizar servicios (' + keys.length + ')';
+    }
+
+    function abrirModalServicioEco(mode) {
+        if (!byId('eco-modal-servicio-eco') || !window.EcoModal) return;
+        _servicioCtx.mode = (mode === 'registro') ? 'registro' : 'facturar';
+        var keys = studyState.servicios || [];
+        if (!keys.length) return;
+
+        var cat = _ecoServiciosCatalogo();
+        var titulo = byId('eco-servicio-title');
+        var pacienteEl = byId('eco-servicio-paciente');
+        var lineas = byId('eco-servicio-lineas');
+        var totalWrap = byId('eco-servicio-total-wrap');
+        var totalEl = byId('eco-servicio-total');
+        var factHead = byId('eco-servicio-fact-head');
+        var notaReg = byId('eco-servicio-nota-registro');
+        var obs = byId('eco-servicio-obs');
+        var obsReq = byId('eco-servicio-obs-req');
+        var volver = byId('eco-servicio-volver');
+        var btnTxt = byId('eco-servicio-guardar-txt');
+        var fb = byId('eco-servicio-feedback');
+
+        var esRegistro = _servicioCtx.mode === 'registro';
+        var tituloTxt = keys.length === 1 && cat[keys[0]]
+            ? cat[keys[0]].label
+            : 'Registro de servicios';
+        if (titulo) titulo.innerHTML = '<i class="fa-solid fa-stethoscope" style="color:var(--accent);margin-right:7px;"></i>' + esc(tituloTxt);
+        if (pacienteEl) pacienteEl.textContent = 'Paciente: ' + (patientState.name || '—');
+
+        if (lineas) {
+            lineas.innerHTML = keys.map(function (k) {
+                var s = cat[k] || { label: k, price: 0 };
+                return '<li><span>' + esc(s.label) + '</span><b>' + _ecoMoney(s.price) + '</b></li>';
+            }).join('');
+        }
+        var calc = _ecoCalcBundleMulti([], keys);
+        if (totalEl) totalEl.textContent = _ecoMoney(calc.total);
+        if (totalWrap) totalWrap.style.display = esRegistro ? 'none' : '';
+        if (factHead) factHead.textContent = esRegistro ? 'Servicios de esta atención' : 'Facturación de servicios';
+        if (notaReg) notaReg.style.display = esRegistro ? '' : 'none';
+        if (obs) obs.value = '';
+        if (obsReq) obsReq.textContent = esRegistro ? '(requerido)' : '(opcional)';
+        if (volver) volver.style.display = esRegistro ? 'none' : '';
+        if (btnTxt) btnTxt.textContent = esRegistro ? 'Guardar registro' : 'Guardar y facturar';
+        if (fb) { fb.style.display = 'none'; fb.innerHTML = ''; }
+
+        EcoModal.open('eco-modal-servicio-eco');
+    }
+
+    function _servicioFeedback(msg, esError) {
+        var fb = byId('eco-servicio-feedback');
+        if (!fb) return;
+        fb.style.display = '';
+        fb.style.background = esError ? 'rgba(239,68,68,.1)' : 'rgba(34,197,94,.1)';
+        fb.style.color = esError ? '#b91c1c' : '#15803d';
+        fb.textContent = msg;
+    }
+
+    function guardarServicioEco() {
+        var keys = studyState.servicios || [];
+        if (!keys.length) return;
+        var esRegistro = _servicioCtx.mode === 'registro';
+        var obs = byId('eco-servicio-obs');
+        var obsVal = obs ? obs.value.trim() : '';
+        if (esRegistro && obsVal === '') {
+            _servicioFeedback('Escribe el motivo u observaciones de la atención para registrarla.', true);
+            return;
+        }
+
+        var btn = byId('eco-servicio-guardar');
+        var prev = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…'; }
+
+        fetch((window.ECO_BASE || '') + 'api/facturar_servicios.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paciente_id: patientState.id,
+                servicios: keys,
+                observaciones: obsVal,
+                facturar: esRegistro ? 0 : 1
+            })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d || !d.success) {
+                    _servicioFeedback((d && d.message) || 'No se pudo guardar. Inténtalo de nuevo.', true);
+                    return;
+                }
+                ecoToast({ type: 'success', title: esRegistro ? 'Atención registrada' : 'Servicios facturados', message: d.message || '', duration: 6000 });
+                EcoModal.close('eco-modal-servicio-eco');
+                if (obsVal !== '') {
+                    document.dispatchEvent(new CustomEvent('eco:notas-changed', { detail: { pacienteId: patientState.id, action: 'add' } }));
+                }
+                if (!esRegistro) {
+                    // El cobro del día cambió: refrescar los detalles la próxima vez.
+                    patientState._stale = true;
+                    document.dispatchEvent(new CustomEvent('eco:facturacion-changed', { detail: { pacienteId: patientState.id } }));
+                    if (patientState.id) window.abrirGestionPacienteEco(patientState.id);
+                }
+                // En modo registro el formulario del estudio sigue abierto debajo.
+            })
+            .catch(function () { _servicioFeedback('Error de red. Inténtalo de nuevo.', true); })
+            .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = prev; } });
+    }
+
+    function volverDeServicioAExpediente() {
+        EcoModal.close('eco-modal-servicio-eco');
+        EcoModal.open('eco-modal-expediente-informe-eco');
     }
 
     function volverAExpediente() {
@@ -1536,6 +1703,12 @@
                     // Facturación al final, debajo de la Conclusión.
                     (!editInformeId ? _ecoFacturaBannerHTML() : '') +
                     '<div class="modal-form-eco-actions">' +
+                    // Botón contextual: si el flujo trae servicios (consulta, citología,
+                    // procesamiento), permite registrar esa atención sin salir del informe.
+                    ((!editInformeId && (studyState.servicios || []).length)
+                        ? '<button type="button" class="eco-btn-cancel" id="eco-servicio-desde-form" style="color:#0369a1;border-color:#7dd3fc;">' +
+                          '<i class="fa-solid fa-stethoscope"></i> ' + esc(_ecoServicioAccionLabel(studyState.servicios)) + '</button>'
+                        : '') +
                     '<button type="button" class="eco-btn-cancel" id="eco-cancelar-estudio">' +
                     '<i class="fa-solid fa-xmark"></i> Cancelar</button>' +
                     '<button type="button" class="eco-btn-cancel" id="eco-borrador-estudio">' +
@@ -1555,6 +1728,8 @@
                 }
                 var cancel = byId('eco-cancelar-estudio');
                 if (cancel) cancel.addEventListener('click', cerrarFormularioEstudioEco);
+                var servDesdeForm = byId('eco-servicio-desde-form');
+                if (servDesdeForm) servDesdeForm.addEventListener('click', function () { abrirModalServicioEco('registro'); });
                 var borrador = byId('eco-borrador-estudio');
                 if (borrador) borrador.addEventListener('click', function () { guardarInformeEstudioEco(null, 'borrador'); });
                 var imprimirBtn = byId('eco-imprimir-estudio');
@@ -2160,6 +2335,12 @@
                 if (e.target && e.target.classList.contains('eco-serv-input')) _ecoRefreshServicios();
             });
         }
+
+        // Modal de servicios sin ecografía
+        var servGuardar = byId('eco-servicio-guardar');
+        if (servGuardar) servGuardar.addEventListener('click', guardarServicioEco);
+        var servVolver = byId('eco-servicio-volver');
+        if (servVolver) servVolver.addEventListener('click', volverDeServicioAExpediente);
 
         var volverTipos = byId('eco-volver-tipos-ecografia');
         if (volverTipos) volverTipos.addEventListener('click', volverATiposEcografia);

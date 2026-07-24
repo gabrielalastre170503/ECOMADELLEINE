@@ -87,7 +87,7 @@ if ($rol === 'ecografista'):
 </style>
 
 <!-- Hero de bienvenida -->
-<div class="card" style="margin-bottom:18px;background:linear-gradient(135deg,var(--accent-soft),var(--bg-surface));border:1px solid rgba(2,177,244,.2);">
+<div class="card" style="margin-bottom:18px;background:var(--bg-surface);border:1px solid rgba(2,177,244,.2);">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
             <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:var(--text-primary);">Hola, <?= htmlspecialchars($primer_nombre) ?> 👋</h2>
@@ -184,7 +184,7 @@ if ($rol === 'ecografista'):
         <div class="card-header">
             <h3><i class="fa-solid fa-chart-column" style="margin-right:7px;color:var(--accent);"></i> Actividad</h3>
         </div>
-        <div style="position:relative;height:240px;">
+        <div style="position:relative;height:270px;">
             <canvas id="dashChart"></canvas>
         </div>
     </div>

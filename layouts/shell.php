@@ -47,6 +47,12 @@ $active_section      = $active_section      ?? '';
 $body_class          = $body_class          ?? '';
 $page_head_extra     = $page_head_extra     ?? '';
 $page_scripts_extra  = $page_scripts_extra  ?? '';
+
+// Clase de rol en el <body> (por si se quieren reskins puntuales por rol) +
+// la clase 'eco-glass', gancho del tema glass Apple aplicado a todo el shell.
+$user_role  = preg_replace('/[^a-z]/', '', strtolower($_SESSION['rol'] ?? ''));
+$role_class = $user_role !== '' ? 'role-' . $user_role : '';
+$body_class = trim($body_class . ' ' . $role_class . ' eco-glass');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -63,6 +69,8 @@ $page_scripts_extra  = $page_scripts_extra  ?? '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/core/shell.css?v=<?= @filemtime(__DIR__ . '/../assets/css/core/shell.css') ?: '1' ?>">
     <link rel="stylesheet" href="assets/css/core/shell-modals.css?v=<?= @filemtime(__DIR__ . '/../assets/css/core/shell-modals.css') ?: '1' ?>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/core/glass.css?v=<?= @filemtime(__DIR__ . '/../assets/css/core/glass.css') ?: '1' ?>">
     <?= $page_head_extra ?>
 
     <script>

@@ -413,26 +413,43 @@ if (!function_exists('eco_facturar_cita_reuso')) {
             if ($pagadoPrevio > 0) {
                 $estadoPago = ($pagadoPrevio + 0.009 >= $total) ? 'pagado' : 'parcial';
             }
-            if ($up = $conex->prepare(
-                "UPDATE citas
-                    SET motivo_principal = ?, monto_total = ?, tipo_ecografia_id = ?, estado_pago = ?
-                  WHERE id = ?"
-            )) {
-                $up->bind_param('sdisi', $motivo, $total, $tipoEcoId, $estadoPago, $citaId);
-                $up->execute();
-                $up->close();
+            // tipo_ecografia_id solo se toca si este cobro trae un estudio real: 0 no es
+            // un id valido (viola fk_cita_tipo) y, en un cobro de solo-servicios, tampoco
+            // debe borrar el tipo de eco que la cita ya tuviera asentado hoy.
+            if ($tipoEcoId > 0) {
+                if ($up = $conex->prepare(
+                    "UPDATE citas
+                        SET motivo_principal = ?, monto_total = ?, tipo_ecografia_id = ?, estado_pago = ?
+                      WHERE id = ?"
+                )) {
+                    $up->bind_param('sdisi', $motivo, $total, $tipoEcoId, $estadoPago, $citaId);
+                    $up->execute();
+                    $up->close();
+                }
+            } else {
+                if ($up = $conex->prepare(
+                    "UPDATE citas
+                        SET motivo_principal = ?, monto_total = ?, estado_pago = ?
+                      WHERE id = ?"
+                )) {
+                    $up->bind_param('sdsi', $motivo, $total, $estadoPago, $citaId);
+                    $up->execute();
+                    $up->close();
+                }
             }
             return [$citaId, $total];
         }
 
         // No hay cita reusable → crear una presencial/completada como contenedor.
+        // tipo_ecografia_id debe ir NULL (no 0) cuando el cobro es solo de servicios.
+        $tipoEcoIdParam = $tipoEcoId > 0 ? $tipoEcoId : null;
         if ($ins = $conex->prepare(
             "INSERT INTO citas
                 (paciente_id, ecografista_id, tipo_ecografia_id, fecha_cita, motivo_principal,
                  modalidad, tipo_cita, monto_total, estado_pago, estado)
              VALUES (?, ?, ?, NOW(), ?, 'presencial', 'primera_consulta', ?, 'pendiente', 'completada')"
         )) {
-            $ins->bind_param('iiisd', $pacienteId, $ecografistaId, $tipoEcoId, $motivo, $total);
+            $ins->bind_param('iiisd', $pacienteId, $ecografistaId, $tipoEcoIdParam, $motivo, $total);
             $ins->execute();
             $newId = (int)$ins->insert_id;
             $ins->close();

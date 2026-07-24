@@ -1,0 +1,183 @@
+/* =====================================================================
+   ECOMADELLEINE — GLASS APPLE (tema del shell, TODOS los roles)
+   ---------------------------------------------------------------------
+   Reskin scopeado a  .eco-glass  (clase que shell.php pone en cada <body>
+   autenticado). Aplica a todos los roles que usan el shell; la landing,
+   que no usa el shell, no se ve afectada.
+
+   Estructura:
+     · Reglas comunes  → .eco-glass …   (usan variables; sirven en AMBOS
+       temas; el valor lo aporta el bloque de tokens del tema activo).
+     · Tokens del tema → [data-theme="light"] / [data-theme="dark"] .eco-glass
+   Así claro y oscuro comparten exactamente el mismo diseño glass y solo
+   cambian los valores (superficies, bordes, sombras).
+   ===================================================================== */
+
+/* ── 0. Acabado común (no depende del tema) ────────────────────────── */
+.eco-glass {
+    /* Radios más generosos (Apple) */
+    --radius-sm: 10px;
+    --radius:    12px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+
+    /* Tipografía Inter (parte del lenguaje glass Apple) */
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* Desenfoque del vidrio */
+    --eco-blur: blur(20px) saturate(1.6);
+}
+
+/* ── 1. TOKENS · TEMA CLARO ────────────────────────────────────────── */
+[data-theme="light"] .eco-glass {
+    /* Fondo general blanco; las superficies se delinean con --silver-edge */
+    --bg-app:     #ffffff;
+    --bg-surface: rgba(255, 255, 255, .9);
+    --bg-sidebar: rgba(255, 255, 255, .85);
+    --bg-topbar:  rgba(255, 255, 255, .8);
+
+    --silver-top:  rgba(255, 255, 255, .85);
+    --silver-edge: rgba(15, 23, 42, .08);
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04);
+    --shadow:    0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .07);
+    --shadow-md: 0 12px 30px rgba(15, 23, 42, .09);
+    --shadow-lg: 0 22px 50px rgba(15, 23, 42, .12);
+
+    /* Superficies opacas (modales, dropdown), franjas de thead, hover, footer */
+    --eco-solid:     #ffffff;
+    --eco-thead:     rgba(255, 255, 255, .45);
+    --eco-thead-pac: #ffffff;
+    --eco-hover:     rgba(255, 255, 255, .85);
+    --eco-footer:    rgba(255, 255, 255, .35);
+
+    /* Sombras compuestas de cada superficie glass */
+    --eco-shadow-card:       inset 0 1px 0 var(--silver-top), 0 10px 28px rgba(15, 23, 42, .07), 0 2px 6px rgba(15, 23, 42, .04);
+    --eco-shadow-card-hover: inset 0 1px 0 var(--silver-top), 0 18px 40px rgba(15, 23, 42, .12);
+    --eco-shadow-side:       inset -1px 0 0 var(--silver-top), 8px 0 32px rgba(15, 23, 42, .06);
+    --eco-shadow-top:        inset 0 1px 0 var(--silver-top), 0 6px 20px rgba(15, 23, 42, .05);
+}
+
+/* ── 2. TOKENS · TEMA OSCURO ───────────────────────────────────────── */
+[data-theme="dark"] .eco-glass {
+    /* Fondo azul-negro profundo; paneles translúcidos un punto más claros */
+    --bg-app:     #0a1120;
+    --bg-surface: rgba(30, 41, 59, .55);
+    --bg-sidebar: rgba(15, 23, 42, .6);
+    --bg-topbar:  rgba(19, 28, 45, .55);
+    --bg-muted:   #1a2436;
+
+    /* Highlight y borde claros muy sutiles (el filo de vidrio en oscuro) */
+    --silver-top:  rgba(255, 255, 255, .06);
+    --silver-edge: rgba(255, 255, 255, .1);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow:    0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .4);
+    --shadow-md: 0 12px 30px rgba(0, 0, 0, .5);
+    --shadow-lg: 0 22px 50px rgba(0, 0, 0, .6);
+
+    --eco-solid:     #131c2d;
+    --eco-thead:     rgba(255, 255, 255, .04);
+    --eco-thead-pac: rgba(255, 255, 255, .04);
+    --eco-hover:     rgba(255, 255, 255, .06);
+    --eco-footer:    rgba(255, 255, 255, .03);
+
+    --eco-shadow-card:       inset 0 1px 0 var(--silver-top), 0 10px 28px rgba(0, 0, 0, .45), 0 2px 6px rgba(0, 0, 0, .35);
+    --eco-shadow-card-hover: inset 0 1px 0 var(--silver-top), 0 18px 40px rgba(0, 0, 0, .55);
+    --eco-shadow-side:       inset -1px 0 0 var(--silver-top), 8px 0 32px rgba(0, 0, 0, .4);
+    --eco-shadow-top:        inset 0 1px 0 var(--silver-top), 0 6px 20px rgba(0, 0, 0, .4);
+}
+
+/* ── 3. Vidrio (desenfoque) en las superficies ─────────────────────── */
+.eco-glass .app-sidebar,
+.eco-glass .app-topbar,
+.eco-glass .card,
+.eco-glass .stat-card,
+.eco-glass .data-table,
+.eco-glass .btn-secondary,
+.eco-glass .topbar-notif-panel {
+    -webkit-backdrop-filter: var(--eco-blur);
+    backdrop-filter: var(--eco-blur);
+}
+
+/* ── 4. Sidebar glass (MISMO tamaño: no se toca --sidebar-w) ────────── */
+.eco-glass .app-sidebar {
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--silver-edge);
+    box-shadow: var(--eco-shadow-side);
+}
+.eco-glass .sidebar-brand,
+.eco-glass .sidebar-footer { border-color: var(--silver-edge); }
+.eco-glass .sidebar-footer { background: var(--eco-footer); }
+
+/* Espaciado entre secciones del menú: un poco más de aire */
+.eco-glass .sidebar-nav { gap: 4px; }
+.eco-glass .sidebar-nav-section { padding-top: 13px; padding-bottom: 8px; }
+
+/* ── 5. Topbar glass ───────────────────────────────────────────────── */
+.eco-glass .app-topbar {
+    background: var(--bg-topbar);
+    border-bottom: 1px solid var(--silver-edge);
+    box-shadow: var(--eco-shadow-top);
+}
+
+/* ── 6. Cards / stat-cards / tablas glass ──────────────────────────── */
+.eco-glass .card,
+.eco-glass .stat-card,
+.eco-glass .data-table {
+    background: var(--bg-surface);
+    border: 1px solid var(--silver-edge);
+    box-shadow: var(--eco-shadow-card);
+}
+.eco-glass .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--eco-shadow-card-hover);
+}
+/* Franja del thead translúcida sobre el glass */
+.eco-glass .data-table thead { background: var(--eco-thead); }
+/* Pacientes clínicos: cabecera de la tabla (blanco en claro / elevado en oscuro) */
+.eco-glass .rx-pac-wrap .rx-pac-table thead th { background: var(--eco-thead-pac); }
+
+/* ── 7. Botón secundario glass (los demás conservan su color/acento) ── */
+.eco-glass .btn-secondary {
+    background: var(--bg-surface);
+    border: 1px solid var(--silver-edge);
+    box-shadow: inset 0 1px 0 var(--silver-top), var(--shadow);
+}
+.eco-glass .btn-secondary:hover { background: var(--eco-hover); }
+
+/* ── 8. Dropdown de notificaciones glass ───────────────────────────── */
+.eco-glass .topbar-notif-panel {
+    background: var(--eco-solid);
+    border: 1px solid var(--silver-edge);
+}
+
+/* ── 9. Title con el tracking de la landing ────────────────────────── */
+.eco-glass .page-header h1 { letter-spacing: -.025em; }
+
+/* ── 10. Modales: superficie sólida (blanca en claro / oscura en oscuro) */
+.eco-glass .eco-modal__dialog,
+.eco-glass .eco-modal__aside { background: var(--eco-solid); }
+
+/* ── 11. Iconos minimalistas (planos, con tinte suave por categoría) ───
+   Sin gradientes ni sombras. El icono principal de cada tipo ya recibe
+   badge+text inline desde el PHP; aquí se aplana su forma y la de los
+   sub-iconos fijos. Los tintes claros funcionan como tiles también en
+   oscuro (color vivo sobre el vidrio oscuro), conservando la categoría. */
+.eco-glass .eco-card .eco-card-icon { box-shadow: none; }
+.eco-glass .eco-modal__aside-icon { box-shadow: none; }
+
+.eco-glass .musculo-card .musculo-card-icon {
+    background: #dcfce7 !important; color: #15803d; box-shadow: none;
+}
+.eco-glass .obstetrica-card .obstetrica-card-icon {
+    background: #fce7f3 !important; color: #be185d; box-shadow: none;
+}
+.eco-glass .pblandas-card .pblandas-card-icon {
+    background: #fef3c7 !important; color: #b45309; box-shadow: none;
+}
+
+/* Icono de cabecera de sección y del aside: plano azul suave (theme-aware) */
+.eco-glass .eco-modal-tipo-icon {
+    background: var(--accent-soft); color: var(--accent-text); box-shadow: none;
+}
