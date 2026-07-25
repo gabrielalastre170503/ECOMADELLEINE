@@ -5,7 +5,9 @@ include __DIR__ . '/../core/conexion.php';
 
 api_json();
 
-// Seguridad
+// Seguridad: solo se consulta desde solicitar_cita_paciente.php, con sesion.
+api_require_login();
+
 if (!isset($_GET['ecografista_id'])) {
     http_response_code(400);
     exit();

@@ -1,0 +1,6 @@
+# Esquema, migraciones y seeds de la base de datos.
+# No deben servirse ni ejecutarse por HTTP: schema.sql revela el modelo de
+# datos completo y los seed_*.php escriben en la BD. Se usan solo por CLI
+# (php database/seed_x.php) o importando el .sql en el gestor.
+Require all denied
+Options -Indexes

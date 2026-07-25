@@ -47,6 +47,7 @@ ob_start();
 <?php endif; ?>
 
 <form action="<?= eco_url('api/acciones_contenido.php') ?>" method="POST" id="form-textos-nosotros" class="cw-textos-form">
+    <?= csrf_field() ?>
     <input type="hidden" name="tipo" value="textos_web">
 
     <div class="cw-textos-layout">

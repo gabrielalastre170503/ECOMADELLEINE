@@ -108,13 +108,21 @@ body.eco-modal-open {
 .eco-modal__split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    /* Como item flex del diálogo, su min-height:auto valía el alto completo del
+       formulario: no encogía, el diálogo lo recortaba (overflow:hidden) y el
+       scroll de .eco-modal__main nunca se activaba, dejando los últimos campos
+       fuera de alcance. min-height:0 + fila 1fr atan la altura al diálogo. */
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
     max-height: min(90vh, 900px);
 }
 
 @media (max-width: 768px) {
     .eco-modal__split {
         grid-template-columns: 1fr;
-        max-height: none;
+        /* El aside ocupa lo suyo y el formulario se queda con el resto,
+           scrolleando por dentro en lugar de recortarse. */
+        grid-template-rows: auto minmax(0, 1fr);
     }
 }
 
@@ -167,6 +175,7 @@ body.eco-modal-open {
 .eco-modal__main {
     padding: 20px 22px 22px;
     overflow-y: auto;
+    min-height: 0;
     position: relative;
 }
 

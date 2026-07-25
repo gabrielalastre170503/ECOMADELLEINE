@@ -4,6 +4,12 @@
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_renal.php
  * También se puede ejecutar via PHP CLI.
  */
+/* Guarda: escribe en la base de datos, solo por linea de comandos.
+   Sin esto, cualquiera podia dispararlo desde el navegador. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Este script solo puede ejecutarse por linea de comandos.');
+}
 include __DIR__ . '/../core/conexion.php';
 
 /* Campos comunes a ambos riñones (se renderizan en columnas paralelas D / I) */

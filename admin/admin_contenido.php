@@ -14,7 +14,9 @@ if (($_SESSION['rol'] ?? '') !== 'administrador') {
 $page_title    = 'Contenido web';
 $page_subtitle = 'Editar textos públicos y preguntas frecuentes';
 $active_section = 'admin-contenido';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-contenido.css">';
+// ?v=filemtime como en shell.php: sin esto el navegador sirve el CSS cacheado.
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-contenido.css?v='
+    . (@filemtime(__DIR__ . '/../assets/css/admin/admin-contenido.css') ?: '1') . '">';
 
 ob_start();
 ?>

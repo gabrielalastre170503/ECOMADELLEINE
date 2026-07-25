@@ -9,6 +9,10 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista
     echo json_encode(['ok' => false, 'error' => 'Acceso denegado']); exit;
 }
 
+// Borra notas clinicas de forma irreversible: exige token CSRF. El wrapper de
+// fetch() de shell.php ya envia la cabecera X-CSRF-Token en cada peticion.
+require_csrf();
+
 $paciente_id = (int)($_POST['paciente_id'] ?? 0);
 if ($paciente_id <= 0) {
     echo json_encode(['ok' => false, 'error' => 'Paciente inválido']); exit;

@@ -6,6 +6,12 @@
  *   • Partes Blandas — Región Inguinal
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_partes_blandas_subtipos.php
  */
+/* Guarda: escribe en la base de datos, solo por linea de comandos.
+   Sin esto, cualquiera podia dispararlo desde el navegador. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Este script solo puede ejecutarse por linea de comandos.');
+}
 include __DIR__ . '/../core/conexion.php';
 
 /* Encabezado del paciente (común) */

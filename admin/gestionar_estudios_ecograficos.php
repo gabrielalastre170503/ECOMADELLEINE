@@ -48,6 +48,7 @@ ob_start();
     <div class="card" style="padding:22px;">
         <h3 style="margin:0 0 16px;font-size:16px;color:var(--text-primary);"><i class="fa-solid fa-plus" style="color:var(--accent);margin-right:8px;"></i> Añadir estudio</h3>
         <form action="<?= eco_url('api/acciones_contenido.php') ?>" method="post" style="display:flex;flex-direction:column;gap:14px;">
+            <?= csrf_field() ?>
             <input type="hidden" name="tipo" value="eco_tipo">
             <input type="hidden" name="accion" value="agregar">
             <div>
@@ -134,7 +135,7 @@ ob_start();
                                 </td>
                                 <td style="text-align:right;white-space:nowrap;">
                                     <?php if ((int)$t['activo'] === 1): ?>
-                                        <a href="acciones_contenido.php?tipo=eco_tipo&amp;accion=desactivar&amp;id=<?= (int)$t['id'] ?>"
+                                        <a href="<?= eco_url('api/acciones_contenido.php') ?>?tipo=eco_tipo&amp;accion=desactivar&amp;id=<?= (int)$t['id'] ?>&amp;csrf_token=<?= urlencode(csrf_token()) ?>"
                                            class="btn-secondary" style="font-size:12px;"
                                            onclick="return confirm('¿Desactivar este estudio del catálogo público?');">
                                             <i class="fa-solid fa-eye-slash"></i>

@@ -474,6 +474,9 @@ composer.lock
 .env
 *.env
 .env*
+# La plantilla SI debe viajar: sin ella la otra maquina no sabe que variables
+# hay que rellenar. No contiene secretos, solo los nombres de las claves.
+!.env.example
 
 ##### EcoMadelleine - credenciales locales (NO subir al repositorio)
 config_correo.php
@@ -488,6 +491,11 @@ uploads/*
 
 ##### EcoMadelleine - informes/adjuntos subidos (PDF de pacientes en lib/uploads, NO subir)
 lib/uploads/
+
+##### EcoMadelleine - repositorio de documentos (lo que sube el admin, NO subir)
+# Se conserva la carpeta (con .gitkeep) porque admin_documentos.php escribe ahi.
+documentos/*
+!documentos/.gitkeep
 
 ##### EcoMadelleine - tooling local y artefactos generados (NO subir)
 .claude/

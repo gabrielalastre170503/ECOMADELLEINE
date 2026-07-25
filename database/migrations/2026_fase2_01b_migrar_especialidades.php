@@ -7,6 +7,12 @@
  *   php database/migrations/2026_fase2_01b_migrar_especialidades.php
  */
 
+/* Guarda: escribe en la base de datos, solo por linea de comandos.
+   Sin esto, cualquiera podia dispararlo desde el navegador. */
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Este script solo puede ejecutarse por linea de comandos.');
+}
 require __DIR__ . '/../../core/conexion.php';
 require __DIR__ . '/../../lib/personal/especialidades.php';
 

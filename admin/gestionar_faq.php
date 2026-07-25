@@ -58,6 +58,7 @@ ob_start();
         </div>
         <div class="cw-panel__body">
             <form action="<?= eco_url('api/acciones_contenido.php') ?>" method="POST" class="cw-form">
+                <?= csrf_field() ?>
                 <input type="hidden" name="tipo" value="faq">
                 <div class="cw-field">
                     <label for="pregunta"><i class="fa-solid fa-circle-question"></i> Pregunta</label>
@@ -100,7 +101,7 @@ ob_start();
                                 <p class="cw-faq-item__a"><?= htmlspecialchars($faq['respuesta']) ?></p>
                             </div>
                             <div class="cw-faq-item__actions">
-                                <a href="acciones_contenido.php?tipo=faq&amp;accion=borrar&amp;id=<?= (int)$faq['id'] ?>"
+                                <a href="<?= eco_url('api/acciones_contenido.php') ?>?tipo=faq&amp;accion=borrar&amp;id=<?= (int)$faq['id'] ?>&amp;csrf_token=<?= urlencode(csrf_token()) ?>"
                                    class="cw-btn-delete"
                                    onclick="return confirm('¿Eliminar esta pregunta?');">
                                     <i class="fa-solid fa-trash-can"></i> Borrar

@@ -16,7 +16,10 @@ if (!function_exists('eco_uploads_base')) {
     /** Ruta absoluta de la carpeta base de uploads (la crea si no existe). */
     function eco_uploads_base(): string
     {
-        $base = __DIR__ . '/../uploads';
+        // __DIR__ es lib/informes/, asi que hacen falta DOS niveles para llegar a
+        // la raiz del proyecto. Con uno solo apuntaba a lib/uploads: los adjuntos
+        // quedaban fuera de uploads/ y sin el .htaccess que impide servirlos por HTTP.
+        $base = __DIR__ . '/../../uploads';
         if (!is_dir($base)) {
             @mkdir($base, 0775, true);
         }

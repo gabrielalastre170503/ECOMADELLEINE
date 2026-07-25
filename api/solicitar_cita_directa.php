@@ -9,6 +9,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
     exit();
 }
 
+// Crea la cita (y su cargo): exige token CSRF del formulario.
+require_csrf();
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validar que todos los datos necesarios llegaron
     if (empty($_POST['ecografista_id']) || empty($_POST['fecha_seleccionada']) || empty($_POST['hora_seleccionada']) || empty($_POST['motivo_consulta'])) {
