@@ -175,7 +175,7 @@ EcoMadelleine maneja **datos clínicos sensibles**, así que la seguridad es par
 ```bash
 # 1. Clonar en el htdocs de XAMPP
 cd C:/xampp/htdocs
-git clone https://github.com/gabrielalastre170503/WEBPSY.git Sistema_EcoMadelleineV1
+git clone https://github.com/gabrielalastre170503/ECOMADELLEINE.git Sistema_EcoMadelleineV1
 
 # 2. Crear la base de datos e importar el esquema/seeds
 #    (crea db_clinica_ecografias y ejecuta los scripts de database/)
