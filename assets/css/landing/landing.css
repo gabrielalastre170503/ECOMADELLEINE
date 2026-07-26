@@ -443,7 +443,27 @@
     }
     .hp-top { display: flex; align-items: center; justify-content: space-between; }
     .hp-brand { display: flex; align-items: center; gap: 11px; }
-    .hp-logo { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: #fff; font-size: 1.1rem; background: linear-gradient(135deg, #02b1f4, #0284c7); box-shadow: 0 8px 20px rgba(2,177,244,.42); }
+    .hp-logo {
+        position: relative;
+        width: 42px; height: 42px; border-radius: 14px;
+        display: grid; place-items: center;
+        color: #fff; font-size: 1.1rem;
+        background: linear-gradient(140deg, #5fd8ff 0%, var(--azul) 48%, var(--azul-dark) 100%);
+        /* Relieve: halo de marca + filo superior iluminado, igual que las
+           tarjetas del panel administrativo. */
+        box-shadow:
+            0 8px 20px -4px rgba(2, 177, 244, .48),
+            inset 0 1px 0 rgba(255, 255, 255, .45),
+            inset 0 -2px 4px rgba(0, 0, 0, .1);
+        text-shadow: 0 1px 2px rgba(1, 74, 130, .3);
+    }
+    /* Brillo diagonal: sensacion de superficie curva. */
+    .hp-logo::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        background: linear-gradient(150deg, rgba(255,255,255,.4), rgba(255,255,255,0) 58%);
+        pointer-events: none;
+    }
+    .hp-logo i { position: relative; z-index: 1; }
     .hp-brand strong { display: block; font-size: .98rem; font-weight: 700; color: var(--azul-deep); letter-spacing: -.01em; }
     .hp-brand span { font-size: .74rem; color: #64748b; }
     .hp-live { display: inline-flex; align-items: center; gap: 7px; font-size: .72rem; font-weight: 700; color: #15803d; background: #dcfce7; padding: 5px 11px; border-radius: 999px; }

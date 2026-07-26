@@ -7,6 +7,28 @@
 
     var stack = [];
 
+    /* Navegación entre modales: los flujos encadenados hacen close(A)+open(B) en
+       el mismo tick. Con las transiciones normales los dos fondos se cruzan
+       durante 180 ms — el velo se aclara y vuelve a oscurecerse, y el diálogo
+       saliente se ve translúcido sobre el entrante. Se percibe como un parpadeo
+       en cada salto. Cuando detectamos ese patrón el cambio de fondo es
+       instantáneo y solo anima el diálogo nuevo. */
+    var ULTIMO_CIERRE_MS = 0;
+    var VENTANA_SALTO_MS = 60;
+    var elementoSaliente = null;
+
+    function marcarInstantaneo(el) {
+        if (!el) return;
+        el.classList.add('eco-modal--instant');
+        // Se quita tras dos frames: solo afecta a este salto, no a los
+        // cierres normales (que sí deben desvanecerse).
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                el.classList.remove('eco-modal--instant');
+            });
+        });
+    }
+
     function getEl(id) {
         return typeof id === 'string' ? document.getElementById(id) : id;
     }
@@ -25,6 +47,18 @@
         open: function (id) {
             var el = getEl(id);
             if (!el || !el.classList.contains('eco-modal')) return;
+
+            // ¿Venimos de cerrar otro modal en este mismo tick? Entonces es una
+            // navegación, no una apertura desde cero: sin cruce de fondos.
+            var esSalto = (performance.now() - ULTIMO_CIERRE_MS) < VENTANA_SALTO_MS;
+            if (esSalto) {
+                marcarInstantaneo(el);
+                if (elementoSaliente && elementoSaliente !== el) {
+                    marcarInstantaneo(elementoSaliente);
+                }
+            }
+            elementoSaliente = null;
+
             el.classList.add('eco-modal--open');
             /* Refuerzo reflow: sin display:none los keyframes del hijo se aplican de forma fiable */
             void el.offsetHeight;
@@ -41,6 +75,12 @@
         close: function (id) {
             var el = getEl(id);
             if (!el) return;
+            if (el.classList.contains('eco-modal--open')) {
+                // Se anota para que un open() inmediato pueda cortarle el
+                // desvanecido y evitar el cruce de fondos.
+                ULTIMO_CIERRE_MS = performance.now();
+                elementoSaliente = el;
+            }
             el.classList.remove('eco-modal--open');
             el.setAttribute('aria-hidden', 'true');
             el.removeAttribute('aria-modal');

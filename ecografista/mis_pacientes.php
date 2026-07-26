@@ -203,7 +203,7 @@ $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="assets/js/panel/eco-table-sort.js"></script>
-<script src="assets/js/panel/ecografista-modals.js?v=26"></script>
+<script src="assets/js/panel/ecografista-modals.js?v=auto"></script>
 <script>
 /* Exportar / Importar pacientes a Excel (.xlsx) con SheetJS */
 (function () {

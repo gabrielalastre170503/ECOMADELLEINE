@@ -84,6 +84,86 @@
         informeDetalleEcoCache.delete(String(id));
     }
 
+    /* Caché de get_patient_details.php. Al cerrar cualquier submodal se vuelve a
+       "Gestionar paciente", que antes repetía el fetch y mostraba de nuevo
+       "Cargando datos del paciente...": ese parpadeo en cada paso atrás era la
+       mayor parte de la lentitud percibida al navegar entre modales. */
+    var pacienteEcoCache = new Map();
+    var PACIENTE_CACHE_MAX = 24;
+    var pacienteEcoInflight = new Map();
+
+    function pacienteEcoCacheGet(id) {
+        var k = String(id);
+        if (!pacienteEcoCache.has(k)) return null;
+        var v = pacienteEcoCache.get(k);
+        pacienteEcoCache.delete(k);
+        pacienteEcoCache.set(k, v);
+        return v;
+    }
+
+    function pacienteEcoCacheSet(id, data) {
+        var k = String(id);
+        if (pacienteEcoCache.has(k)) pacienteEcoCache.delete(k);
+        pacienteEcoCache.set(k, data);
+        while (pacienteEcoCache.size > PACIENTE_CACHE_MAX) {
+            pacienteEcoCache.delete(pacienteEcoCache.keys().next().value);
+        }
+    }
+
+    /** Invalida el paciente indicado, o todos si no se pasa id. */
+    function pacienteEcoCacheInvalidate(id) {
+        if (id == null || id === '') { pacienteEcoCache.clear(); return; }
+        pacienteEcoCache.delete(String(id));
+    }
+    window.ecoInvalidarCachePaciente = pacienteEcoCacheInvalidate;
+
+    /** Devuelve el JSON del paciente; deduplica peticiones simultáneas. */
+    function fetchPacienteEcoPayload(pacienteId) {
+        var k = String(pacienteId);
+        var enCurso = pacienteEcoInflight.get(k);
+        if (enCurso) return enCurso;
+        var p = fetch((window.ECO_BASE || '') + 'api/get_patient_details.php?id=' + encodeURIComponent(pacienteId))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && !data.error) pacienteEcoCacheSet(k, data);
+                return data;
+            })
+            .finally(function () { pacienteEcoInflight.delete(k); });
+        pacienteEcoInflight.set(k, p);
+        return p;
+    }
+
+    /* Peticiones GET en vuelo, indexadas por URL.
+     *
+     * No es una caché: la promesa se descarta al resolverse, así que nunca se
+     * muestran datos clínicos viejos. Sirve para dos cosas:
+     *   1. Si algo pide la misma URL dos veces seguidas, se reutiliza la
+     *      petición en curso en vez de duplicarla.
+     *   2. Permite precargar al pasar el cursor: mientras el usuario mueve el
+     *      ratón hasta la tarjeta y hace clic, la respuesta ya viene en camino,
+     *      así que el submodal abre con los datos puestos y sin spinner.
+     */
+    var peticionesEnVuelo = new Map();
+
+    function ecoGetJson(url) {
+        var enCurso = peticionesEnVuelo.get(url);
+        if (enCurso) return enCurso;
+        var p = fetch(url)
+            .then(function (r) { return r.json(); })
+            .finally(function () { peticionesEnVuelo.delete(url); });
+        peticionesEnVuelo.set(url, p);
+        return p;
+    }
+
+    /** Lanza la petición sin usar el resultado; los errores se ignoran a propósito. */
+    function ecoPrecargar(url) {
+        try { ecoGetJson(url).catch(function () {}); } catch (e) {}
+    }
+
+    function urlApi(ruta) {
+        return (window.ECO_BASE || '') + ruta;
+    }
+
     var informeEcoDetalleInflight = new Map();
 
     function fetchInformeDetalleEcoPayload(informeId) {
@@ -479,21 +559,46 @@
         if (!body || !nombreEl || !window.EcoModal) return;
 
         patientState.id = pacienteId;
-        patientState.name = '';
-        body.innerHTML = '<p class="eco-modal__body-text">Cargando datos del paciente...</p>';
-        nombreEl.textContent = '...';
-        if (metaEl) metaEl.textContent = '';
-        if (telEl) { telEl.textContent = ''; telEl.style.display = 'none'; }
+
+        var cacheado = pacienteEcoCacheGet(pacienteId);
+        if (!cacheado) {
+            // Solo se muestra el estado de carga si de verdad hay que esperar:
+            // al volver de un submodal los datos ya están y se pinta directo.
+            patientState.name = '';
+            body.innerHTML = '<p class="eco-modal__body-text">Cargando datos del paciente...</p>';
+            nombreEl.textContent = '...';
+            if (metaEl) metaEl.textContent = '';
+            if (telEl) { telEl.textContent = ''; telEl.style.display = 'none'; }
+        }
         EcoModal.open('eco-modal-gestionar-paciente-eco');
 
-        fetch((window.ECO_BASE || '') + 'api/get_patient_details.php?id=' + encodeURIComponent(pacienteId))
-            .then(function (r) { return r.json(); })
+        if (cacheado) {
+            pintarGestionPacienteEco(cacheado, pacienteId);
+            return;
+        }
+
+        fetchPacienteEcoPayload(pacienteId)
             .then(function (data) {
                 if (data.error) {
                     body.innerHTML = '<p style="color:#b91c1c;">' + esc(data.error) + '</p>';
                     return;
                 }
+                pintarGestionPacienteEco(data, pacienteId);
+            })
+            .catch(function () {
+                body.innerHTML = '<p style="color:#b91c1c;">No se pudo cargar la informacion del paciente.</p>';
+            });
+    };
 
+    /** Vuelca el JSON del paciente en el modal de gestión y engancha sus acciones. */
+    function pintarGestionPacienteEco(data, pacienteId) {
+        var body = byId('eco-gestion-pac-body');
+        var nombreEl = byId('eco-gestion-pac-nombre');
+        var metaEl = byId('eco-gestion-pac-meta');
+        var telEl = byId('eco-gestion-pac-tel');
+        if (!body || !nombreEl) return;
+
+        (function () {
                 var p = data.paciente || {};
                 patientState.name = p.nombre_completo || '';
                 patientState.age = p.edad || null;
@@ -590,11 +695,26 @@
                         window.abrirFacturacionPacienteEco(pacienteId);
                     });
                 }
-            })
-            .catch(function () {
-                body.innerHTML = '<p style="color:#b91c1c;">No se pudo cargar la informacion del paciente.</p>';
-            });
-    };
+
+                /* Precarga al apuntar: el trayecto del ratón hasta la tarjeta y
+                   el clic dan de sobra para los ~30 ms que tarda la API, así que
+                   el submodal abre con los datos ya puestos. Solo se dispara una
+                   vez por tarjeta y la respuesta no se retiene. */
+                var pid = encodeURIComponent(pacienteId);
+                [
+                    [btnInformes, 'api/get_informes_paciente.php?paciente_id=' + pid],
+                    [btnHistoria, 'api/get_historia_clinica.php?paciente_id=' + pid],
+                    [btnNotas,    'api/get_notas_paciente.php?paciente_id=' + pid],
+                    [btnFact,     'api/get_facturacion_paciente.php?paciente_id=' + pid]
+                ].forEach(function (par) {
+                    var boton = par[0];
+                    if (!boton) return;
+                    var lanzar = function () { ecoPrecargar(urlApi(par[1])); };
+                    boton.addEventListener('mouseenter', lanzar, { once: true, passive: true });
+                    boton.addEventListener('focus', lanzar, { once: true });
+                });
+        })();
+    }
 
     function ecoInformEstadoClass(estado) {
         var e = String(estado || '').toLowerCase();
@@ -652,8 +772,7 @@
         EcoModal.close('eco-modal-gestionar-paciente-eco');
         EcoModal.open('eco-modal-informes-paciente-eco');
 
-        fetch((window.ECO_BASE || '') + 'api/get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
-            .then(function (r) { return r.json(); })
+        ecoGetJson(urlApi('api/get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId)))
             .then(function (data) {
                 if (data.error) {
                     var nmErr = byId('eco-informes-strip-name');
@@ -765,8 +884,7 @@
         EcoModal.close('eco-modal-gestionar-paciente-eco');
         EcoModal.open('eco-modal-historia-clinica-eco');
 
-        fetch((window.ECO_BASE || '') + 'api/get_historia_clinica.php?paciente_id=' + encodeURIComponent(pacienteId))
-            .then(function (r) { return r.json(); })
+        ecoGetJson(urlApi('api/get_historia_clinica.php?paciente_id=' + encodeURIComponent(pacienteId)))
             .then(function (data) {
                 if (data.error) {
                     body.innerHTML = '<p style="color:#b91c1c;padding:20px;">' + esc(data.error) + '</p>';
@@ -895,8 +1013,7 @@
         EcoModal.open('eco-modal-facturacion-paciente-eco');
 
         function cargar() {
-            fetch((window.ECO_BASE || '') + 'api/get_facturacion_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
-                .then(function (r) { return r.json(); })
+            ecoGetJson(urlApi('api/get_facturacion_paciente.php?paciente_id=' + encodeURIComponent(pacienteId)))
                 .then(render)
                 .catch(function () {
                     body.innerHTML = '<p style="color:#b91c1c;padding:20px;">No se pudo cargar la facturación.</p>';
@@ -1475,6 +1592,7 @@
                 if (!esRegistro) {
                     // El cobro del día cambió: refrescar los detalles la próxima vez.
                     patientState._stale = true;
+                    pacienteEcoCacheInvalidate(patientState.id);
                     document.dispatchEvent(new CustomEvent('eco:facturacion-changed', { detail: { pacienteId: patientState.id } }));
                     if (patientState.id) window.abrirGestionPacienteEco(patientState.id);
                 }
@@ -1812,6 +1930,7 @@
                     }));
                     // Forzar refetch de servicios_hoy al reabrir el expediente (ya se facturo).
                     patientState._stale = true;
+                    pacienteEcoCacheInvalidate(patientState.id);
 
                     if (accion === 'finalizar') {
                         if (submitBtn) {
@@ -1911,14 +2030,17 @@
         _volviendoGestion = true;
         _programarDesdeGestion = false;
         var pid = patientState.id;
-        setTimeout(function () {
+        // El cierre y la reapertura se hacen en el mismo frame: antes iban en un
+        // setTimeout que sumaba un salto de tarea visible al volver atrás.
+        requestAnimationFrame(function () {
             EcoModal.close('eco-modal-informe-detalle-eco');
             EcoModal.close('eco-modal-expediente-informe-eco');
             EcoModal.close('eco-modal-informes-paciente-eco');
             EcoModal.close('eco-modal-programar-cita-eco');
             window.abrirGestionPacienteEco(pid);
-            setTimeout(function () { _volviendoGestion = false; }, 250);
-        }, 0);
+            // Guarda antirrebote alineada con la duración real de la animación.
+            setTimeout(function () { _volviendoGestion = false; }, 150);
+        });
     }
 
     // 1) Clic en la X de esos modales
@@ -1971,6 +2093,15 @@
         if (d.informeId != null && String(d.informeId).length) {
             informeEcoCacheInvalidate(d.informeId);
         }
+        // El contador de informes del modal de gestión quedó desfasado.
+        pacienteEcoCacheInvalidate(d.pacienteId);
+    });
+
+    /* Un cobro cambia los saldos del paciente: descarta su copia en caché para
+       que la próxima apertura traiga datos frescos. */
+    document.addEventListener('eco:facturacion-changed', function (ev) {
+        var d = ev && ev.detail ? ev.detail : {};
+        pacienteEcoCacheInvalidate(d.pacienteId);
     });
 
     window.abrirNotasPacienteEco = function (pacienteId, nombre) {
@@ -1995,8 +2126,7 @@
         if (!list) return;
 
         list.innerHTML = '<p class="eco-modal__body-text">Cargando...</p>';
-        fetch((window.ECO_BASE || '') + 'api/get_notas_paciente.php?paciente_id=' + encodeURIComponent(patientState.id))
-            .then(function (r) { return r.json(); })
+        ecoGetJson(urlApi('api/get_notas_paciente.php?paciente_id=' + encodeURIComponent(patientState.id)))
             .then(function (data) {
                 if (!data.ok) {
                     list.innerHTML = '<p style="color:#b91c1c;">' + esc(data.error || 'Error') + '</p>';

@@ -108,7 +108,7 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-<script src="assets/js/panel/ecografista-modals.js?v=26"></script>
+<script src="assets/js/panel/ecografista-modals.js?v=auto"></script>
 <script src="assets/js/agenda/recordatorios-ui.js"></script>
 HTML;
 include __DIR__ . '/../layouts/shell.php';

@@ -48,6 +48,28 @@ $body_class          = $body_class          ?? '';
 $page_head_extra     = $page_head_extra     ?? '';
 $page_scripts_extra  = $page_scripts_extra  ?? '';
 
+/* Cache-busting automático en $page_head_extra / $page_scripts_extra.
+ *
+ * Esos bloques suelen escribirse con nowdoc (<<<'HTML'), que protege el JS de
+ * la interpolación de PHP pero impide llamar a filemtime() dentro. Antes se
+ * ponía el número a mano (?v=26) y había que acordarse de subirlo en cada
+ * página al tocar el asset; si se olvidaba, el navegador seguía sirviendo la
+ * versión vieja. Escribiendo `?v=auto` se resuelve aquí con la fecha real del
+ * archivo. Solo afecta a rutas propias: las de CDN no llevan el marcador.
+ */
+$eco_resolver_version = static function (string $html): string {
+    return preg_replace_callback(
+        '/(src|href)="([^"]+\.(?:js|css))\?v=auto"/i',
+        static function (array $m): string {
+            $ruta = __DIR__ . '/../' . ltrim($m[2], '/');
+            return $m[1] . '="' . $m[2] . '?v=' . (@filemtime($ruta) ?: '1') . '"';
+        },
+        $html
+    );
+};
+$page_head_extra    = $eco_resolver_version($page_head_extra);
+$page_scripts_extra = $eco_resolver_version($page_scripts_extra);
+
 // Clase de rol en el <body> (por si se quieren reskins puntuales por rol) +
 // la clase 'eco-glass', gancho del tema glass Apple aplicado a todo el shell.
 $user_role  = preg_replace('/[^a-z]/', '', strtolower($_SESSION['rol'] ?? ''));

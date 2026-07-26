@@ -29,29 +29,50 @@
     padding: 24px 16px;
     overflow-y: auto;
     background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
 
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+
+    /* Rendimiento: una pagina puede tener 15+ overlays a pantalla completa.
+       Mientras estan cerrados no se maqueta ni se pinta su contenido (aqui son
+       ~40% de los nodos del documento), asi que cualquier reflow de la pagina
+       deja de arrastrarlos. */
+    content-visibility: hidden;
+
     transition:
-        opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-        visibility 0s linear 0.34s;
+        opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0s linear 0.18s;
 }
 
 .eco-modal.eco-modal--open {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    content-visibility: visible;
+
+    /* El desenfoque del fondo solo existe mientras el modal esta abierto.
+       Declarado en .eco-modal lo mantenian los ~16 overlays cerrados, cada uno
+       como una capa de composicion viva: eso encarecia cada animacion. */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+
     transition:
-        opacity 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.18s cubic-bezier(0.22, 1, 0.36, 1),
         visibility 0s linear 0s;
+}
+
+/* Navegación entre modales encadenados (lo marca shell-modals.js): el velo de
+   fondo aparece y desaparece sin transición, así no se cruzan dos fondos ni se
+   ve el diálogo saliente translúcido sobre el entrante. El diálogo nuevo sí
+   conserva su animación de entrada. */
+.eco-modal.eco-modal--instant {
+    transition: none !important;
 }
 
 /* Diálogo estándar: entrada perceptible (overlay ya no usa display:none → flex) */
 .eco-modal.eco-modal--open > .eco-modal__dialog {
-    animation: eco-modal-panel-fadeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: eco-modal-panel-fadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 body.eco-modal-open {

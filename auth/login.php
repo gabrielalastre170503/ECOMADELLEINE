@@ -267,7 +267,12 @@ $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
         min-height: 100vh;
         display: grid;
         grid-template-columns: 1fr 1.05fr;
-        align-items: center;
+        /* stretch (no "center"): con center cada panel toma solo su propia
+           altura de contenido, asi que al aparecer el aviso de error la
+           tarjeta derecha crecia sola y quedaba descuadrada frente a la
+           izquierda (fija en min-height:560px). Con stretch ambas igualan
+           siempre a la mas alta de las dos. */
+        align-items: stretch;
         gap: 24px;
         max-width: 1240px;
         margin: 0 auto;
