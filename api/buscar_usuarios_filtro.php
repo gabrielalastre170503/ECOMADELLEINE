@@ -138,7 +138,10 @@ while ($usuario = $resultado->fetch_assoc()) {
         } elseif ($estado === 'inhabilitado') {
             echo '<button type="button" class="vu-btn vu-btn--ok" onclick="toggleUserState(' . $id . ', \'aprobado\')"><i class="fa-solid fa-user-check"></i> Habilitar</button>';
         }
-        echo '<form method="post" action="reset_password.php" style="display:inline" onsubmit="return confirm(\'¿Restablecer la contraseña? Se generará una temporal.\');">' . csrf_field() . '<input type="hidden" name="id" value="' . (int)$id . '"><input type="hidden" name="filtro" value="' . htmlspecialchars($filtro, ENT_QUOTES) . '"><button type="submit" class="vu-btn vu-btn--reset"><i class="fa-solid fa-key"></i> Restablecer</button></form>';
+        // Ruta absoluta: estas filas se inyectan por AJAX en /usuarios, así que
+        // una acción relativa la resolvería el navegador contra ESA página y no
+        // contra api/, dando 404.
+        echo '<form method="post" action="' . htmlspecialchars(eco_url('api/reset_password.php')) . '" style="display:inline" onsubmit="return confirm(\'¿Restablecer la contraseña? Se generará una temporal.\');">' . csrf_field() . '<input type="hidden" name="id" value="' . (int)$id . '"><input type="hidden" name="filtro" value="' . htmlspecialchars($filtro, ENT_QUOTES) . '"><button type="submit" class="vu-btn vu-btn--reset"><i class="fa-solid fa-key"></i> Restablecer</button></form>';
     } else {
         echo '<span class="vu-self-note" style="font-size:11px;color:var(--text-muted);">Tu cuenta</span>';
     }

@@ -35,18 +35,8 @@
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.eco-modal .eco-field-hint {
-    margin: 6px 0 0;
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--text-muted);
-}
-
-.eco-modal .eco-field-hint i {
-    margin-right: 4px;
-    color: var(--accent-text);
-    font-size: 10px;
-}
+/* .eco-field-hint se mudó a shell-modals.css: este archivo solo lo cargan dos
+   páginas, y la aclaración se usa en modales de todo el sistema. */
 
 /* —— Modal perfil personal: footer de acciones (refuerzo; principal en admin-personal-modals.css) —— */
 #eco-modal-staff-perfil .contenedor-botones-modal.staff-perfil-footer {

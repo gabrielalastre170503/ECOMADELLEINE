@@ -182,9 +182,21 @@
             if (actions) actions.hidden = false;
             if (hint) hint.hidden = true;
             if (btnReset) {
-                btnReset.href = (window.ECO_BASE || '') + 'api/reset_password.php?id=' + p.id;
-                btnReset.onclick = function () {
-                    return confirm('¿Restablecer la contraseña de este usuario?');
+                /* reset_password.php exige POST + token CSRF (así se cerró el
+                   hueco de CSRF por enlace GET). Un href suelto lo rebotaba a
+                   ?error=parametros_invalidos, así que se envía un formulario. */
+                btnReset.setAttribute('href', '#'); // sigue siendo enlace: mantiene estilo y foco
+                btnReset.onclick = function (ev) {
+                    ev.preventDefault();
+                    if (!confirm('¿Restablecer la contraseña de este usuario?')) return false;
+                    var f = document.createElement('form');
+                    f.method = 'post';
+                    f.action = (window.ECO_BASE || '') + 'api/reset_password.php';
+                    f.innerHTML = '<input type="hidden" name="id" value="' + parseInt(p.id, 10) + '">'
+                        + '<input type="hidden" name="csrf_token" value="' + (window.ECO_CSRF || '') + '">';
+                    document.body.appendChild(f);
+                    f.submit();
+                    return false;
                 };
             }
             if (btnEstado) {

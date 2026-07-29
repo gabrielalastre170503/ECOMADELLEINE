@@ -3,10 +3,15 @@
    Uso con EcoModal (shell-modals.js): id en el contenedor .eco-modal
    ===================================================================== */
 
+/* Entrada del diálogo: un asentamiento corto, no un zoom.
+   El recorrido anterior (18px + scale .92) tardaba 220 ms en completarse y era
+   toda la espera percibida al navegar entre modales encadenados, porque los
+   datos ya llegan en 0-3 ms gracias a la caché y la precarga. Un desplazamiento
+   discreto se lee como instantáneo sin perder la sensación de continuidad. */
 @keyframes eco-modal-panel-fadeIn {
     from {
         opacity: 0;
-        transform: translateY(18px) scale(0.92);
+        transform: translateY(8px) scale(0.985);
     }
     to {
         opacity: 1;
@@ -70,9 +75,16 @@
     transition: none !important;
 }
 
+/* Al encadenar modales el usuario ya está "dentro": el panel solo necesita
+   asentarse, no presentarse. La clase se aplica antes de --open, así que la
+   animación arranca ya con esta duración (no cambia a mitad de camino). */
+.eco-modal.eco-modal--instant.eco-modal--open > .eco-modal__dialog {
+    animation-duration: 0.09s;
+}
+
 /* Diálogo estándar: entrada perceptible (overlay ya no usa display:none → flex) */
 .eco-modal.eco-modal--open > .eco-modal__dialog {
-    animation: eco-modal-panel-fadeIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: eco-modal-panel-fadeIn 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 body.eco-modal-open {
@@ -254,6 +266,23 @@ body.eco-modal-open {
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 6px;
+}
+
+/* Aclaración bajo un campo (requisitos de contraseña, formatos…).
+   Vive aquí, y no en estilos.css, porque estilos.css solo lo cargan dos
+   páginas de administración: en el resto el texto salía como párrafo suelto,
+   grande y en negro. */
+.eco-modal .eco-field-hint {
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.eco-modal .eco-field-hint i {
+    margin-right: 4px;
+    color: var(--accent-text);
+    font-size: 10px;
 }
 
 /* Input premium unificado (texto, correo, contraseña, número, etc.) */
@@ -2430,17 +2459,30 @@ button.eco-action-card:hover {
     background: var(--exp-tint-bg, #f0f9ff);
 }
 
+/* Minimalista, en el mismo lenguaje que el icono de la cabecera y los de
+   Servicios: fondo tenue del color de la variante y glifo en ese color.
+   Sin degradado, sombra ni brillo. */
 .eco-exp-card__icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--exp-color, #02b1f4);
     font-size: 19px;
-    background: var(--exp-color, #02b1f4);
+    background: var(--exp-tint-bg, #f0f9ff);
+    border: 1px solid var(--exp-tint-border, #bae6fd);
     margin-bottom: 4px;
+    transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+/* Al apuntar, la tarjeta se tiñe con ese mismo fondo, así que el icono se
+   invierte para no fundirse con ella: sirve de acuse de selección. */
+.eco-exp-card:hover .eco-exp-card__icon {
+    background: var(--exp-color, #02b1f4);
+    border-color: var(--exp-color, #02b1f4);
+    color: #fff;
 }
 .eco-exp-card__title {
     margin: 0;
@@ -2531,6 +2573,14 @@ button.eco-action-card:hover {
 }
 .eco-exp-card.eco-exp-card--disabled:hover .eco-exp-card__icon {
     transform: none;
+}
+/* Un expediente no disponible se muestra en gris neutro, sin el color del rol,
+   y no se invierte al pasar el cursor. */
+.eco-exp-card.eco-exp-card--disabled .eco-exp-card__icon,
+.eco-exp-card.eco-exp-card--disabled:hover .eco-exp-card__icon {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
 }
 .eco-exp-card.eco-exp-card--disabled .eco-exp-card__badge--lock {
     display: inline-flex;

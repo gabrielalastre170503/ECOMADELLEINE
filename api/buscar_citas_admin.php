@@ -55,7 +55,9 @@ if ($resultado->num_rows > 0) {
         echo "<td>" . htmlspecialchars($cita['psicologo_nombre'] ?? 'No Asignado') . "</td>";
         echo "<td>" . ($cita['fecha_cita'] ? htmlspecialchars(date('d/m/Y h:i A', strtotime($cita['fecha_cita']))) : 'N/A') . "</td>";
         echo "<td><span class='status-badge status-" . htmlspecialchars($cita['estado']) . "'>" . htmlspecialchars(ucfirst($cita['estado'])) . "</span></td>";
-        echo "<td class='action-links'><form method='post' action='borrar_cita_admin.php' style='display:inline' onsubmit=\"return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');\">" . csrf_field() . "<input type='hidden' name='id' value='" . (int)$cita['id'] . "'><button type='submit' class='reject'><i class='fa-solid fa-trash'></i> Eliminar</button></form></td>";
+        // Ruta absoluta: la tabla se inyecta por AJAX en /citas-admin y una
+        // acción relativa se resolvería contra esa página, dando 404.
+        echo "<td class='action-links'><form method='post' action='" . htmlspecialchars(eco_url('api/borrar_cita_admin.php')) . "' style='display:inline' onsubmit=\"return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');\">" . csrf_field() . "<input type='hidden' name='id' value='" . (int)$cita['id'] . "'><button type='submit' class='reject'><i class='fa-solid fa-trash'></i> Eliminar</button></form></td>";
         echo "</tr>";
     }
     echo "</tbody></table>";

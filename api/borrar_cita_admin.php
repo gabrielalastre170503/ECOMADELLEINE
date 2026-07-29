@@ -12,8 +12,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
 
 // 2. Validar que se recibió un ID de cita por POST + token CSRF (anti CSRF por enlace GET).
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id']) || !is_numeric($_POST['id'])) {
-    // Redirigir si no hay un ID válido
-    header('Location: ver_citas_admin.php?error=invalid_id');
+    // Redirigir si no hay un ID válido. La ruta va absoluta: relativa se
+    // resolvería contra api/, que no sirve esa página.
+    header('Location: ' . eco_url('citas-admin') . '?error=invalid_id');
     exit();
 }
 require_csrf();
@@ -27,10 +28,10 @@ $stmt->bind_param("i", $cita_id);
 if ($stmt->execute()) {
     // Si se borró correctamente, redirigir con un mensaje de éxito.
     eco_auditar($conex, 'cita_borrada', ['entidad' => 'cita', 'entidad_id' => $cita_id]);
-    header('Location: ver_citas_admin.php?status=deleted');
+    header('Location: ' . eco_url('citas-admin') . '?status=deleted');
 } else {
     // Si hubo un error, redirigir con un mensaje de error.
-    header('Location: ver_citas_admin.php?error=delete_failed');
+    header('Location: ' . eco_url('citas-admin') . '?error=delete_failed');
 }
 
 $stmt->close();
