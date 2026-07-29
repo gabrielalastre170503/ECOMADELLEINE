@@ -1,0 +1,417 @@
+/* =====================================================================
+   Panel de Control — Recepción
+
+   Reutiliza .card y .stat-card del sistema para heredar el relieve y las
+   sombras del tema glass; aquí solo se COMPACTAN para que todo el panel
+   entre en una pantalla sin barra de desplazamiento.
+
+   Gráficos en HTML/CSS puro (sin librería): son barras y no justifican
+   una dependencia de CDN más.
+
+   Paleta de datos: cyan = recuentos de pacientes, verde = dinero. Los pasos
+   de modo oscuro NO son los del tema (#38bdf8/#4ade80): esos quedaban fuera
+   de la banda de luminosidad para superficie oscura, así que se bajaron al
+   escalón que sí entra, conservando ≥3:1 de contraste.
+   ===================================================================== */
+
+.rxp {
+    --viz-count: #0284c7;  /* recuentos */
+    --viz-money: #15803d;  /* dinero    */
+    --viz-grid:  var(--border-soft);
+    --viz-axis:  var(--border);
+}
+
+[data-theme="dark"] .rxp {
+    --viz-count: #0d9ae0;
+    --viz-money: #16a34a;
+}
+
+/* ── Saludo ──────────────────────────────────────────────────────── */
+.rxp-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 15px 22px;
+    border-color: rgba(2, 177, 244, .22);
+}
+
+.rxp-hero h2 {
+    margin: 0 0 3px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.rxp-hero p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ── Cifras ──────────────────────────────────────────────────────── */
+.rxp-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+/* Compactado sobre .stat-card: conserva fondo, borde y sombra del tema. */
+.rxp-kpis .stat-card {
+    padding: 15px 18px;
+}
+
+.rxp-kpis .stat-card-icon {
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    border-radius: 9px;
+}
+
+.rxp-kpis .stat-card-label {
+    margin: 0 0 5px;
+    font-size: 11px;
+    letter-spacing: .05em;
+    padding-right: 42px;   /* no pasar por debajo del icono */
+}
+
+/* Figuras proporcionales: tabular-nums deja sueltas las cifras grandes. */
+.rxp-kpis .stat-card-value {
+    font-size: 26px;
+    line-height: 1.05;
+}
+
+.rxp-kpis .stat-card-sub {
+    margin: 4px 0 0;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+}
+
+a.stat-card { text-decoration: none; color: inherit; display: block; }
+a.stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Rejilla principal: 3 columnas × 2 filas ─────────────────────── */
+.rxp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.rxp-grid .card {
+    padding: 15px 18px 13px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Ocupa el hueco de la columna que falta en su fila. */
+.rxp-grid .rxp-ancho { grid-column: span 2; }
+
+.rxp-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+}
+
+.rxp-card__title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rxp-card__meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.rxp-card__note {
+    margin: 0 0 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.rxp-card__link {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--accent-text);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+/* ── Barras verticales ───────────────────────────────────────────── */
+.viz-cols {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;              /* separación por hueco de superficie, sin bordes */
+    height: 104px;
+    padding-top: 15px;     /* aire para la etiqueta del máximo */
+    border-bottom: 1px solid var(--viz-axis);
+}
+
+/* Rejilla: líneas continuas de un tono sobre la superficie, nunca discontinuas. */
+.viz-cols::before,
+.viz-cols::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--viz-grid);
+    pointer-events: none;
+}
+.viz-cols::before { top: 15px; }
+.viz-cols::after  { top: calc(15px + (100% - 15px) / 2); }
+
+/* El objetivo de hover es la columna entera, no la barra. */
+.viz-col {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: default;
+}
+
+.viz-col__bar {
+    width: 66%;
+    max-width: 22px;
+    min-height: 2px;
+    border-radius: 4px 4px 0 0;   /* extremo del dato redondeado, base recta */
+    background: var(--viz-count);
+    transition: filter .15s ease;
+}
+
+.viz-col--money .viz-col__bar { background: var(--viz-money); }
+
+.viz-col:hover .viz-col__bar,
+.viz-col:focus-visible .viz-col__bar { filter: brightness(1.12); }
+
+.viz-col:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Valor sobre la barra: solo en el máximo, no en cada punto. */
+.viz-col__pico {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* Tooltip: acompaña, nunca es la única vía al dato (hay tabla abajo). */
+.viz-col__tip {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    padding: 4px 8px;
+    border-radius: 7px;
+    background: var(--text-primary);
+    color: var(--bg-surface);
+    font-size: 10.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s ease;
+}
+
+.viz-col:hover .viz-col__tip,
+.viz-col:focus-visible .viz-col__tip { opacity: 1; }
+
+.viz-xaxis {
+    display: flex;
+    gap: 2px;
+    margin-top: 5px;
+}
+
+.viz-xaxis span {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: 9.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;  /* aquí sí: los ticks se alinean */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ── Barras horizontales (ranking de estudios) ───────────────────── */
+.viz-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.viz-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 9px;
+    align-items: center;
+}
+
+.viz-row__label {
+    grid-column: 1 / -1;
+    font-size: 11.5px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.viz-row__track {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--bg-muted);
+    overflow: hidden;
+}
+
+.viz-row__fill {
+    height: 100%;
+    min-width: 3px;
+    border-radius: 0 4px 4px 0;
+    background: var(--viz-count);
+}
+
+.viz-row__value {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Listas laterales ────────────────────────────────────────────── */
+.rxp-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.rxp-item {
+    padding: 8px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    background: var(--bg-muted);
+}
+
+.rxp-item__meta {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.rxp-item__nombre {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rxp-item__extra {
+    font-size: 11px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+/* ── Vista de tabla (equivalente accesible de cada gráfico) ──────── */
+.viz-tabla {
+    margin-top: auto;
+    padding-top: 7px;
+}
+
+.viz-tabla > summary {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--accent-text);
+    cursor: pointer;
+    list-style: none;
+}
+
+.viz-tabla > summary::-webkit-details-marker { display: none; }
+.viz-tabla > summary::before { content: "▸ "; }
+.viz-tabla[open] > summary::before { content: "▾ "; }
+
+.viz-tabla table {
+    width: 100%;
+    margin-top: 6px;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.viz-tabla th,
+.viz-tabla td {
+    padding: 4px 5px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-secondary);
+}
+
+.viz-tabla th { color: var(--text-muted); font-weight: 600; }
+
+.viz-tabla td:last-child,
+.viz-tabla th:last-child {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+
+.viz-vacio {
+    margin: auto 0;
+    padding: 18px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ── Responsive: por debajo de 3 columnas se deja crecer ─────────── */
+@media (max-width: 1250px) {
+    .rxp-grid { grid-template-columns: repeat(2, 1fr); }
+    .rxp-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 720px) {
+    .rxp-grid,
+    .rxp-kpis { grid-template-columns: 1fr; }
+    /* A una columna, "span 2" desbordaría la rejilla. */
+    .rxp-grid .rxp-ancho { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .viz-col__bar, .viz-col__tip { transition: none; }
+}

@@ -43,16 +43,32 @@
         }
         sortState = { table: table, col: col, dir: dir };
 
-        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
-        rows.sort(function (ra, rb) {
-            var ca = ra.children[col];
-            var cb = rb.children[col];
+        /* Una fila puede llevar detrás su fila de detalle desplegable
+           ([data-rx-detalle]). Se ordenan como pareja: si se ordenaran sueltas,
+           el detalle acabaria bajo otro paciente. */
+        var todas = Array.prototype.slice.call(tbody.children);
+        var pares = [];
+        for (var i = 0; i < todas.length; i++) {
+            if (todas[i].hasAttribute('data-rx-detalle')) continue;
+            var siguiente = todas[i + 1];
+            pares.push({
+                fila: todas[i],
+                detalle: (siguiente && siguiente.hasAttribute('data-rx-detalle')) ? siguiente : null
+            });
+        }
+
+        pares.sort(function (pa, pb) {
+            var ca = pa.fila.children[col];
+            var cb = pb.fila.children[col];
             var cmp = sortCompare(cellSortValue(ca), cellSortValue(cb), type);
             return dir === 'asc' ? cmp : -cmp;
         });
 
         tbody.classList.add('rx-sorting');
-        rows.forEach(function (r) { tbody.appendChild(r); });
+        pares.forEach(function (p) {
+            tbody.appendChild(p.fila);
+            if (p.detalle) tbody.appendChild(p.detalle);
+        });
         window.setTimeout(function () { tbody.classList.remove('rx-sorting'); }, 120);
 
         table.querySelectorAll('th.rx-sort-th').forEach(function (h) {

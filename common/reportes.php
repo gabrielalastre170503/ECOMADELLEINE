@@ -77,22 +77,26 @@ $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 $page_title     = $ecoId ? 'Estadísticas' : 'Reportes';
 $page_subtitle  = $ecoId ? 'Tu actividad y facturación por periodo' : 'Actividad y facturación por periodo';
 $active_section = 'reportes';
-$page_head_extra = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
+// ?v=auto lo resuelve shell.php con filemtime.
+$page_head_extra = '<link rel="stylesheet" href="assets/css/panel/reportes.css?v=auto">'
+    . '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
 
-// Tarjetas KPI: [label, valor, icono, color]
+// Tarjetas KPI: [label, valor, icono, dominio]
+// El dominio da el color (actividad / dinero / calidad). Antes cada tarjeta
+// llevaba un hex propio: doce tonos que no significaban nada.
 $kpis = [
-    ['Citas',        number_format($resumen['citas']),       'fa-calendar-check', '#0284c7'],
-    ['Completadas',  number_format($resumen['completadas']), 'fa-circle-check',   '#15803d'],
-    ['Canceladas',   number_format($resumen['canceladas']),  'fa-calendar-xmark', '#b91c1c'],
-    ['Pacientes',    number_format($resumen['pacientes']),   'fa-users',          '#7c3aed'],
-    ['Facturado',    eco_money($resumen['facturado']),       'fa-file-invoice',   '#0f766e'],
-    ['Cobrado',      eco_money($resumen['cobrado']),          'fa-money-bill-wave','#15803d'],
-    ['Saldo',        eco_money($resumen['saldo']),            'fa-hand-holding-dollar', '#b45309'],
-    ['Tasa de cobro', $resumen['tasa_cobro'] . '%',          'fa-percent',        '#0284c7'],
-    ['No-show (' . $resumen['no_show'] . ')', $resumen['tasa_no_show'] . '%', 'fa-user-clock', '#b45309'],
-    ['Satisfacción (' . $satisf['respuestas'] . ')', ($satisf['respuestas'] > 0 ? $satisf['promedio'] . '/5' : '—'), 'fa-star', '#d97706'],
-    ['Notas de sesión',   number_format($total_notas),    'fa-notes-medical',  '#0d9488'],
-    ['Informes firmados', number_format($total_firmados),  'fa-file-signature', '#0369a1'],
+    ['Citas',        number_format($resumen['citas']),       'fa-calendar-check', 'actividad'],
+    ['Completadas',  number_format($resumen['completadas']), 'fa-circle-check',   'actividad'],
+    ['Canceladas',   number_format($resumen['canceladas']),  'fa-calendar-xmark', 'actividad'],
+    ['Pacientes',    number_format($resumen['pacientes']),   'fa-users',          'actividad'],
+    ['No-show (' . $resumen['no_show'] . ')', $resumen['tasa_no_show'] . '%', 'fa-user-clock', 'actividad'],
+    ['Facturado',    eco_money($resumen['facturado']),       'fa-file-invoice',   'dinero'],
+    ['Cobrado',      eco_money($resumen['cobrado']),         'fa-money-bill-wave', 'dinero'],
+    ['Saldo',        eco_money($resumen['saldo']),           'fa-hand-holding-dollar', 'dinero'],
+    ['Tasa de cobro', $resumen['tasa_cobro'] . '%',          'fa-percent',        'dinero'],
+    ['Satisfacción (' . $satisf['respuestas'] . ')', ($satisf['respuestas'] > 0 ? $satisf['promedio'] . '/5' : '—'), 'fa-star', 'calidad'],
+    ['Notas de sesión',   number_format($total_notas),       'fa-notes-medical',  'calidad'],
+    ['Informes firmados', number_format($total_firmados),    'fa-file-signature', 'calidad'],
 ];
 
 ob_start();
@@ -122,16 +126,12 @@ ob_start();
 </div>
 
 <!-- KPIs -->
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px;">
-    <?php foreach ($kpis as [$label, $valor, $icono, $color]): ?>
-        <div class="card" style="padding:16px 18px;display:flex;align-items:center;gap:14px;">
-            <div style="width:42px;height:42px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:<?= $color ?>1a;color:<?= $color ?>;font-size:18px;">
-                <i class="fa-solid <?= $icono ?>"></i>
-            </div>
-            <div style="min-width:0;">
-                <div style="font-size:20px;font-weight:800;color:var(--text-primary);line-height:1.1;"><?= htmlspecialchars($valor) ?></div>
-                <div style="font-size:12px;color:var(--text-secondary);"><?= htmlspecialchars($label) ?></div>
-            </div>
+<div class="rep-kpis">
+    <?php foreach ($kpis as [$label, $valor, $icono, $dominio]): ?>
+        <div class="card rep-kpi rep-kpi--<?= htmlspecialchars($dominio) ?>">
+            <div class="rep-kpi__icon" aria-hidden="true"><i class="fa-solid <?= htmlspecialchars($icono) ?>"></i></div>
+            <p class="rep-kpi__label"><?= htmlspecialchars($label) ?></p>
+            <p class="rep-kpi__value"><?= htmlspecialchars($valor) ?></p>
         </div>
     <?php endforeach; ?>
 </div>

@@ -21,11 +21,13 @@ if ($r = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'ec
 
 $solicitudes = [];
 if ($q = $conex->query("
-    SELECT c.id, c.motivo_consulta, c.fecha_solicitud,
+    SELECT c.id, c.motivo_consulta, c.motivo_principal, c.fecha_solicitud, c.fecha_cita,
            u.nombre_completo AS paciente_nombre, u.cedula AS paciente_cedula,
-           u.correo AS paciente_correo, TIMESTAMPDIFF(YEAR, u.fecha_nacimiento, CURDATE()) AS paciente_edad
+           u.correo AS paciente_correo, TIMESTAMPDIFF(YEAR, u.fecha_nacimiento, CURDATE()) AS paciente_edad,
+           t.nombre AS tipo_nombre, t.icono AS tipo_icono
     FROM citas c
     JOIN usuarios u ON c.paciente_id = u.id
+    LEFT JOIN tipos_ecografias t ON t.id = c.tipo_ecografia_id
     WHERE c.estado = 'pendiente'
     ORDER BY c.fecha_solicitud DESC
 ")) {
@@ -68,47 +70,88 @@ ob_start();
 <?php endif; ?>
 
 <?php if (empty($solicitudes)): ?>
-    <div class="card" style="text-align:center;padding:48px 20px;">
-        <i class="fa-solid fa-inbox" style="font-size:2.5rem;color:var(--text-muted);opacity:.5;"></i>
-        <p style="color:var(--text-secondary);margin:12px 0 0;">No hay solicitudes de cita pendientes.</p>
+    <div class="card" style="text-align:center;padding:60px 20px;">
+        <i class="fa-solid fa-inbox" style="font-size:3rem;color:var(--success);opacity:.5;margin-bottom:14px;"></i>
+        <h3 style="margin:0 0 6px;color:var(--text-primary);">¡Bandeja vacía!</h3>
+        <p style="color:var(--text-secondary);margin:0;font-size:13.5px;">No hay solicitudes de cita pendientes por asignar.</p>
     </div>
 <?php else: ?>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-        <?php foreach ($solicitudes as $s):
-            $fechaSolicitudTimestamp = !empty($s['fecha_solicitud']) ? strtotime($s['fecha_solicitud']) : false;
-            $fechaSolicitudTexto = $fechaSolicitudTimestamp ? 'Recibida el ' . date('d/m H:i', $fechaSolicitudTimestamp) : 'Fecha no registrada';
-            $motivoBruto = trim((string)($s['motivo_consulta'] ?? ''));
-            if (strlen($motivoBruto) > 180) {
-                $motivoBruto = substr($motivoBruto, 0, 177) . '…';
-            }
-            $motivoTexto = $motivoBruto !== '' ? $motivoBruto : 'Sin motivo registrado';
-            $correoTexto = !empty($s['paciente_correo']) ? $s['paciente_correo'] : 'Sin correo';
-            ?>
-            <div class="card" style="padding:18px 20px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-                    <div>
-                        <h3 style="margin:0 0 4px;font-size:16px;color:var(--text-primary);"><?= htmlspecialchars($s['paciente_nombre']) ?></h3>
-                        <span style="font-size:12.5px;color:var(--text-secondary);"><?= htmlspecialchars($fechaSolicitudTexto) ?></span>
-                    </div>
-                    <button type="button" class="btn-primary" style="white-space:nowrap;" onclick="abrirModalAsignarCitaRx(<?= (int)$s['id'] ?>)">
-                        <i class="fa-solid fa-calendar-check"></i> Asignar y programar
-                    </button>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
-                    <?php if (!empty($s['paciente_cedula'])): ?>
-                        <span class="badge badge-info"><i class="fa-solid fa-id-card"></i> <?= htmlspecialchars($s['paciente_cedula']) ?></span>
-                    <?php endif; ?>
-                    <?php if (!empty($s['paciente_edad'])): ?>
-                        <span class="badge badge-accent"><i class="fa-solid fa-cake-candles"></i> <?= (int)$s['paciente_edad'] ?> años</span>
-                    <?php endif; ?>
-                </div>
-                <p style="margin:0;font-size:12.5px;color:var(--text-secondary);"><i class="fa-solid fa-envelope"></i> <?= htmlspecialchars($correoTexto) ?></p>
-                <div style="margin-top:12px;padding:12px 14px;background:var(--bg-muted);border-radius:10px;font-size:13.5px;color:var(--text-primary);line-height:1.5;">
-                    <strong>Motivo:</strong> <?= nl2br(htmlspecialchars($motivoTexto)) ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
+
+<div class="card" style="margin-bottom:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.3);">
+    <i class="fa-solid fa-bell" style="color:#b45309;font-size:18px;"></i>
+    <div style="flex:1;">
+        <strong style="color:#b45309;font-size:14px;"><?= count($solicitudes) ?> solicitud<?= count($solicitudes) > 1 ? 'es' : '' ?> pendiente<?= count($solicitudes) > 1 ? 's' : '' ?></strong>
+        <div style="color:var(--text-secondary);font-size:12.5px;">Asigna ecografista y fecha a cada solicitud.</div>
     </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+    <div class="data-table" style="border:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Edad</th>
+                    <th>Tipo de estudio</th>
+                    <th>Fecha propuesta</th>
+                    <th>Motivo</th>
+                    <th>Recibida</th>
+                    <th style="text-align:right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($solicitudes as $s):
+                $iniciales = '';
+                foreach (explode(' ', trim((string)$s['paciente_nombre'])) as $p) {
+                    if ($p !== '' && strlen($iniciales) < 2) { $iniciales .= strtoupper($p[0]); }
+                }
+                $fechaProp  = !empty($s['fecha_cita']) ? date('d/m/Y H:i', strtotime($s['fecha_cita'])) : 'Sin fecha propuesta';
+                $fechaRecib = !empty($s['fecha_solicitud']) ? date('d/m/Y', strtotime($s['fecha_solicitud'])) : '—';
+                $motivo = trim((string)($s['motivo_consulta'] ?? '')) ?: trim((string)($s['motivo_principal'] ?? '')) ?: 'No especificado';
+                $correo = !empty($s['paciente_correo']) ? $s['paciente_correo'] : 'Sin correo';
+            ?>
+                <tr class="sol-row">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#38bdf8);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11.5px;flex-shrink:0;"><?= htmlspecialchars($iniciales ?: '?') ?></div>
+                            <div style="min-width:0;">
+                                <strong style="color:var(--text-primary);"><?= htmlspecialchars($s['paciente_nombre']) ?></strong>
+                                <div style="font-size:11.5px;color:var(--text-muted);" title="<?= htmlspecialchars($correo) ?>">
+                                    <?= htmlspecialchars($s['paciente_cedula'] ?: 'Sin cédula') ?> · <?= htmlspecialchars($correo) ?>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="white-space:nowrap;"><?= !empty($s['paciente_edad']) ? (int)$s['paciente_edad'] . ' años' : '—' ?></td>
+                    <td>
+                        <?php if (!empty($s['tipo_nombre'])): ?>
+                            <span style="display:inline-flex;align-items:center;gap:5px;">
+                                <i class="<?= htmlspecialchars($s['tipo_icono'] ?: 'fa-solid fa-wave-square') ?>" style="color:var(--accent);"></i>
+                                <?= htmlspecialchars($s['tipo_nombre']) ?>
+                            </span>
+                        <?php else: ?>
+                            <span style="color:var(--text-muted);">—</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="white-space:nowrap;"><?= htmlspecialchars($fechaProp) ?></td>
+                    <td style="max-width:220px;font-size:12.5px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= htmlspecialchars($motivo) ?>"><?= htmlspecialchars(mb_strimwidth($motivo, 0, 60, '…')) ?></td>
+                    <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;"><?= htmlspecialchars($fechaRecib) ?></td>
+                    <td style="text-align:right;white-space:nowrap;">
+                        <button type="button" class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="abrirModalAsignarCitaRx(<?= (int)$s['id'] ?>)">
+                            <i class="fa-solid fa-calendar-check"></i> Asignar y programar
+                        </button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.sol-row:hover td { background: var(--bg-hover); }
+</style>
+
 <?php endif; ?>
 
 <div id="eco-modal-asignar-cita-rx" class="eco-modal" aria-hidden="true" role="dialog">
@@ -214,7 +257,9 @@ $page_scripts_extra = <<<'HTML'
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {
-                        window.location.href = '<?= eco_url('citas-pendientes') ?>?status=cita_programada';
+                        // Este bloque es un nowdoc: PHP no interpola aquí, así que
+                        // la URL se arma con ECO_BASE como el resto de la página.
+                        window.location.href = (window.ECO_BASE || '') + 'citas-pendientes?status=cita_programada';
                     } else {
                         alert(data.message || 'No se pudo programar.');
                     }

@@ -1,0 +1,102 @@
+/* =====================================================================
+   Reportes / Estadísticas — tarjetas de indicador.
+
+   Antes cada una traía un chip de 42px con su propio color: doce tonos
+   distintos que no codificaban nada y competían con las cifras. Aquí el
+   color pasa a significar el DOMINIO del dato (actividad, dinero,
+   calidad), así que son tres en vez de doce, y el icono se reduce a una
+   marca discreta para que la cifra sea lo primero que se lee.
+
+   Usa .card del sistema: hereda relieve y sombra del tema glass.
+   ===================================================================== */
+
+/* 6 + 6: las doce tarjetas en dos filas iguales. Rejilla fija, no auto-fill,
+   que repartía 7 y 5 según el ancho disponible. */
+.rep-kpis {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.rep-kpi {
+    position: relative;
+    padding: 14px 16px;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.rep-kpi:hover {
+    transform: translateY(-2px);
+    border-color: var(--kpi-borde, var(--accent));
+}
+
+.rep-kpi__icon {
+    position: absolute;
+    top: 13px;
+    right: 14px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 11.5px;
+    background: var(--kpi-tinte);
+    color: var(--kpi-ink);
+}
+
+.rep-kpi__label {
+    margin: 0;
+    padding-right: 32px;   /* no pasar por debajo del icono */
+    /* Dos líneas reservadas: "Informes firmados" ocupa dos y las demás una;
+       sin esto las cifras de una misma fila no quedan a la misma altura. */
+    min-height: 2.6em;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+/* Figuras proporcionales: tabular-nums deja sueltas las cifras grandes. */
+.rep-kpi__value {
+    margin: 6px 0 0;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--text-primary);
+}
+
+/* ── Tres dominios, tres tonos ───────────────────────────────────── */
+.rep-kpi--actividad {
+    --kpi-tinte: var(--accent-soft);
+    --kpi-ink: var(--accent-text);
+    --kpi-borde: rgba(2, 177, 244, .45);
+}
+
+.rep-kpi--dinero {
+    --kpi-tinte: rgba(21, 128, 61, .12);
+    --kpi-ink: #15803d;
+    --kpi-borde: rgba(21, 128, 61, .40);
+}
+
+.rep-kpi--calidad {
+    --kpi-tinte: rgba(124, 58, 237, .12);
+    --kpi-ink: #6d28d9;
+    --kpi-borde: rgba(124, 58, 237, .40);
+}
+
+[data-theme="dark"] .rep-kpi--dinero  { --kpi-tinte: rgba(21, 128, 61, .20);  --kpi-ink: #4ade80; }
+[data-theme="dark"] .rep-kpi--calidad { --kpi-tinte: rgba(124, 58, 237, .22); --kpi-ink: #a78bfa; }
+
+/* Al estrecharse, se conservan filas completas en vez de dejar huecos. */
+@media (max-width: 1400px) { .rep-kpis { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 980px)  { .rep-kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px)  { .rep-kpis { grid-template-columns: repeat(2, 1fr); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .rep-kpi { transition: none; }
+    .rep-kpi:hover { transform: none; }
+}
