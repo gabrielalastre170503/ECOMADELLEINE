@@ -88,20 +88,95 @@ if (!function_exists('eco_metodos_pago')) {
 }
 
 if (!function_exists('eco_servicios_adicionales')) {
+
     /**
-     * Catalogo de servicios adicionales combinables (sin ecografia). Mismas
-     * claves/precios que usa el flujo del paciente (solicitar_cita_paciente.php),
-     * centralizados aqui para que el flujo del ecografista calcule igual.
-     *  - 'combo_cito' ya incluye Citologia + Procesamiento + Eco pelvico.
+     * Valores de respaldo: los mismos que estaban escritos aquí antes de que
+     * existiera la tabla `precios_servicios`. Se usan si la tabla todavía no se
+     * ha creado, para que la facturación no se caiga por una migración pendiente.
+     */
+    function eco_precios_por_defecto(): array
+    {
+        return [
+            'consulta'           => ['etiqueta' => 'Consulta médica',                         'precio' => 15.0, 'icono' => 'fa-solid fa-stethoscope', 'tipo' => 'servicio',  'posicion' => 1],
+            'citologia'          => ['etiqueta' => 'Citología médica',                        'precio' => 20.0, 'icono' => 'fa-solid fa-vial',        'tipo' => 'servicio',  'posicion' => 2],
+            'procesamiento'      => ['etiqueta' => 'Procesamiento de muestra',                'precio' => 3.0,  'icono' => 'fa-solid fa-microscope',  'tipo' => 'servicio',  'posicion' => 3],
+            'combo_cito'         => ['etiqueta' => 'Procesamiento, Citologia + Eco pélvico',  'precio' => 25.0, 'icono' => 'fa-solid fa-flask-vial',  'tipo' => 'promocion', 'posicion' => 1],
+            'promo_eco_consulta' => ['etiqueta' => 'Promoción Eco + Consulta',                'precio' => 25.0, 'icono' => 'fa-solid fa-tags',        'tipo' => 'promocion', 'posicion' => 2],
+        ];
+    }
+
+    /**
+     * Catálogo completo de precios (servicios y promociones), leído de la BD.
+     *
+     * Se cachea por petición. Usa $GLOBALS['conex'] porque las decenas de
+     * llamadas existentes a eco_servicios_adicionales() no pasan la conexión, y
+     * en esta aplicación esa variable está siempre disponible tras incluir
+     * core/conexion.php. Si la tabla no existe, degrada a los valores por
+     * defecto en lugar de reventar (igual que auditoría o notificaciones).
+     *
+     * @return array<string,array{etiqueta:string,precio:float,icono:string,tipo:string,posicion:int}>
+     */
+    function eco_precios_catalogo(bool $recargar = false): array
+    {
+        static $cache = null;
+        if ($cache !== null && !$recargar) {
+            return $cache;
+        }
+
+        $cache = eco_precios_por_defecto();
+        $conex = $GLOBALS['conex'] ?? null;
+        if ($conex instanceof mysqli) {
+            if ($r = @$conex->query("SELECT clave, etiqueta, precio, icono, tipo, posicion
+                                       FROM precios_servicios WHERE activo = 1
+                                      ORDER BY tipo, posicion")) {
+                $filas = [];
+                while ($row = $r->fetch_assoc()) {
+                    $filas[(string)$row['clave']] = [
+                        'etiqueta' => (string)$row['etiqueta'],
+                        'precio'   => (float)$row['precio'],
+                        'icono'    => (string)$row['icono'],
+                        'tipo'     => (string)$row['tipo'],
+                        'posicion' => (int)$row['posicion'],
+                    ];
+                }
+                $r->free();
+                if ($filas) {
+                    $cache = $filas;
+                }
+            }
+        }
+        return $cache;
+    }
+
+    /** Precio de una clave del catálogo (0 si no existe). */
+    function eco_precio_de(string $clave): float
+    {
+        $cat = eco_precios_catalogo();
+        return isset($cat[$clave]) ? (float)$cat[$clave]['precio'] : 0.0;
+    }
+
+    /**
+     * Servicios adicionales combinables (sin ecografia), en el formato que ya
+     * consumían los formularios. 'combo_cito' se incluye aquí aunque sea una
+     * promoción: es marcable por el usuario como cualquier otro servicio.
      */
     function eco_servicios_adicionales(): array
     {
-        return [
-            ['key' => 'consulta',      'label' => 'Consulta médica',                        'price' => 15, 'icon' => 'fa-stethoscope'],
-            ['key' => 'citologia',     'label' => 'Citología médica',                       'price' => 20, 'icon' => 'fa-vial'],
-            ['key' => 'procesamiento', 'label' => 'Procesamiento de muestra',               'price' => 3,  'icon' => 'fa-microscope'],
-            ['key' => 'combo_cito',    'label' => 'Procesamiento, Citologia + Eco pélvico',  'price' => 25, 'icon' => 'fa-flask-vial'],
-        ];
+        $out = [];
+        foreach (eco_precios_catalogo() as $clave => $d) {
+            // 'promo_eco_consulta' no se marca: se aplica sola cuando coinciden
+            // una ecografía y una consulta.
+            if ($clave === 'promo_eco_consulta') {
+                continue;
+            }
+            $out[] = [
+                'key'   => $clave,
+                'label' => $d['etiqueta'],
+                'price' => $d['precio'],
+                'icon'  => $d['icono'],
+            ];
+        }
+        return $out;
     }
 }
 
@@ -217,9 +292,16 @@ if (!function_exists('eco_calcular_bundle_multi')) {
             $sueltos[] = $cat[$k]['label'];
         }
 
+        // Importes de las promociones: se leen del catálogo (tabla
+        // precios_servicios), no fijados aquí, para que recepción pueda
+        // cambiarlos desde Control de precios.
+        $precioConsulta  = eco_precio_de('consulta');
+        $precioCombo     = eco_precio_de('combo_cito');
+        $precioPromoEcoC = eco_precio_de('promo_eco_consulta');
+
         if ($combo) {
-            $total  += 25.0;
-            $ahorro += (20 + 3 + 15) - 25;
+            $total  += $precioCombo;
+            $ahorro += (eco_precio_de('citologia') + eco_precio_de('procesamiento') + $precioConsulta) - $precioCombo;
             $promos[] = 'Combo Citología + Procesamiento + Eco pélvico';
         }
 
@@ -227,13 +309,13 @@ if (!function_exists('eco_calcular_bundle_multi')) {
             rsort($precios); // descendente: la mas cara primero
             $maxEco = $precios[0];
             $resto  = array_sum(array_slice($precios, 1));
-            $total  += 25.0 + $resto; // Eco mas cara + Consulta = 25; resto a precio pleno
-            $ahorro += ($maxEco + 15) - 25;
+            $total  += $precioPromoEcoC + $resto; // Eco mas cara + Consulta al precio de la promo
+            $ahorro += ($maxEco + $precioConsulta) - $precioPromoEcoC;
             $promos[] = 'Promoción Eco + Consulta';
         } else {
             $total += array_sum($precios);
             if ($consulta) {
-                $total += 15.0;
+                $total += $precioConsulta;
             }
         }
 
