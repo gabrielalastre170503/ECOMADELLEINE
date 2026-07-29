@@ -54,13 +54,13 @@ if ($res_tipos) {
     while ($t = $res_tipos->fetch_assoc()) { $tipos_eco[] = $t; }
 }
 
-/* Servicios adicionales combinables (sin ecografía) */
-$adicionales = [
-    ['key' => 'consulta',      'icon' => 'fa-stethoscope', 'label' => 'Consulta médica',          'price' => 15],
-    ['key' => 'citologia',     'icon' => 'fa-vial',        'label' => 'Citología médica',                'price' => 20],
-    ['key' => 'procesamiento', 'icon' => 'fa-microscope',  'label' => 'Procesamiento de muestra', 'price' => 3],
-    ['key' => 'combo_cito',    'icon' => 'fa-flask-vial',  'label' => 'Procesamiento, Citologia + Eco pélvico', 'price' => 25],
-];
+/* Servicios adicionales combinables (sin ecografía).
+   Salen del catálogo de precios_servicios, igual que en los modales de
+   recepción y ecografista: estaban escritos a mano aquí con sus importes, así
+   que al cambiar un precio en "Control de precios" el paciente seguía viendo
+   el viejo. */
+require_once __DIR__ . '/../lib/facturacion/facturacion.php';
+$adicionales = eco_servicios_adicionales();
 
 $page_title    = 'Solicitar cita';
 $page_subtitle = 'Elige el servicio, el ecografista, la fecha y la hora disponibles';
@@ -110,8 +110,9 @@ ob_start();
 .sol-serv:hover .sol-serv__box { border-color:var(--accent); box-shadow:0 8px 20px rgba(2,177,244,.13); transform:translateY(-3px); }
 .sol-serv input:checked + .sol-serv__box { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px rgba(2,177,244,.14); }
 .sol-serv input:checked + .sol-serv__box::before { transform:scaleX(1); }
-.sol-serv__icon { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#fff; background:linear-gradient(135deg,var(--accent),#38bdf8); box-shadow:0 4px 11px rgba(2,177,244,.28); transition:transform .2s ease; }
-.sol-serv input:checked + .sol-serv__box .sol-serv__icon { transform:scale(1.07); }
+/* Mismo tratamiento plano que los estudios: al marcar, el icono se llena. */
+.sol-serv__icon { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--accent-text); background:var(--accent-soft); transition:background .2s ease, color .2s ease; }
+.sol-serv input:checked + .sol-serv__box .sol-serv__icon { background:var(--accent); color:#fff; }
 .sol-serv__label { font-size:13px; font-weight:600; color:var(--text-primary); line-height:1.3; padding-right:38px; }
 .sol-serv__price { position:absolute; top:12px; right:12px; font-size:12px; font-weight:800; color:#15803d; background:rgba(34,197,94,.12); padding:2px 8px; border-radius:999px; }
 .sol-serv__check { position:absolute; bottom:11px; right:12px; font-size:15px; color:var(--accent); opacity:0; transform:scale(.6); transition:opacity .2s ease, transform .2s ease; }
@@ -132,8 +133,11 @@ ob_start();
 .eco-type-card:hover { border-color:var(--accent); box-shadow:0 8px 20px rgba(2,177,244,.14); transform:translateY(-3px); }
 .eco-type-card.selected { border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px rgba(2,177,244,.14); }
 .eco-type-card.selected::before { transform:scaleX(1); }
-.eco-type-card__icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),#38bdf8); box-shadow:0 4px 12px rgba(2,177,244,.3); transition:transform .2s ease; }
-.eco-type-card.selected .eco-type-card__icon { transform:scale(1.07); }
+/* Plano y en tono suave: el bloque de color macizo con sombra pesaba más que
+   el nombre del estudio, que es lo que se lee. Al elegir la tarjeta el icono
+   sí se llena, y ahí el contraste marca la selección. */
+.eco-type-card__icon { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--accent-text); background:var(--accent-soft); transition:background .2s ease, color .2s ease; }
+.eco-type-card.selected .eco-type-card__icon { background:var(--accent); color:#fff; }
 .eco-type-card__cat { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--accent-text); }
 .eco-type-card__name { font-size:13.5px; font-weight:600; color:var(--text-primary); line-height:1.3; padding-right:6px; }
 .eco-type-card__price { position:absolute; top:12px; right:12px; font-size:12px; font-weight:800; color:#15803d; background:rgba(34,197,94,.12); padding:2px 8px; border-radius:999px; }
@@ -252,11 +256,12 @@ ob_start();
                     <div class="sol-serv-grid" id="adic-grid">
                         <?php foreach ($adicionales as $a): ?>
                             <label class="sol-serv">
-                                <input type="checkbox" class="adic-input" value="<?= $a['key'] ?>"
-                                       data-price="<?= (int)$a['price'] ?>" data-label="<?= htmlspecialchars($a['label'], ENT_QUOTES) ?>">
+                                <input type="checkbox" class="adic-input" value="<?= htmlspecialchars($a['key'], ENT_QUOTES) ?>"
+                                       data-price="<?= htmlspecialchars((string)(float)$a['price'], ENT_QUOTES) ?>" data-label="<?= htmlspecialchars($a['label'], ENT_QUOTES) ?>">
                                 <span class="sol-serv__box">
-                                    <span class="sol-serv__price">$<?= (int)$a['price'] ?></span>
-                                    <span class="sol-serv__icon"><i class="fa-solid <?= $a['icon'] ?>"></i></span>
+                                    <span class="sol-serv__price"><?= htmlspecialchars(eco_money((float)$a['price'])) ?></span>
+                                    <!-- El icono viene del catálogo con su estilo ya incluido. -->
+                                    <span class="sol-serv__icon"><i class="<?= htmlspecialchars($a['icon'] ?: 'fa-solid fa-plus', ENT_QUOTES) ?>"></i></span>
                                     <span class="sol-serv__label"><?= htmlspecialchars($a['label']) ?></span>
                                     <i class="fa-solid fa-circle-check sol-serv__check"></i>
                                 </span>
@@ -495,7 +500,9 @@ $page_scripts_extra = <<<'HTML'
     }
     function leerAdic() {
         return adicInputs.filter(function (i) { return i.checked; }).map(function (i) {
-            return { key: i.value, label: i.getAttribute('data-label'), price: parseInt(i.getAttribute('data-price'), 10) || 0 };
+            /* parseFloat y no parseInt: los precios salen del catálogo y pueden
+               llevar decimales; con parseInt un servicio de $15.50 sumaría 15. */
+            return { key: i.value, label: i.getAttribute('data-label'), price: parseFloat(i.getAttribute('data-price')) || 0 };
         });
     }
     function calcular() {

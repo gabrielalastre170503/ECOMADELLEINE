@@ -1,0 +1,445 @@
+/* =====================================================================
+   Mis Citas — Paciente
+
+   Reutiliza .card, .stat-card y .badge del sistema para heredar relieve y
+   sombras; aquí van la disposición, la tarjeta de la próxima cita y los
+   distintivos de estado.
+
+   El color de cada estado se fija una sola vez en --cita-color (lo pone el
+   PHP en cada tarjeta) y de ahí lo toman el riel lateral, el bloque de fecha
+   y el punto del estado: así no hay forma de que una tarjeta salga con el
+   riel de un color y el badge de otro.
+   ===================================================================== */
+
+/* ── Próxima cita: lo primero que el paciente necesita saber ─────── */
+.mc-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 20px 24px;
+    border-left: 4px solid var(--accent);
+}
+
+.mc-hero__fecha {
+    width: 92px;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 12px 6px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.mc-hero__dia    { display: block; font-size: 32px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.mc-hero__mes    { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 700; letter-spacing: .07em; }
+.mc-hero__hora   { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.mc-hero__info { flex: 1; min-width: 200px; }
+
+.mc-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 5px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--accent-text);
+}
+
+.mc-hero__titulo {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+
+.mc-hero__datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.mc-hero__datos span { display: inline-flex; align-items: center; gap: 7px; }
+.mc-hero__datos i { color: var(--text-muted); width: 14px; text-align: center; }
+
+.mc-hero__acciones { display: flex; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* Cuenta atrás: lo urgente en rojo suave, lo lejano en neutro. */
+.mc-cuenta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.mc-cuenta--hoy     { background: rgba(239, 68, 68, .12);  color: #b91c1c; }
+.mc-cuenta--pronto  { background: rgba(245, 158, 11, .14); color: #b45309; }
+
+[data-theme="dark"] .mc-cuenta--hoy    { color: #f87171; }
+[data-theme="dark"] .mc-cuenta--pronto { color: #fbbf24; }
+
+/* Sin citas próximas: mismo hueco, tono neutro y una salida clara. */
+.mc-hero--vacio { border-left-color: var(--border); }
+.mc-hero--vacio .mc-hero__fecha { background: var(--bg-muted); color: var(--text-muted); }
+.mc-hero--vacio .mc-hero__eyebrow { color: var(--text-muted); }
+
+/* ── Barra de filtros ────────────────────────────────────────────── */
+.cita-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.cita-search { position: relative; flex: 1; min-width: 220px; max-width: 340px; }
+
+.cita-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.cita-search input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13.5px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.cita-search input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(2, 177, 244, .12);
+}
+
+.cita-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.cita-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+
+.cita-tab:hover { color: var(--text-primary); border-color: rgba(2, 177, 244, .35); }
+
+.cita-tab.is-active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(2, 177, 244, .28);
+}
+
+.cita-tab-count {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.cita-tab.is-active .cita-tab-count { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* ── Tarjetas ────────────────────────────────────────────────────── */
+.cita-list { display: flex; flex-direction: column; gap: 12px; }
+
+.cita-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 20px 16px 23px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+}
+
+/* Riel de color en vez de border-left: el borde recortaba la esquina
+   redondeada y se veía como un defecto de dibujo. */
+.cita-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--cita-color, #02b1f4);
+}
+
+.cita-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--cita-color) 40%, var(--border));
+}
+
+/* El riel y el fondo llevan el azul del acento; el TEXTO va un escalón más
+   oscuro. Sobre un fondo que es ese mismo azul al 12% (casi blanco), el acento
+   como letra da 2.4:1 y el "JUN 2026" de 11px no se leería. */
+.cita-date {
+    width: 64px;
+    flex-shrink: 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 4px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--cita-color) 12%, transparent);
+    color: var(--cita-tinta, #0369a1);
+}
+
+[data-theme="dark"] .cita-card { --cita-tinta: #7dd3fc; }
+
+.cita-date-day   { font-size: 22px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.cita-date-month { font-size: 11px; font-weight: 700; letter-spacing: .06em; margin-top: 2px; }
+.cita-date-time  { font-size: 11px; font-weight: 600; margin-top: 4px; opacity: .85; font-variant-numeric: tabular-nums; }
+
+.cita-date--tbd { background: var(--bg-muted); color: var(--text-muted); }
+.cita-date--tbd i { font-size: 18px; }
+.cita-date--tbd span {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
+.cita-main { flex: 1; min-width: 0; }
+
+.cita-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 5px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cita-meta {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+}
+
+.cita-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.cita-meta i { color: var(--text-muted); width: 13px; text-align: center; }
+
+/* Qué significa el estado para el paciente. Un badge dice "Pendiente";
+   esto dice qué tiene que hacer al respecto, que es lo que preguntaría. */
+.cita-nota {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 7px 0 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.cita-nota__punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cita-color, #02b1f4);
+    flex-shrink: 0;
+}
+
+.cita-side { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+.cita-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border: 1px solid rgba(2, 177, 244, .25);
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    transition: all .2s ease;
+    white-space: nowrap;
+}
+
+.cita-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.cita-btn--cancel { background: rgba(239, 68, 68, .1); color: #dc2626; border-color: rgba(239, 68, 68, .25); }
+.cita-btn--cancel:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+.cita-btn--rate { color: #b45309; background: rgba(245, 158, 11, .12); border-color: rgba(245, 158, 11, .28); }
+.cita-btn--rate:hover { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+
+.cita-enc-rated { display: inline-flex; gap: 2px; color: #fbbf24; font-size: 13px; align-items: center; }
+
+.cita-empty { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+.cita-empty > i { font-size: 42px; color: var(--accent); opacity: .5; margin-bottom: 14px; display: block; }
+
+/* ── Avisos del ecografista ──────────────────────────────────────── */
+.cita-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 14px 18px;
+    border-radius: var(--radius-lg);
+    background: var(--accent-soft);
+    border: 1px solid rgba(2, 177, 244, .3);
+}
+
+.cita-aviso i { color: var(--accent-text); font-size: 16px; margin-top: 2px; }
+.cita-aviso p { margin: 0; font-size: 13.5px; color: var(--text-primary); line-height: 1.5; }
+
+/* ── Modal: detalle de la cita ───────────────────────────────────── */
+.cd-head { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; padding-right: 30px; }
+.cd-head__icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff;
+    background: linear-gradient(135deg, var(--accent), #38bdf8);
+}
+.cd-head__title { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
+.cd-head__sub { margin: 2px 0 0; font-size: 12.5px; color: var(--text-muted); }
+
+.cd-hero {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border-radius: 14px;
+    border: 1px solid var(--border); margin-bottom: 18px; background: var(--bg-muted);
+}
+.cd-hero__date {
+    width: 56px; flex-shrink: 0; text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 9px 0; border-radius: 11px;
+    background: color-mix(in srgb, var(--cd-color, #02b1f4) 14%, transparent);
+    color: var(--cd-color, #02b1f4);
+}
+.cd-hero__day { font-size: 22px; font-weight: 800; line-height: 1; }
+.cd-hero__month { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; margin-top: 3px; }
+.cd-hero__info { flex: 1; min-width: 0; }
+.cd-hero__label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); font-weight: 600; }
+.cd-hero__value { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+.cd-badge {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+    color: #fff; background: var(--cd-color, #02b1f4);
+}
+
+.cd-section { margin-bottom: 16px; }
+.cd-section:last-child { margin-bottom: 0; }
+.cd-section__title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--text-muted); font-weight: 700; margin: 0 0 8px;
+    display: flex; align-items: center; gap: 7px;
+}
+.cd-rows { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 2px 14px; }
+.cd-row { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--border); align-items: flex-start; }
+.cd-row:last-child { border-bottom: none; }
+.cd-row__icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0; margin-top: 1px;
+}
+.cd-row__text { min-width: 0; flex: 1; }
+.cd-row__label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+.cd-row__value { font-size: 13.5px; color: var(--text-primary); margin-top: 2px; line-height: 1.45; word-break: break-word; }
+
+.cd-banner {
+    padding: 14px 16px; border-radius: 12px;
+    background: rgba(245, 158, 11, .1); border: 1px solid rgba(245, 158, 11, .35); margin-bottom: 18px;
+}
+.cd-banner__title { font-weight: 700; color: #b45309; display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.cd-banner__text { font-size: 13px; color: var(--text-primary); margin: 8px 0 0; line-height: 1.5; }
+.cd-banner__actions { margin-top: 13px; display: flex; gap: 10px; flex-wrap: wrap; }
+.cd-banner__actions a {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; text-decoration: none;
+}
+
+.cd-loading { text-align: center; color: var(--text-muted); padding: 28px 12px; font-size: 13.5px; }
+
+/* ── Modales de confirmación y encuesta ──────────────────────────── */
+.cc-icon {
+    width: 74px; height: 74px; margin: 0 auto 16px; border-radius: 50%;
+    background: rgba(2, 132, 199, .14); color: #0369a1;
+    display: flex; align-items: center; justify-content: center; font-size: 35px;
+    animation: ccPop .35s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes ccPop {
+    0%   { transform: scale(.5); opacity: 0; }
+    100% { transform: scale(1);  opacity: 1; }
+}
+
+/* Quien haya pedido menos movimiento no debería ver el rebote. */
+@media (prefers-reduced-motion: reduce) {
+    .cc-icon { animation: none; }
+    .cita-card:hover { transform: none; }
+}
+
+.cc-title { margin: 0 0 9px; font-size: 19px; font-weight: 800; color: var(--text-primary); }
+.cc-text { margin: 0 auto 22px; max-width: 330px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+.cc-btn { width: 100%; justify-content: center; }
+.cc-icon--danger { background: rgba(239, 68, 68, .14); color: #dc2626; }
+.cc-foot { display: flex; gap: 10px; justify-content: center; }
+
+#eco-modal-encuesta .enc-stars i { cursor: pointer; transition: transform .1s; }
+#eco-modal-encuesta .enc-stars i:hover { transform: scale(1.15); }
+
+/* ── Pantallas estrechas ─────────────────────────────────────────── */
+@media (max-width: 860px) {
+    .mc-hero { gap: 16px; }
+    .mc-hero__acciones { width: 100%; }
+}
+
+@media (max-width: 680px) {
+    .cita-card { flex-wrap: wrap; }
+    .cita-side { width: 100%; justify-content: space-between; }
+    .mc-hero__titulo { font-size: 17px; }
+}

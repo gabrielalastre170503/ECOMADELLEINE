@@ -80,7 +80,13 @@ ob_start();
 .eco-doc-card { background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; display:flex; flex-direction:column; gap:14px; transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
 .eco-doc-card:hover { box-shadow:var(--shadow); transform:translateY(-3px); border-color:rgba(2,177,244,.3); }
 .eco-doc-top { display:flex; align-items:center; gap:14px; }
-.eco-doc-avatar { width:54px; height:54px; border-radius:15px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#fff; letter-spacing:.5px; background:linear-gradient(135deg,var(--accent),#38bdf8); box-shadow:0 6px 14px rgba(2,177,244,.25); }
+/* Plano: en una rejilla de siete, siete bloques de color macizo compiten
+   entre sí y con el nombre, que es lo que se busca. Con fondo suave las
+   iniciales siguen identificando sin gritar. */
+.eco-doc-avatar { width:52px; height:52px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; color:#0369a1; letter-spacing:.5px; background:var(--accent-soft); border:1px solid rgba(2,177,244,.22); transition:background .2s ease, color .2s ease, border-color .2s ease; }
+.eco-doc-card:hover .eco-doc-avatar { background:#0369a1; color:#fff; border-color:#0369a1; }
+[data-theme="dark"] .eco-doc-avatar { color:#7dd3fc; }
+[data-theme="dark"] .eco-doc-card:hover .eco-doc-avatar { background:#0284c7; color:#fff; border-color:#0284c7; }
 .eco-doc-id { min-width:0; flex:1; }
 .eco-doc-name { font-size:15px; font-weight:700; color:var(--text-primary); margin:0; line-height:1.25; }
 .eco-doc-role { font-size:12px; color:var(--text-muted); margin:3px 0 0; display:flex; align-items:center; gap:6px; }
@@ -88,7 +94,9 @@ ob_start();
 .eco-doc-chip { font-size:11px; font-weight:600; padding:4px 11px; border-radius:999px; background:var(--accent-soft); color:var(--accent-text); border:1px solid rgba(2,177,244,.2); }
 .eco-doc-chip--muted { background:var(--bg-muted); color:var(--text-muted); border-color:var(--border); }
 .eco-doc-meta { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-secondary); padding-top:13px; border-top:1px dashed var(--border); }
-.eco-doc-meta i { color:var(--accent); }
+/* --accent sobre blanco da 2.4:1: para un icono de 12px se veía desvaído.
+   El escalón oscuro del mismo azul llega a 4.5:1. */
+.eco-doc-meta i { color:var(--accent-text); }
 .eco-doc-meta strong { color:var(--text-primary); }
 .eco-doc-actions { display:flex; gap:8px; margin-top:auto; }
 .eco-doc-btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 12px; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer; text-decoration:none; transition:all .18s ease; border:1.5px solid var(--border); white-space:nowrap; }
@@ -102,7 +110,10 @@ ob_start();
 
 /* Modal de perfil */
 .pd-head { display:flex; align-items:center; gap:14px; margin-bottom:18px; padding-right:30px; }
-.pd-avatar { width:54px; height:54px; border-radius:15px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#fff; letter-spacing:.5px; background:linear-gradient(135deg,var(--accent),#38bdf8); }
+/* El del modal, igual que el de la tarjeta: es el mismo profesional y no
+   debería cambiar de aspecto al abrirlo. */
+.pd-avatar { width:52px; height:52px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; color:#0369a1; letter-spacing:.5px; background:var(--accent-soft); border:1px solid rgba(2,177,244,.22); }
+[data-theme="dark"] .pd-avatar { color:#7dd3fc; }
 .pd-name { margin:0; font-size:1.1rem; font-weight:700; color:var(--text-primary); }
 .pd-role { margin:3px 0 0; font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
 .pd-rows { background:var(--bg-muted); border:1px solid var(--border); border-radius:12px; padding:2px 14px; }

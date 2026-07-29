@@ -59,24 +59,42 @@ if (isset($_GET['status']) && $_GET['status'] === 'cita_creada') {
 /* ── Metadatos de estado (etiqueta, badge, color, grupo de filtro) ── */
 $meses_abbr = [1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR', 5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'];
 
+/* Todas las tarjetas del mismo azul: el acento del sistema, el que ya usan la
+   barra lateral, los botones y las tarjetas de "Mis Informes". El estado se
+   sigue leyendo en el distintivo y en la nota de cada tarjeta. */
+define('ECO_CITA_AZUL', '#02b1f4');
+
 $estado_meta = [
-    'confirmada'         => ['Confirmada',  'badge-success', '#22c55e', 'proxima'],
-    'completada'         => ['Completada',  'badge-info',    '#0ea5e9', 'historial'],
-    'pendiente'          => ['Pendiente',   'badge-warning', '#f59e0b', 'pendiente'],
-    'pendiente_paciente' => ['Pospuesta',   'badge-warning', '#f59e0b', 'pendiente'],
-    'reprogramada'       => ['Reprogramada','badge-purple',  '#8b5cf6', 'proxima'],
-    'cancelada'          => ['Cancelada',   'badge-danger',  '#ef4444', 'historial'],
-    'rechazada'          => ['Rechazada',   'badge-danger',  '#ef4444', 'historial'],
+    'confirmada'         => ['Confirmada',  'badge-accent',  ECO_CITA_AZUL, 'proxima'],
+    'completada'         => ['Completada',  'badge-info',    ECO_CITA_AZUL, 'historial'],
+    'pendiente'          => ['Pendiente',   'badge-warning', ECO_CITA_AZUL, 'pendiente'],
+    'pendiente_paciente' => ['Pospuesta',   'badge-warning', ECO_CITA_AZUL, 'pendiente'],
+    'reprogramada'       => ['Reprogramada','badge-purple',  ECO_CITA_AZUL, 'proxima'],
+    'cancelada'          => ['Cancelada',   'badge-danger',  ECO_CITA_AZUL, 'historial'],
+    'rechazada'          => ['Rechazada',   'badge-danger',  ECO_CITA_AZUL, 'historial'],
 ];
-$meta_default = ['Solicitada', 'badge-accent', '#02b1f4', 'pendiente'];
+$meta_default = ['Solicitada', 'badge-accent', ECO_CITA_AZUL, 'pendiente'];
+
+/* Qué significa cada estado PARA EL PACIENTE. El badge dice cómo se llama;
+   esto dice qué tiene que hacer, que es lo que preguntaría en recepción. */
+$estado_nota = [
+    'confirmada'         => 'Tu cita está confirmada. Preséntate 10 minutos antes.',
+    'completada'         => 'Estudio realizado. El informe aparecerá en «Mis Informes».',
+    'pendiente'          => 'Esperando que el ecografista confirme la fecha.',
+    'pendiente_paciente' => 'El ecografista propuso otra fecha: entra en los detalles para aceptarla o rechazarla.',
+    'reprogramada'       => 'La cita se movió de fecha. Revisa el día y la hora.',
+    'cancelada'          => 'Esta cita fue cancelada.',
+    'rechazada'          => 'La solicitud no se aprobó. Puedes solicitar otra fecha.',
+];
 
 /* ── Estadísticas + próxima cita ── */
-$total       = count($citas);
-$num_prox    = 0;
-$num_pend    = 0;
-$num_comp    = 0;
-$proxima_ts  = null;
-$ahora       = time();
+$total        = count($citas);
+$num_prox     = 0;
+$num_pend     = 0;
+$num_comp     = 0;
+$proxima_ts   = null;
+$proxima_cita = null;
+$ahora        = time();
 
 foreach ($citas as $c) {
     $grupo = ($estado_meta[$c['estado']] ?? $meta_default)[3];
@@ -89,7 +107,10 @@ foreach ($citas as $c) {
         $ts = strtotime($efectiva);
         if ($ts && $ts >= $ahora) {
             $num_prox++;
-            if ($proxima_ts === null || $ts < $proxima_ts) $proxima_ts = $ts;
+            if ($proxima_ts === null || $ts < $proxima_ts) {
+                $proxima_ts   = $ts;
+                $proxima_cita = $c;
+            }
         }
     }
 }
@@ -101,128 +122,91 @@ if ($proxima_ts !== null) {
     $proxima_sub   = date('h:i A', $proxima_ts);
 }
 
+/* Cuenta atrás por días de calendario, no por horas: una cita de mañana a
+   primera hora está "mañana" aunque falten menos de 24 horas. */
+$cuenta_texto = '';
+$cuenta_clase = '';
+if ($proxima_ts !== null) {
+    $dias = (int)floor((strtotime(date('Y-m-d', $proxima_ts)) - strtotime(date('Y-m-d', $ahora))) / 86400);
+    if ($dias <= 0) {
+        $cuenta_texto = 'Es hoy';
+        $cuenta_clase = 'mc-cuenta--hoy';
+    } elseif ($dias === 1) {
+        $cuenta_texto = 'Es mañana';
+        $cuenta_clase = 'mc-cuenta--pronto';
+    } elseif ($dias <= 7) {
+        $cuenta_texto = "En $dias días";
+        $cuenta_clase = 'mc-cuenta--pronto';
+    } else {
+        $cuenta_texto = "En $dias días";
+    }
+}
+
 $page_title       = 'Mis Citas';
 $page_subtitle    = 'Consulta el estado de tus citas y los detalles de cada solicitud';
 $active_section   = 'miscitas';
 
+$css_citas = 'assets/css/paciente/mis-citas.css';
+$page_head_extra = '<link rel="stylesheet" href="' . $css_citas
+    . '?v=' . (@filemtime(__DIR__ . '/../' . $css_citas) ?: '1') . '">';
+
 ob_start();
 ?>
 
-<style>
-.cita-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
-.cita-tab {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 16px; border-radius:999px; font-size:13px; font-weight:600;
-    color:var(--text-secondary); background:var(--bg-surface);
-    border:1px solid var(--border); cursor:pointer;
-    transition:all .18s ease; white-space:nowrap;
-}
-.cita-tab:hover { color:var(--text-primary); border-color:rgba(2,177,244,.35); }
-.cita-tab.is-active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px rgba(2,177,244,.28); }
-.cita-tab .cita-tab-count {
-    font-size:11.5px; font-weight:700; padding:1px 7px; border-radius:999px;
-    background:var(--bg-muted); color:var(--text-secondary); line-height:1.6;
-}
-.cita-tab.is-active .cita-tab-count { background:rgba(255,255,255,.22); color:#fff; }
-
-.cita-list { display:flex; flex-direction:column; gap:12px; }
-.cita-card {
-    display:flex; align-items:center; gap:18px;
-    padding:16px 20px; background:var(--bg-surface);
-    border:1px solid var(--border); border-left:3px solid var(--cita-color,#02b1f4);
-    border-radius:var(--radius-lg);
-    transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease;
-}
-.cita-card:hover { box-shadow:var(--shadow); transform:translateY(-2px); }
-
-.cita-date {
-    width:62px; flex-shrink:0; text-align:center;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:8px 4px; border-radius:12px;
-    background:color-mix(in srgb, var(--cita-color) 12%, transparent);
-    color:var(--cita-color);
-}
-.cita-date-day   { font-size:22px; font-weight:800; line-height:1; }
-.cita-date-month { font-size:11px; font-weight:700; letter-spacing:.06em; margin-top:2px; }
-.cita-date-time  { font-size:11px; font-weight:600; margin-top:4px; opacity:.85; }
-.cita-date--tbd  { background:var(--bg-muted); color:var(--text-muted); }
-.cita-date--tbd i { font-size:18px; }
-.cita-date--tbd span { font-size:9.5px; font-weight:700; letter-spacing:.04em; margin-top:5px; text-transform:uppercase; }
-
-.cita-main { flex:1; min-width:0; }
-.cita-title { font-size:14.5px; font-weight:700; color:var(--text-primary); margin:0 0 4px; }
-.cita-meta { font-size:12.5px; color:var(--text-secondary); display:flex; flex-wrap:wrap; gap:4px 16px; }
-.cita-meta span { display:inline-flex; align-items:center; gap:6px; }
-.cita-meta i { color:var(--text-muted); width:13px; text-align:center; }
-
-.cita-side { display:flex; align-items:center; gap:14px; flex-shrink:0; }
-.cita-btn {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 16px; border-radius:9px; font-size:13px; font-weight:600;
-    background:var(--accent-soft); color:var(--accent-text); border:1px solid rgba(2,177,244,.25);
-    cursor:pointer; transition:all .2s ease; white-space:nowrap;
-}
-.cita-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
-.cita-btn--cancel { background:rgba(239,68,68,.1); color:#dc2626; border-color:rgba(239,68,68,.25); }
-.cita-btn--cancel:hover { background:#ef4444; color:#fff; border-color:#ef4444; }
-
-.cita-empty { text-align:center; padding:48px 24px; color:var(--text-muted); }
-.cita-empty > i { font-size:42px; color:var(--accent); opacity:.5; margin-bottom:14px; display:block; }
-
-@media (max-width:680px){
-    .cita-card { flex-wrap:wrap; }
-    .cita-side { width:100%; justify-content:space-between; }
-}
-
-/* ── Modal: detalle de la cita ── */
-.cd-head { display:flex; align-items:center; gap:13px; margin-bottom:18px; padding-right:30px; }
-.cd-head__icon { width:44px; height:44px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),#38bdf8); }
-.cd-head__title { margin:0; font-size:1.05rem; font-weight:700; color:var(--text-primary); }
-.cd-head__sub { margin:2px 0 0; font-size:12.5px; color:var(--text-muted); }
-
-.cd-hero { display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px; border:1px solid var(--border); margin-bottom:18px; background:var(--bg-muted); }
-.cd-hero__date { width:56px; flex-shrink:0; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:9px 0; border-radius:11px; background:color-mix(in srgb, var(--cd-color,#02b1f4) 14%, transparent); color:var(--cd-color,#02b1f4); }
-.cd-hero__day { font-size:22px; font-weight:800; line-height:1; }
-.cd-hero__month { font-size:10.5px; font-weight:700; letter-spacing:.06em; margin-top:3px; }
-.cd-hero__info { flex:1; min-width:0; }
-.cd-hero__label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); font-weight:600; }
-.cd-hero__value { font-size:14.5px; font-weight:700; color:var(--text-primary); margin-top:2px; }
-.cd-badge { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:3px 11px; border-radius:999px; font-size:11.5px; font-weight:700; color:#fff; background:var(--cd-color,#02b1f4); }
-
-.cd-section { margin-bottom:16px; }
-.cd-section:last-child { margin-bottom:0; }
-.cd-section__title { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); font-weight:700; margin:0 0 8px; display:flex; align-items:center; gap:7px; }
-.cd-rows { background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; padding:2px 14px; }
-.cd-row { display:flex; gap:12px; padding:11px 0; border-bottom:1px dashed var(--border); align-items:flex-start; }
-.cd-row:last-child { border-bottom:none; }
-.cd-row__icon { width:28px; height:28px; border-radius:8px; background:var(--accent-soft); color:var(--accent-text); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; margin-top:1px; }
-.cd-row__text { min-width:0; flex:1; }
-.cd-row__label { font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
-.cd-row__value { font-size:13.5px; color:var(--text-primary); margin-top:2px; line-height:1.45; word-break:break-word; }
-
-.cd-banner { padding:14px 16px; border-radius:12px; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.35); margin-bottom:18px; }
-.cd-banner__title { font-weight:700; color:#b45309; display:flex; align-items:center; gap:8px; font-size:13.5px; }
-.cd-banner__text { font-size:13px; color:var(--text-primary); margin:8px 0 0; line-height:1.5; }
-.cd-banner__actions { margin-top:13px; display:flex; gap:10px; flex-wrap:wrap; }
-.cd-banner__actions a { display:inline-flex; align-items:center; gap:7px; padding:9px 16px; border-radius:9px; font-size:13px; font-weight:600; text-decoration:none; }
-
-.cd-loading { text-align:center; color:var(--text-muted); padding:28px 12px; font-size:13.5px; }
-
-/* Modal de solicitud creada */
-.cc-icon { width:74px; height:74px; margin:0 auto 16px; border-radius:50%; background:rgba(34,197,94,.14); color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:35px; animation:ccPop .35s cubic-bezier(.34,1.56,.64,1); }
-@keyframes ccPop { 0% { transform:scale(.5); opacity:0; } 100% { transform:scale(1); opacity:1; } }
-.cc-title { margin:0 0 9px; font-size:19px; font-weight:800; color:var(--text-primary); }
-.cc-text { margin:0 auto 22px; max-width:330px; font-size:13.5px; color:var(--text-secondary); line-height:1.55; }
-.cc-btn { width:100%; justify-content:center; }
-.cc-icon--danger { background:rgba(239,68,68,.14); color:#dc2626; }
-.cc-foot { display:flex; gap:10px; justify-content:center; }
-</style>
-
 <?php foreach ($notificaciones as $n): ?>
-    <div class="card" style="border-left:4px solid var(--accent);background:var(--accent-soft);margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-        <span style="font-size:13.5px;color:var(--text-primary);"><strong><i class="fa-solid fa-bell"></i> Notificación:</strong> <?= htmlspecialchars($n['notificacion_paciente']) ?></span>
+    <div class="cita-aviso">
+        <i class="fa-solid fa-bell"></i>
+        <p><?= htmlspecialchars($n['notificacion_paciente']) ?></p>
     </div>
 <?php endforeach; ?>
+
+<?php if ($proxima_cita !== null): ?>
+    <?php
+        $px_titulo = $proxima_cita['tipo_estudio'] ?: 'Ecografía';
+        $px_icono  = $proxima_cita['tipo_icono'] ?: 'fa-solid fa-wave-square';
+    ?>
+    <section class="card mc-hero">
+        <div class="mc-hero__fecha">
+            <span class="mc-hero__dia"><?= date('d', $proxima_ts) ?></span>
+            <span class="mc-hero__mes"><?= $meses_abbr[(int)date('n', $proxima_ts)] ?></span>
+            <span class="mc-hero__hora"><?= date('H:i', $proxima_ts) ?></span>
+        </div>
+        <div class="mc-hero__info">
+            <p class="mc-hero__eyebrow">
+                <i class="fa-solid fa-calendar-day"></i> Tu próxima cita
+                <span class="mc-cuenta <?= htmlspecialchars($cuenta_clase) ?>"><?= htmlspecialchars($cuenta_texto) ?></span>
+            </p>
+            <h2 class="mc-hero__titulo"><i class="<?= htmlspecialchars($px_icono, ENT_QUOTES) ?>" style="color:var(--accent);margin-right:6px;"></i><?= htmlspecialchars($px_titulo) ?></h2>
+            <p class="mc-hero__datos">
+                <span><i class="fa-regular fa-clock"></i><?= htmlspecialchars(date('d/m/Y', $proxima_ts) . ' · ' . date('h:i A', $proxima_ts)) ?></span>
+                <span><i class="fa-solid fa-user-doctor"></i><?= htmlspecialchars($proxima_cita['ecografista_nombre'] ?: 'Sin asignar') ?></span>
+                <?php if (!empty($proxima_cita['tipo_categoria'])): ?>
+                    <span><i class="fa-solid fa-layer-group"></i><?= htmlspecialchars($proxima_cita['tipo_categoria']) ?></span>
+                <?php endif; ?>
+            </p>
+        </div>
+        <div class="mc-hero__acciones">
+            <button type="button" class="btn-primary" onclick="abrirDetalleCitaPaciente(<?= (int)$proxima_cita['id'] ?>)">
+                <i class="fa-solid fa-eye"></i> Ver detalles
+            </button>
+            <a href="<?= eco_url('preparacion') ?>" class="btn-secondary">
+                <i class="fa-solid fa-clipboard-list"></i> Cómo prepararme
+            </a>
+        </div>
+    </section>
+<?php elseif ($total > 0): ?>
+    <section class="card mc-hero mc-hero--vacio">
+        <div class="mc-hero__fecha"><span class="mc-hero__dia"><i class="fa-regular fa-calendar"></i></span></div>
+        <div class="mc-hero__info">
+            <p class="mc-hero__eyebrow"><i class="fa-solid fa-calendar-day"></i> Tu próxima cita</p>
+            <h2 class="mc-hero__titulo">No tienes citas próximas</h2>
+            <p class="mc-hero__datos"><span>Cuando el ecografista confirme una fecha, aparecerá aquí.</span></p>
+        </div>
+        <div class="mc-hero__acciones">
+            <a href="<?= eco_url('solicitar-cita') ?>" class="btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Solicitar cita</a>
+        </div>
+    </section>
+<?php endif; ?>
 
 <div class="stats-grid">
     <div class="stat-card">
@@ -232,7 +216,7 @@ ob_start();
         <p class="stat-card-sub">solicitudes registradas</p>
     </div>
     <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(34,197,94,.12);color:#15803d;"><i class="fa-solid fa-calendar-day"></i></div>
+        <div class="stat-card-icon" style="background:rgba(3,105,161,.12);color:#0369a1;"><i class="fa-solid fa-calendar-day"></i></div>
         <p class="stat-card-label">Próxima cita</p>
         <p class="stat-card-value" style="font-size:20px;"><?= htmlspecialchars($proxima_label) ?></p>
         <p class="stat-card-sub"><?= htmlspecialchars($proxima_sub) ?></p>
@@ -262,19 +246,25 @@ ob_start();
     </div>
 <?php else: ?>
 
-    <div class="cita-tabs">
-        <button type="button" class="cita-tab is-active" data-filter="todas">
-            Todas <span class="cita-tab-count"><?= $total ?></span>
-        </button>
-        <button type="button" class="cita-tab" data-filter="proxima">
-            Próximas <span class="cita-tab-count"><?= $num_prox ?></span>
-        </button>
-        <button type="button" class="cita-tab" data-filter="pendiente">
-            Pendientes <span class="cita-tab-count"><?= $num_pend ?></span>
-        </button>
-        <button type="button" class="cita-tab" data-filter="historial">
-            Historial <span class="cita-tab-count"><?= ($total - $num_prox - $num_pend) ?></span>
-        </button>
+    <div class="cita-toolbar">
+        <div class="cita-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="cita-search-input" placeholder="Buscar por estudio o ecografista…" autocomplete="off">
+        </div>
+        <div class="cita-tabs">
+            <button type="button" class="cita-tab is-active" data-filter="todas">
+                Todas <span class="cita-tab-count"><?= $total ?></span>
+            </button>
+            <button type="button" class="cita-tab" data-filter="proxima">
+                Próximas <span class="cita-tab-count"><?= $num_prox ?></span>
+            </button>
+            <button type="button" class="cita-tab" data-filter="pendiente">
+                Pendientes <span class="cita-tab-count"><?= $num_pend ?></span>
+            </button>
+            <button type="button" class="cita-tab" data-filter="historial">
+                Historial <span class="cita-tab-count"><?= ($total - $num_prox - $num_pend) ?></span>
+            </button>
+        </div>
     </div>
 
     <div class="cita-list">
@@ -293,8 +283,14 @@ ob_start();
 
             $icono = $cita['tipo_icono'] ?: 'fa-solid fa-wave-square';
             $titulo = $cita['tipo_estudio'] ?: 'Ecografía';
+            $nota   = $estado_nota[$cita['estado']] ?? '';
+            $busca  = mb_strtolower(trim($titulo . ' ' . ($cita['ecografista_nombre'] ?? '') . ' '
+                        . ($cita['tipo_categoria'] ?? '') . ' ' . $etiqueta));
         ?>
-            <div class="cita-card" data-grupo="<?= htmlspecialchars($grupo) ?>" style="--cita-color:<?= htmlspecialchars($color) ?>;">
+            <div class="cita-card" data-grupo="<?= htmlspecialchars($grupo) ?>"
+                 data-estado="<?= htmlspecialchars($cita['estado']) ?>"
+                 data-search="<?= htmlspecialchars($busca, ENT_QUOTES) ?>"
+                 style="--cita-color:<?= htmlspecialchars($color) ?>;">
                 <?php if ($ts): ?>
                     <div class="cita-date">
                         <span class="cita-date-day"><?= date('d', $ts) ?></span>
@@ -319,6 +315,9 @@ ob_start();
                             <span style="color:#b45309;"><i class="fa-solid fa-calendar-day"></i>Nueva fecha propuesta</span>
                         <?php endif; ?>
                     </div>
+                    <?php if ($nota !== ''): ?>
+                        <p class="cita-nota"><span class="cita-nota__punto" aria-hidden="true"></span><?= htmlspecialchars($nota) ?></p>
+                    <?php endif; ?>
                 </div>
 
                 <div class="cita-side">
@@ -399,13 +398,6 @@ ob_start();
 </div>
 <?php endif; ?>
 
-<style>
-.cita-btn--rate { color:#b45309; }
-.cita-btn--rate:hover { background:#fef3c7; border-color:#fcd34d; }
-.cita-enc-rated { display:inline-flex; gap:2px; color:#fbbf24; font-size:13px; align-items:center; }
-#eco-modal-encuesta .enc-stars i { cursor:pointer; transition:transform .1s; }
-#eco-modal-encuesta .enc-stars i:hover { transform:scale(1.15); }
-</style>
 <div id="eco-modal-encuesta" class="eco-modal" aria-hidden="true" role="dialog">
     <div class="eco-modal__dialog" style="max-width:430px;">
         <div class="eco-modal__main" style="padding:30px 26px;text-align:center;">
@@ -436,24 +428,38 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script>
 (function () {
-    /* Filtro por pestañas */
-    var tabs  = document.querySelectorAll('.cita-tab');
-    var cards = document.querySelectorAll('.cita-card');
-    var empty = document.getElementById('cita-empty-filter');
+    /* Filtro por pestañas + búsqueda. Se combinan en una sola pasada: si cada
+       uno ocultara por su cuenta, el segundo volvería a mostrar lo que el
+       primero había escondido. */
+    var tabs   = document.querySelectorAll('.cita-tab');
+    var cards  = document.querySelectorAll('.cita-card');
+    var empty  = document.getElementById('cita-empty-filter');
+    var search = document.getElementById('cita-search-input');
+    var filtro = 'todas';
+
+    function aplicarFiltros() {
+        var q = (search && search.value || '').trim().toLowerCase();
+        var visibles = 0;
+        cards.forEach(function (c) {
+            var okGrupo = (filtro === 'todas' || c.getAttribute('data-grupo') === filtro);
+            var okBusca = (!q || (c.getAttribute('data-search') || '').indexOf(q) !== -1);
+            var show = okGrupo && okBusca;
+            c.style.display = show ? '' : 'none';
+            if (show) visibles++;
+        });
+        if (empty) empty.style.display = (visibles === 0) ? '' : 'none';
+    }
+
     tabs.forEach(function (tab) {
         tab.addEventListener('click', function () {
             tabs.forEach(function (t) { t.classList.remove('is-active'); });
             tab.classList.add('is-active');
-            var f = tab.getAttribute('data-filter');
-            var visibles = 0;
-            cards.forEach(function (c) {
-                var show = (f === 'todas' || c.getAttribute('data-grupo') === f);
-                c.style.display = show ? '' : 'none';
-                if (show) visibles++;
-            });
-            if (empty) empty.style.display = (visibles === 0) ? '' : 'none';
+            filtro = tab.getAttribute('data-filter');
+            aplicarFiltros();
         });
     });
+
+    if (search) search.addEventListener('input', aplicarFiltros);
 
     /* Modal de detalles */
     var modalId = 'eco-modal-detalle-cita-paciente';
@@ -462,13 +468,17 @@ $page_scripts_extra = <<<'HTML'
 
     var mesesAbbr = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     var estadoMeta = {
-        confirmada:         ['Confirmada',   '#22c55e', 'fa-circle-check'],
-        completada:         ['Completada',   '#0ea5e9', 'fa-clipboard-check'],
-        pendiente:          ['Pendiente',    '#f59e0b', 'fa-hourglass-half'],
-        pendiente_paciente: ['Pospuesta',    '#f59e0b', 'fa-clock-rotate-left'],
-        reprogramada:       ['Reprogramada', '#8b5cf6', 'fa-calendar-day'],
-        cancelada:          ['Cancelada',    '#ef4444', 'fa-ban'],
-        rechazada:          ['Rechazada',    '#ef4444', 'fa-xmark']
+        /* El mismo azul que las tarjetas: si el modal usara otro color, la
+           misma cita saldría de un tono en la lista y de otro al abrirla.
+           Aquí va un escalón más del acento porque el distintivo del modal
+           lleva texto blanco encima y sobre el acento claro no se leería. */
+        confirmada:         ['Confirmada',   '#0369a1', 'fa-circle-check'],
+        completada:         ['Completada',   '#0369a1', 'fa-clipboard-check'],
+        pendiente:          ['Pendiente',    '#0369a1', 'fa-hourglass-half'],
+        pendiente_paciente: ['Pospuesta',    '#0369a1', 'fa-clock-rotate-left'],
+        reprogramada:       ['Reprogramada', '#0369a1', 'fa-calendar-day'],
+        cancelada:          ['Cancelada',    '#0369a1', 'fa-ban'],
+        rechazada:          ['Rechazada',    '#0369a1', 'fa-xmark']
     };
 
     function esc(v) {

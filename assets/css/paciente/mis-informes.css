@@ -1,0 +1,301 @@
+/* =====================================================================
+   Mis Informes — Paciente
+
+   Un informe no es una cita ni un pago: es un DOCUMENTO. Tiene número
+   correlativo, autor y firma, y se archiva por año. Por eso esto no es una
+   lista de tarjetas sino un índice documental: cabecera de expediente
+   arriba y, debajo, los estudios agrupados por año.
+
+   El número de informe manda: va primero, en cifras de ancho fijo, para
+   poder recorrer la columna y localizar uno concreto.
+   ===================================================================== */
+
+.exp {
+    --exp-firmado: #0369a1;
+    --exp-tinta:   #0369a1;
+}
+
+[data-theme="dark"] .exp {
+    --exp-firmado: #7dd3fc;
+    --exp-tinta:   #7dd3fc;
+}
+
+/* ── Cabecera de expediente ──────────────────────────────────────── */
+.exp-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 20px 24px;
+}
+
+.exp-cabecera__ident { display: flex; align-items: center; gap: 16px; min-width: 0; }
+
+.exp-cabecera__sello {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--accent-soft);
+    color: var(--exp-tinta);
+    border: 1px solid rgba(2, 177, 244, .22);
+}
+
+.exp-cabecera__eyebrow {
+    margin: 0 0 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--text-muted);
+}
+
+.exp-cabecera__nombre {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.exp-cabecera__nota { margin: 4px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+
+.exp-cifras { display: flex; gap: 30px; flex-wrap: wrap; }
+.exp-cifras > div { text-align: right; }
+
+.exp-cifras dt {
+    margin: 0 0 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+}
+
+.exp-cifras dd {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.exp-cifras dd small { font-size: 13px; font-weight: 700; }
+.exp-cifras .exp-cifras__firmados dd { color: var(--exp-firmado); }
+
+/* ── Barra de filtros ────────────────────────────────────────────── */
+.exp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.exp-search { position: relative; flex: 1; min-width: 210px; max-width: 330px; }
+
+.exp-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.exp-search input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.exp-search input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(2, 177, 244, .12);
+}
+
+.exp-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.exp-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+
+.exp-tab:hover { color: var(--text-primary); border-color: rgba(2, 177, 244, .35); }
+.exp-tab.is-active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.exp-tab-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+}
+
+.exp-tab.is-active .exp-tab-count { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* ── Índice ──────────────────────────────────────────────────────── */
+/* La tabla se desplaza dentro de su caja: la página nunca en horizontal. */
+.exp-tabla-wrap { overflow-x: auto; margin: 0 -4px; }
+
+.exp-tabla {
+    width: 100%;
+    min-width: 660px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.exp-tabla thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+/* Separador de año: los informes se numeran por ejercicio (INF-2026-00001),
+   así que agruparlos por año es como están archivados de verdad. */
+.exp-anio td {
+    padding: 16px 12px 7px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.exp-anio__fila { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+
+.exp-anio__num {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.exp-anio__conteo { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+
+.exp-fila td { padding: 13px 12px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+.exp-fila:hover { background: var(--bg-muted); }
+
+/* El número identifica el documento: cifras de ancho fijo para poder
+   recorrer la columna sin que bailen los dígitos. */
+.exp-num {
+    font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.exp-estudio { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+.exp-estudio__icono {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: var(--accent-soft);
+    color: var(--exp-tinta);
+}
+
+.exp-estudio__nombre { font-weight: 600; color: var(--text-primary); }
+
+.exp-estudio__cat {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.exp-fecha { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.exp-autor { color: var(--text-secondary); }
+
+/* La firma es lo que da validez al informe: se marca como un sello. */
+.exp-sello {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: rgba(2, 132, 199, .12);
+    color: var(--exp-firmado);
+    border: 1px solid rgba(2, 132, 199, .22);
+}
+
+.exp-sello i { font-size: 10px; }
+
+.exp-sello--sin {
+    background: var(--bg-muted);
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+.exp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border: 1px solid rgba(2, 177, 244, .25);
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all .18s ease;
+}
+
+.exp-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.exp-vacio { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+.exp-vacio > i { font-size: 42px; color: var(--accent); opacity: .5; margin-bottom: 14px; display: block; }
+
+/* ── Pantallas estrechas ─────────────────────────────────────────── */
+@media (max-width: 760px) {
+    .exp-cabecera { gap: 16px; }
+    .exp-cifras { width: 100%; justify-content: space-between; gap: 16px; }
+    .exp-cifras > div { text-align: left; }
+}

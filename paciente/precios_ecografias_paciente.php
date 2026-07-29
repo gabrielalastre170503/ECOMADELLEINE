@@ -110,7 +110,7 @@ ob_start();
     </a>
 </div>
 
-<div class="card" style="margin-bottom:18px;background:linear-gradient(135deg,var(--accent-soft),var(--bg-surface));border:1px solid rgba(2,177,244,.2);">
+<div class="card" style="margin-bottom:18px;">
     <div style="display:flex;align-items:flex-start;gap:14px;">
         <span style="width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"><i class="fa-solid fa-circle-info"></i></span>
         <div>

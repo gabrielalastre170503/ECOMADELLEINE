@@ -1,4 +1,11 @@
 <?php
+/**
+ * Mis Informes (paciente): índice documental de los estudios finalizados.
+ *
+ * Un informe es un documento con número correlativo, autor y firma, así que
+ * se presenta como un expediente archivado por año, no como una lista de
+ * tarjetas.
+ */
 session_start();
 include __DIR__ . '/../core/conexion.php';
 
@@ -31,203 +38,168 @@ if ($stmt = $conex->prepare("
     $stmt->close();
 }
 
-$meses_abbr = [1 => 'ENE', 2 => 'FEB', 3 => 'MAR', 4 => 'ABR', 5 => 'MAY', 6 => 'JUN', 7 => 'JUL', 8 => 'AGO', 9 => 'SEP', 10 => 'OCT', 11 => 'NOV', 12 => 'DIC'];
-
-$estados_meta = [
-    'finalizado' => ['Finalizado', 'badge-success', '#22c55e'],
-    'firmado'    => ['Firmado',    'badge-info',    '#0ea5e9'],
-];
-
-/* Estadísticas */
 $total       = count($informes);
 $num_firmado = 0;
 $num_anio    = 0;
 $anio_actual = (int)date('Y');
 $ultimo_label = '—';
 
+/* Agrupación por año: los informes se numeran por ejercicio
+   (INF-2026-00001), así que es como están archivados de verdad. */
+$por_anio = [];
 foreach ($informes as $i => $inf) {
-    if ($inf['estado'] === 'firmado') $num_firmado++;
-    $raw = $inf['fecha_estudio'] ?: substr($inf['creado_en'], 0, 10);
+    if ($inf['estado'] === 'firmado') { $num_firmado++; }
+    $raw = $inf['fecha_estudio'] ?: substr((string)$inf['creado_en'], 0, 10);
     $ts  = $raw ? strtotime($raw) : null;
-    if ($ts && (int)date('Y', $ts) === $anio_actual) $num_anio++;
-    if ($i === 0 && $ts) $ultimo_label = date('d/m/Y', $ts);
+    if ($ts && (int)date('Y', $ts) === $anio_actual) { $num_anio++; }
+    if ($i === 0 && $ts) { $ultimo_label = date('d/m/Y', $ts); }
+
+    $anio = $ts ? date('Y', $ts) : 'Sin fecha';
+    $por_anio[$anio][] = $inf + ['_ts' => $ts];
 }
 
+$paciente_nombre = (string)($_SESSION['nombre_completo'] ?? 'Paciente');
+
 $page_title     = 'Mis Informes';
-$page_subtitle  = 'Resultados de tus estudios ecográficos';
+$page_subtitle  = 'Expediente de tus estudios ecográficos';
 $active_section = 'mis-informes';
+$body_class     = 'exp';
+
+$css_inf = 'assets/css/paciente/mis-informes.css';
+$page_head_extra = '<link rel="stylesheet" href="' . $css_inf
+    . '?v=' . (@filemtime(__DIR__ . '/../' . $css_inf) ?: '1') . '">';
 
 ob_start();
 ?>
 
-<style>
-.inf-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:16px; }
-.inf-search { position:relative; flex:1; min-width:220px; max-width:360px; }
-.inf-search i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:13px; pointer-events:none; }
-.inf-search input {
-    width:100%; padding:10px 12px 10px 36px; border:1.5px solid var(--border); border-radius:10px;
-    font-family:inherit; font-size:13.5px; background:var(--bg-surface); color:var(--text-primary);
-    box-sizing:border-box; transition:border-color .18s ease, box-shadow .18s ease;
-}
-.inf-search input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(2,177,244,.12); }
-
-.inf-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-.inf-tab {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 15px; border-radius:999px; font-size:12.5px; font-weight:600;
-    color:var(--text-secondary); background:var(--bg-surface);
-    border:1px solid var(--border); cursor:pointer; transition:all .18s ease; white-space:nowrap;
-}
-.inf-tab:hover { color:var(--text-primary); border-color:rgba(2,177,244,.35); }
-.inf-tab.is-active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 12px rgba(2,177,244,.28); }
-.inf-tab-count { font-size:11px; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--bg-muted); color:var(--text-secondary); }
-.inf-tab.is-active .inf-tab-count { background:rgba(255,255,255,.22); color:#fff; }
-
-.inf-list { display:flex; flex-direction:column; gap:12px; }
-.inf-card {
-    display:flex; align-items:center; gap:18px;
-    padding:16px 20px; background:var(--bg-surface);
-    border:1px solid var(--border); border-left:3px solid var(--inf-color,#02b1f4);
-    border-radius:var(--radius-lg);
-    transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease;
-}
-.inf-card:hover { box-shadow:var(--shadow); transform:translateY(-2px); }
-
-.inf-date {
-    width:62px; flex-shrink:0; text-align:center;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:8px 4px; border-radius:12px;
-    background:color-mix(in srgb, var(--inf-color) 12%, transparent); color:var(--inf-color);
-}
-.inf-date-day   { font-size:21px; font-weight:800; line-height:1; }
-.inf-date-month { font-size:10.5px; font-weight:700; letter-spacing:.06em; margin-top:2px; }
-.inf-date-year  { font-size:10.5px; font-weight:600; margin-top:3px; opacity:.85; }
-
-.inf-main { flex:1; min-width:0; }
-.inf-title { font-size:14.5px; font-weight:700; color:var(--text-primary); margin:0 0 4px; display:flex; align-items:center; gap:8px; }
-.inf-meta { font-size:12.5px; color:var(--text-secondary); display:flex; flex-wrap:wrap; gap:4px 16px; }
-.inf-meta span { display:inline-flex; align-items:center; gap:6px; }
-.inf-meta i { color:var(--text-muted); width:13px; text-align:center; }
-
-.inf-side { display:flex; align-items:center; gap:14px; flex-shrink:0; }
-.inf-btn {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 16px; border-radius:9px; font-size:13px; font-weight:600;
-    background:var(--accent-soft); color:var(--accent-text); border:1px solid rgba(2,177,244,.25);
-    text-decoration:none; transition:all .2s ease; white-space:nowrap;
-    cursor:pointer; font-family:inherit;
-}
-.inf-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
-
-.inf-empty { text-align:center; padding:48px 24px; color:var(--text-muted); }
-.inf-empty > i { font-size:42px; color:var(--accent); opacity:.5; margin-bottom:14px; display:block; }
-
-@media (max-width:680px){
-    .inf-card { flex-wrap:wrap; }
-    .inf-side { width:100%; justify-content:space-between; }
-}
-</style>
-
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-card-icon"><i class="fa-solid fa-file-medical"></i></div>
-        <p class="stat-card-label">Informes disponibles</p>
-        <p class="stat-card-value accent"><?= $total ?></p>
-        <p class="stat-card-sub">estudios disponibles</p>
+<section class="card exp-cabecera">
+    <div class="exp-cabecera__ident">
+        <span class="exp-cabecera__sello" aria-hidden="true"><i class="fa-solid fa-folder-open"></i></span>
+        <div>
+            <p class="exp-cabecera__eyebrow">Expediente de estudios</p>
+            <h2 class="exp-cabecera__nombre"><?= htmlspecialchars($paciente_nombre) ?></h2>
+            <p class="exp-cabecera__nota">
+                <?php if ($total === 0): ?>
+                    Sin estudios registrados todavía.
+                <?php else: ?>
+                    <?= $total ?> <?= $total === 1 ? 'estudio archivado' : 'estudios archivados' ?>
+                    · último el <?= htmlspecialchars($ultimo_label) ?>
+                <?php endif; ?>
+            </p>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(14,165,233,.12);color:#0369a1;"><i class="fa-solid fa-file-signature"></i></div>
-        <p class="stat-card-label">Firmados</p>
-        <p class="stat-card-value" style="color:#0369a1;"><?= $num_firmado ?></p>
-        <p class="stat-card-sub">validados por el ecografista</p>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(139,92,246,.12);color:#7c3aed;"><i class="fa-solid fa-calendar-day"></i></div>
-        <p class="stat-card-label">Este año</p>
-        <p class="stat-card-value" style="color:#7c3aed;"><?= $num_anio ?></p>
-        <p class="stat-card-sub">estudios en <?= $anio_actual ?></p>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(34,197,94,.12);color:#15803d;"><i class="fa-solid fa-calendar-check"></i></div>
-        <p class="stat-card-label">Último estudio</p>
-        <p class="stat-card-value" style="font-size:20px;"><?= htmlspecialchars($ultimo_label) ?></p>
-        <p class="stat-card-sub">fecha más reciente</p>
-    </div>
-</div>
+    <dl class="exp-cifras">
+        <div>
+            <dt>Estudios</dt>
+            <dd><?= $total ?></dd>
+        </div>
+        <div class="exp-cifras__firmados">
+            <dt>Firmados</dt>
+            <dd><?= $num_firmado ?></dd>
+        </div>
+        <div>
+            <dt>En <?= $anio_actual ?></dt>
+            <dd><?= $num_anio ?></dd>
+        </div>
+    </dl>
+</section>
 
 <div class="card">
     <div class="card-header">
-        <h3><i class="fa-solid fa-folder-open" style="margin-right:8px;color:var(--accent);"></i> Historial de informes</h3>
+        <h3><i class="fa-solid fa-folder-tree" style="margin-right:8px;color:var(--accent);"></i> Índice de estudios</h3>
     </div>
 
     <?php if ($total === 0): ?>
-        <div class="inf-empty">
+        <div class="exp-vacio">
             <i class="fa-solid fa-file-circle-xmark"></i>
             <p style="margin:0 0 4px;font-weight:600;color:var(--text-secondary);">Aún no tienes informes disponibles</p>
             <p style="margin:0;font-size:13px;">Tus resultados aparecerán aquí cuando el ecografista finalice tu estudio.</p>
         </div>
     <?php else: ?>
 
-        <div class="inf-toolbar">
-            <div class="inf-search">
+        <div class="exp-toolbar">
+            <div class="exp-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="inf-search-input" placeholder="Buscar por estudio, número o ecografista…" autocomplete="off">
+                <input type="text" id="exp-search-input" placeholder="Buscar por estudio, número o ecografista…" autocomplete="off">
             </div>
-            <div class="inf-tabs">
-                <button type="button" class="inf-tab is-active" data-filter="todos">Todos <span class="inf-tab-count"><?= $total ?></span></button>
-                <button type="button" class="inf-tab" data-filter="firmado">Firmados <span class="inf-tab-count"><?= $num_firmado ?></span></button>
-                <button type="button" class="inf-tab" data-filter="finalizado">Finalizados <span class="inf-tab-count"><?= ($total - $num_firmado) ?></span></button>
+            <div class="exp-tabs">
+                <button type="button" class="exp-tab is-active" data-filter="todos">Todos <span class="exp-tab-count"><?= $total ?></span></button>
+                <button type="button" class="exp-tab" data-filter="firmado">Firmados <span class="exp-tab-count"><?= $num_firmado ?></span></button>
+                <button type="button" class="exp-tab" data-filter="finalizado">Finalizados <span class="exp-tab-count"><?= ($total - $num_firmado) ?></span></button>
             </div>
         </div>
 
-        <div class="inf-list" id="inf-list">
-            <?php foreach ($informes as $inf):
-                $meta  = $estados_meta[$inf['estado']] ?? ['Disponible', 'badge-accent', '#02b1f4'];
-                [$etiqueta, $badge, $color] = $meta;
-                $raw   = $inf['fecha_estudio'] ?: substr($inf['creado_en'], 0, 10);
-                $ts    = $raw ? strtotime($raw) : null;
-                $icono = $inf['tipo_icono'] ?: 'fa-solid fa-wave-square';
-                $titulo = $inf['tipo_nombre'] ?: 'Ecografía';
-                $busca = mb_strtolower(trim($titulo . ' ' . ($inf['numero_informe'] ?? '') . ' ' . ($inf['ecografista_nombre'] ?? '')));
-            ?>
-                <div class="inf-card" data-estado="<?= htmlspecialchars($inf['estado']) ?>" data-search="<?= htmlspecialchars($busca, ENT_QUOTES) ?>" style="--inf-color:<?= htmlspecialchars($color) ?>;">
-                    <?php if ($ts): ?>
-                        <div class="inf-date">
-                            <span class="inf-date-day"><?= date('d', $ts) ?></span>
-                            <span class="inf-date-month"><?= $meses_abbr[(int)date('n', $ts)] ?></span>
-                            <span class="inf-date-year"><?= date('Y', $ts) ?></span>
-                        </div>
-                    <?php else: ?>
-                        <div class="inf-date"><span class="inf-date-day"><i class="fa-solid fa-file"></i></span></div>
-                    <?php endif; ?>
+        <div class="exp-tabla-wrap">
+            <table class="exp-tabla">
+                <thead>
+                    <tr>
+                        <th>Nº de informe</th>
+                        <th>Estudio</th>
+                        <th>Fecha</th>
+                        <th>Ecografista</th>
+                        <th>Validación</th>
+                        <!-- Columna de acción: sin rótulo visible, pero anunciada
+                             a los lectores de pantalla. -->
+                        <th><span aria-label="Acción"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($por_anio as $anio => $filas): ?>
+                    <tr class="exp-anio">
+                        <td colspan="6">
+                            <div class="exp-anio__fila">
+                                <span class="exp-anio__num"><?= htmlspecialchars($anio) ?></span>
+                                <span class="exp-anio__conteo"><?= count($filas) ?> <?= count($filas) === 1 ? 'estudio' : 'estudios' ?></span>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php foreach ($filas as $inf):
+                        $firmado = ($inf['estado'] === 'firmado');
+                        $titulo  = $inf['tipo_nombre'] ?: 'Ecografía';
+                        $icono   = $inf['tipo_icono'] ?: 'fa-solid fa-file-waveform';
+                        $busca   = mb_strtolower(trim($titulo . ' ' . ($inf['numero_informe'] ?? '') . ' '
+                                    . ($inf['ecografista_nombre'] ?? '') . ' ' . ($inf['tipo_categoria'] ?? '')));
+                    ?>
+                        <tr class="exp-fila"
+                            data-estado="<?= htmlspecialchars($inf['estado']) ?>"
+                            data-search="<?= htmlspecialchars($busca, ENT_QUOTES) ?>">
+                            <td class="exp-num"><?= htmlspecialchars($inf['numero_informe'] ?: '—') ?></td>
+                            <td>
+                                <div class="exp-estudio">
+                                    <span class="exp-estudio__icono" aria-hidden="true"><i class="<?= htmlspecialchars($icono, ENT_QUOTES) ?>"></i></span>
+                                    <span>
+                                        <span class="exp-estudio__nombre"><?= htmlspecialchars($titulo) ?></span>
+                                        <?php if (!empty($inf['tipo_categoria'])): ?>
+                                            <span class="exp-estudio__cat"><?= htmlspecialchars($inf['tipo_categoria']) ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="exp-fecha"><?= $inf['_ts'] ? date('d/m/Y', $inf['_ts']) : '—' ?></td>
+                            <td class="exp-autor"><?= htmlspecialchars($inf['ecografista_nombre'] ?: '—') ?></td>
+                            <td>
+                                <?php if ($firmado): ?>
+                                    <span class="exp-sello"><i class="fa-solid fa-certificate"></i> Firmado</span>
+                                <?php else: ?>
+                                    <span class="exp-sello exp-sello--sin"><i class="fa-regular fa-circle-check"></i> Finalizado</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align:right;">
+                                <button type="button" class="exp-btn" data-informe-id="<?= (int)$inf['id'] ?>">
+                                    <i class="fa-solid fa-eye"></i> Ver informe
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
-                    <div class="inf-main">
-                        <p class="inf-title"><i class="<?= htmlspecialchars($icono, ENT_QUOTES) ?>" style="color:<?= htmlspecialchars($color) ?>;"></i><?= htmlspecialchars($titulo) ?></p>
-                        <div class="inf-meta">
-                            <span><i class="fa-solid fa-hashtag"></i><?= htmlspecialchars($inf['numero_informe'] ?: '—') ?></span>
-                            <?php if (!empty($inf['tipo_categoria'])): ?>
-                                <span><i class="fa-solid fa-layer-group"></i><?= htmlspecialchars($inf['tipo_categoria']) ?></span>
-                            <?php endif; ?>
-                            <?php if (!empty($inf['ecografista_nombre'])): ?>
-                                <span><i class="fa-solid fa-user-doctor"></i><?= htmlspecialchars($inf['ecografista_nombre']) ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="inf-side">
-                        <span class="badge <?= $badge ?>"><?= htmlspecialchars($etiqueta) ?></span>
-                        <button type="button" class="inf-btn" data-informe-id="<?= (int)$inf['id'] ?>" data-informe-titulo="<?= htmlspecialchars($titulo, ENT_QUOTES) ?>">
-                            <i class="fa-solid fa-eye"></i> Ver informe
-                        </button>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-
-            <div id="inf-empty-filter" class="inf-empty" style="display:none;">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <p style="margin:0;font-weight:600;color:var(--text-secondary);">No se encontraron informes</p>
-                <p style="margin:0;font-size:13px;">Prueba con otro término de búsqueda o filtro.</p>
-            </div>
+        <div id="exp-empty-filter" class="exp-vacio" style="display:none;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <p style="margin:0;font-weight:600;color:var(--text-secondary);">No se encontraron informes</p>
+            <p style="margin:0;font-size:13px;">Prueba con otro término de búsqueda o filtro.</p>
         </div>
 
     <?php endif; ?>
@@ -268,32 +240,49 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script>
 (function () {
-    var tabs   = document.querySelectorAll('.inf-tab');
-    var cards  = Array.prototype.slice.call(document.querySelectorAll('.inf-card'));
-    var search = document.getElementById('inf-search-input');
-    var empty  = document.getElementById('inf-empty-filter');
-    if (!cards.length) return;
+    /* Filtro por pestañas + búsqueda, en una sola pasada: si cada uno ocultara
+       por su cuenta, el segundo volvería a mostrar lo que el primero escondió. */
+    var tabs   = document.querySelectorAll('.exp-tab');
+    var filas  = Array.prototype.slice.call(document.querySelectorAll('.exp-fila'));
+    var anios  = Array.prototype.slice.call(document.querySelectorAll('.exp-anio'));
+    var search = document.getElementById('exp-search-input');
+    var empty  = document.getElementById('exp-empty-filter');
+    var tabla  = document.querySelector('.exp-tabla-wrap');
+    if (!filas.length) return;
 
-    var filtroEstado = 'todos';
+    var filtro = 'todos';
 
     function aplicar() {
         var q = (search && search.value || '').trim().toLowerCase();
         var visibles = 0;
-        cards.forEach(function (c) {
-            var okEstado = (filtroEstado === 'todos' || c.getAttribute('data-estado') === filtroEstado);
-            var okBusca  = (!q || (c.getAttribute('data-search') || '').indexOf(q) !== -1);
+        filas.forEach(function (f) {
+            var okEstado = (filtro === 'todos' || f.getAttribute('data-estado') === filtro);
+            var okBusca  = (!q || (f.getAttribute('data-search') || '').indexOf(q) !== -1);
             var show = okEstado && okBusca;
-            c.style.display = show ? '' : 'none';
+            f.style.display = show ? '' : 'none';
             if (show) visibles++;
         });
+
+        /* Un año sin filas visibles no debe dejar su separador suelto. */
+        anios.forEach(function (a) {
+            var hay = false;
+            var n = a.nextElementSibling;
+            while (n && !n.classList.contains('exp-anio')) {
+                if (n.classList.contains('exp-fila') && n.style.display !== 'none') { hay = true; break; }
+                n = n.nextElementSibling;
+            }
+            a.style.display = hay ? '' : 'none';
+        });
+
         if (empty) empty.style.display = (visibles === 0) ? '' : 'none';
+        if (tabla) tabla.style.display = (visibles === 0) ? 'none' : '';
     }
 
     tabs.forEach(function (tab) {
         tab.addEventListener('click', function () {
             tabs.forEach(function (t) { t.classList.remove('is-active'); });
             tab.classList.add('is-active');
-            filtroEstado = tab.getAttribute('data-filter');
+            filtro = tab.getAttribute('data-filter');
             aplicar();
         });
     });
@@ -366,7 +355,7 @@ $page_scripts_extra = <<<'HTML'
     });
 
     document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.inf-btn[data-informe-id]');
+        var btn = e.target.closest('.exp-btn[data-informe-id]');
         if (!btn) return;
         e.preventDefault();
         var id = btn.getAttribute('data-informe-id');

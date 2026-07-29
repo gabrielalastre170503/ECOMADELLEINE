@@ -151,7 +151,7 @@ ob_start();
 
     <!-- Contacto -->
     <aside>
-        <div class="card" style="background:linear-gradient(135deg,var(--accent-soft),var(--bg-surface));">
+        <div class="card">
             <h3 class="ah-card-title"><i class="fa-solid fa-address-book"></i> Contacto directo</h3>
 
             <div class="ah-contact__row">

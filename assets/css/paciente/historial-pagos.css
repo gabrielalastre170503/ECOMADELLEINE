@@ -1,0 +1,336 @@
+/* =====================================================================
+   Mi Historial de Pagos — Paciente
+
+   Esto NO es una lista de tarjetas como "Mis Citas": es un extracto de
+   cuenta. La forma que le corresponde es un estado de cuenta arriba y un
+   listado de movimientos agrupado por mes debajo, con los importes en
+   columna y alineados a la derecha.
+
+   Regla de los números: todo importe lleva tabular-nums y va alineado a la
+   derecha. Es lo único que permite comparar cantidades de un vistazo
+   recorriendo la columna hacia abajo.
+   ===================================================================== */
+
+.pg {
+    --pg-ok:    #0369a1;  /* cobrado   */
+    --pg-debe:  #b45309;  /* pendiente */
+    --pg-tinta: #0369a1;
+}
+
+[data-theme="dark"] .pg {
+    --pg-ok:    #7dd3fc;
+    --pg-debe:  #fbbf24;
+    --pg-tinta: #7dd3fc;
+}
+
+/* ── Estado de cuenta ────────────────────────────────────────────── */
+.pg-cuenta {
+    display: flex;
+    align-items: stretch;
+    gap: 28px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 22px 26px;
+}
+
+.pg-cuenta__saldo {
+    flex-shrink: 0;
+    min-width: 190px;
+    padding-right: 28px;
+    border-right: 1px solid var(--border);
+}
+
+.pg-cuenta__label {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--text-muted);
+}
+
+/* La cifra que de verdad importa: lo que el paciente debe. */
+.pg-cuenta__cifra {
+    margin: 0;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    color: var(--pg-debe);
+}
+
+.pg-cuenta__cifra--aldia { color: var(--pg-ok); }
+
+.pg-cuenta__nota {
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+}
+
+.pg-cuenta__detalle { flex: 1; min-width: 260px; display: flex; flex-direction: column; justify-content: center; }
+
+.pg-cuenta__lineas {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 9px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+}
+
+.pg-cuenta__lineas strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.pg-cuenta__lineas span:last-child { text-align: right; }
+
+/* Cuánto del total ya está cobrado. Una barra dice en un golpe de vista lo
+   que dos cifras sueltas obligan a comparar mentalmente. */
+.pg-barra {
+    height: 9px;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    overflow: hidden;
+}
+
+.pg-barra__relleno {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), #38bdf8);
+    transition: width .4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pg-barra__relleno { transition: none; }
+}
+
+.pg-cuenta__pie { margin: 9px 0 0; font-size: 12px; color: var(--text-muted); }
+
+/* ── Aviso de cobro de más ───────────────────────────────────────── */
+.pg-aviso {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 13px 18px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 158, 11, .08);
+    border: 1px solid rgba(245, 158, 11, .3);
+}
+
+.pg-aviso i { color: var(--pg-debe); font-size: 17px; }
+.pg-aviso p { margin: 0; font-size: 13px; color: var(--text-secondary); }
+.pg-aviso strong { color: var(--text-primary); }
+
+/* ── Barra de filtros ────────────────────────────────────────────── */
+.pg-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.pg-search { position: relative; flex: 1; min-width: 210px; max-width: 320px; }
+
+.pg-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.pg-search input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.pg-search input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(2, 177, 244, .12);
+}
+
+.pg-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.pg-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+
+.pg-tab:hover { color: var(--text-primary); border-color: rgba(2, 177, 244, .35); }
+.pg-tab.is-active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.pg-tab-count {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+}
+
+.pg-tab.is-active .pg-tab-count { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* ── Extracto ────────────────────────────────────────────────────── */
+/* La tabla se desplaza dentro de su caja: el cuerpo de la página nunca
+   debe moverse en horizontal. */
+.pg-tabla-wrap { overflow-x: auto; margin: 0 -4px; }
+
+.pg-tabla {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pg-tabla thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.pg-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Cabecera de mes: separa el extracto en periodos y lleva su subtotal. */
+.pg-mes td {
+    padding: 16px 12px 7px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.pg-mes__fila { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+
+.pg-mes__nombre {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+    color: var(--text-secondary);
+}
+
+.pg-mes__total {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.pg-fila td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+}
+
+.pg-fila:hover { background: var(--bg-muted); }
+
+.pg-fecha { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.pg-concepto { font-weight: 600; color: var(--text-primary); }
+
+.pg-concepto__extra {
+    display: block;
+    margin-top: 3px;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+/* El método de pago como sello, igual que en un recibo. */
+.pg-metodo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-soft);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.pg-metodo i { font-size: 10px; opacity: .7; }
+
+.pg-importe { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+.pg-saldo {
+    display: block;
+    margin-top: 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--pg-debe);
+    font-variant-numeric: tabular-nums;
+}
+
+.pg-estado {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: rgba(148, 163, 184, .16);
+    color: var(--text-muted);
+}
+
+.pg-estado--pagado   { background: rgba(2, 132, 199, .12);  color: var(--pg-ok); }
+.pg-estado--debe     { background: rgba(245, 158, 11, .14); color: var(--pg-debe); }
+.pg-estado--exceso   { background: rgba(245, 158, 11, .14); color: var(--pg-debe); }
+
+/* Una cita cancelada queda en el extracto como constancia, pero atenuada:
+   no se cobró y no debe competir visualmente con lo que sí cuenta. */
+.pg-fila--anulada .pg-concepto,
+.pg-fila--anulada .pg-importe { color: var(--text-muted); }
+.pg-fila--anulada .pg-importe { text-decoration: line-through; }
+
+.pg-vacio { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+.pg-vacio > i { font-size: 42px; color: var(--accent); opacity: .5; margin-bottom: 14px; display: block; }
+
+/* ── Pantallas estrechas ─────────────────────────────────────────── */
+@media (max-width: 760px) {
+    .pg-cuenta__saldo {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding-right: 0;
+        padding-bottom: 16px;
+        width: 100%;
+    }
+    .pg-cuenta { gap: 16px; }
+}

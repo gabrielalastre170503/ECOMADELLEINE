@@ -298,7 +298,7 @@ elseif ($rol === 'paciente'):
 ?>
 
 <!-- Hero de bienvenida -->
-<div class="card" style="margin-bottom:18px;background:linear-gradient(135deg,var(--accent-soft),var(--bg-surface));border:1px solid rgba(2,177,244,.2);">
+<div class="card" style="margin-bottom:18px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
         <div>
             <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:var(--text-primary);">Hola, <?= htmlspecialchars($primer_nombre) ?> 👋</h2>
@@ -351,9 +351,12 @@ elseif ($rol === 'paciente'):
         ['ecografistas',   'fa-solid fa-user-doctor',      'Ecografistas'],
         ['faq',            'fa-solid fa-circle-question',  'Preguntas'],
         ['ayuda',          'fa-solid fa-life-ring',        'Ayuda'],
+        ['mis-pagos',      'fa-solid fa-receipt',          'Pagos'],
     ];
+    // eco_url() y no la ruta suelta: en relativo el navegador la resolvería
+    // contra la página actual, que hoy funciona por casualidad.
     foreach ($accesos as $a): ?>
-        <a href="<?= $a[0] ?>" class="card" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:16px;">
+        <a href="<?= eco_url($a[0]) ?>" class="card" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:16px;">
             <span style="width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent-text);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="<?= $a[1] ?>"></i></span>
             <strong style="font-size:13.5px;color:var(--text-primary);"><?= $a[2] ?></strong>
         </a>
@@ -373,7 +376,9 @@ elseif ($rol === 'paciente'):
         $f   = $raw ? date('d/m/Y', strtotime($raw)) : '—';
     ?>
         <a href="<?= eco_url('informe/' . (int)$inf['id']) ?>" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:12px 6px;<?= $i > 0 ? 'border-top:1px solid var(--border-soft);' : '' ?>text-decoration:none;color:inherit;">
-            <span style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#38bdf8);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="<?= htmlspecialchars($inf['tipo_icono'] ?: 'fa-solid fa-wave-square', ENT_QUOTES) ?>"></i></span>
+            <!-- Plano y en tono suave, como los accesos rápidos: el bloque de
+                 color macizo pesaba más que el propio nombre del estudio. -->
+            <span style="width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent-text);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="<?= htmlspecialchars($inf['tipo_icono'] ?: 'fa-solid fa-wave-square', ENT_QUOTES) ?>"></i></span>
             <span style="flex:1;min-width:0;">
                 <strong style="display:block;font-size:13.5px;color:var(--text-primary);"><?= htmlspecialchars($inf['tipo_nombre'] ?: 'Ecografía') ?></strong>
                 <small style="color:var(--text-secondary);"><?= htmlspecialchars($f) ?> · <?= htmlspecialchars($inf['ecografista_nombre'] ?: '—') ?></small>
@@ -428,6 +433,18 @@ fetch((window.ECO_BASE || '') + 'api/get_patient_chart_data.php').then(r => r.js
    =================================================================== */
 elseif ($rol === 'recepcionista'):
 
+    require_once __DIR__ . '/../lib/panel/metricas_recepcion.php';
+
+    $rx_dias      = 14;
+    $rx_serie     = eco_panel_rx_serie_diaria($conex, $rx_dias);
+    $rx_tot       = eco_panel_rx_totales($conex);
+    $rx_por_edad  = eco_panel_rx_por_edad($conex);
+
+    /** Altura de barra en %, con el máximo de la serie como tope. */
+    $rx_pct = static function (float $v, float $max): float {
+        return $max > 0 ? round(($v / $max) * 100, 2) : 0.0;
+    };
+
     $total_pendientes = $citas_hoy_rx = $pacientes_activos = $eco_activos = $nuevas_hoy = 0;
 
     if ($r = $conex->query("SELECT COUNT(*) c FROM citas WHERE estado = 'pendiente'")) {
@@ -479,107 +496,251 @@ elseif ($rol === 'recepcionista'):
     }
 ?>
 
-<div class="stats-grid">
-    <a href="<?= eco_url('citas-pendientes') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
-        <div class="stat-card-icon" style="background:rgba(245,158,11,.12);color:#b45309;"><i class="fa-solid fa-inbox"></i></div>
-        <p class="stat-card-label">Citas pendientes</p>
-        <p class="stat-card-value warning"><?= number_format($total_pendientes) ?></p>
-        <p class="stat-card-sub">Por asignar</p>
-    </a>
+<div class="rxp">
+
+<?php
+$rx_max_pac = (float)max(array_column($rx_serie, 'pacientes') ?: [0]);
+$rx_max_cob = (float)max(array_column($rx_serie, 'cobrado') ?: [0]);
+$rx_sum_pac = array_sum(array_column($rx_serie, 'pacientes'));
+$rx_sum_cob = array_sum(array_column($rx_serie, 'cobrado'));
+// Mismo formato de fecha que el saludo del ecografista.
+$rx_meses = [1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',
+             7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'];
+$rx_hoy_txt = (int)date('d') . ' de ' . $rx_meses[(int)date('n')];
+?>
+
+<div class="card rxp-hero">
+    <div>
+        <h2>Hola, <?= htmlspecialchars($primer_nombre) ?> 👋</h2>
+        <p>Hoy es <?= htmlspecialchars($rx_hoy_txt) ?>.
+           <?= $citas_hoy_rx > 0
+                ? 'Hay <strong style="color:var(--accent-text);">' . (int)$citas_hoy_rx . '</strong> cita' . ($citas_hoy_rx === 1 ? '' : 's') . ' confirmada' . ($citas_hoy_rx === 1 ? '' : 's') . ' para hoy'
+                : 'No hay citas confirmadas para hoy' ?><?= $total_pendientes > 0
+                ? ' y <strong style="color:#b45309;">' . (int)$total_pendientes . '</strong> solicitud' . ($total_pendientes === 1 ? '' : 'es') . ' por asignar.'
+                : '.' ?></p>
+    </div>
+    <a href="<?= eco_url('agenda') ?>" class="btn-primary" style="white-space:nowrap;"><i class="fa-solid fa-calendar-days"></i> Agenda general</a>
+</div>
+
+<div class="rxp-kpis">
     <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(34,197,94,.12);color:#15803d;"><i class="fa-solid fa-calendar-day"></i></div>
-        <p class="stat-card-label">Citas hoy</p>
-        <p class="stat-card-value success"><?= number_format($citas_hoy_rx) ?></p>
-        <p class="stat-card-sub">Confirmadas / reprogramadas</p>
+        <div class="stat-card-icon" style="background:rgba(2,132,199,.12);color:#0284c7;"><i class="fa-solid fa-user-check"></i></div>
+        <p class="stat-card-label">Atendidos hoy</p>
+        <p class="stat-card-value" style="color:#0284c7;"><?= number_format($rx_tot['hoy_pacientes']) ?></p>
+        <p class="stat-card-sub"><?= number_format($rx_tot['mes_pacientes']) ?> en lo que va de mes</p>
     </div>
     <div class="stat-card">
+        <div class="stat-card-icon" style="background:rgba(21,128,61,.12);color:#15803d;"><i class="fa-solid fa-money-bill-wave"></i></div>
+        <p class="stat-card-label">Cobrado hoy</p>
+        <p class="stat-card-value" style="color:#15803d;"><?= htmlspecialchars(eco_money($rx_tot['hoy_cobrado'])) ?></p>
+        <p class="stat-card-sub"><?= htmlspecialchars(eco_money($rx_tot['mes_cobrado'])) ?> en lo que va de mes</p>
+    </div>
+    <a href="<?= eco_url('citas-pendientes') ?>" class="stat-card">
+        <div class="stat-card-icon" style="background:rgba(245,158,11,.14);color:#b45309;"><i class="fa-solid fa-inbox"></i></div>
+        <p class="stat-card-label">Citas pendientes</p>
+        <p class="stat-card-value warning"><?= number_format($total_pendientes) ?></p>
+        <p class="stat-card-sub">Por asignar · <?= (int)$nuevas_hoy ?> nuevas en 24 h</p>
+    </a>
+    <a href="<?= eco_url('gestion-pacientes') ?>" class="stat-card">
         <div class="stat-card-icon" style="background:rgba(99,102,241,.12);color:#4338ca;"><i class="fa-solid fa-users"></i></div>
         <p class="stat-card-label">Pacientes activos</p>
         <p class="stat-card-value" style="color:#4338ca;"><?= number_format($pacientes_activos) ?></p>
-        <p class="stat-card-sub">Cuentas aprobadas</p>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card-icon" style="background:rgba(249,115,22,.12);color:#c2410c;"><i class="fa-solid fa-user-doctor"></i></div>
-        <p class="stat-card-label">Ecografistas</p>
-        <p class="stat-card-value warning"><?= number_format($eco_activos) ?></p>
-        <p class="stat-card-sub">Equipo disponible</p>
-    </div>
+        <p class="stat-card-sub"><?= (int)$citas_hoy_rx ?> citas hoy · <?= (int)$eco_activos ?> ecografistas</p>
+    </a>
 </div>
 
-<p style="font-size:12.5px;color:var(--text-muted);margin:-6px 0 14px;"><i class="fa-solid fa-bolt" style="color:var(--accent);"></i> <?= (int)$nuevas_hoy ?> solicitudes nuevas en las últimas 24 h</p>
+<div class="rxp-grid">
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;">
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fa-solid fa-calendar-check" style="color:var(--accent);margin-right:6px;"></i> Agenda de hoy</h3>
-            <a href="<?= eco_url('agenda') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Calendario completo →</a>
+    <?php /* Dos gráficos separados, no un doble eje: son magnitudes distintas. */ ?>
+    <section class="card">
+        <div class="rxp-card__head">
+            <h3 class="rxp-card__title">Atendidos por día</h3>
+            <span class="rxp-card__meta"><?= $rx_dias ?> días · <?= number_format($rx_sum_pac) ?></span>
         </div>
-        <?php if (empty($agenda_hoy)): ?>
-            <p style="color:var(--text-muted);margin:0;font-size:13.5px;">No hay citas confirmadas para hoy.</p>
+        <p class="rxp-card__note">Pacientes distintos con cita no cancelada.</p>
+        <?php if ($rx_sum_pac === 0): ?>
+            <p class="viz-vacio">Sin atenciones en este periodo.</p>
         <?php else: ?>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-                <?php foreach ($agenda_hoy as $row):
-                    $hora = !empty($row['fecha_cita']) ? date('h:i A', strtotime($row['fecha_cita'])) : '—';
-                    $mot = isset($row['motivo_consulta']) ? trim((string)$row['motivo_consulta']) : '';
-                    if (strlen($mot) > 90) {
-                        $mot = substr($mot, 0, 87) . '…';
-                    }
-                    $mot = $mot !== '' ? $mot : 'Sin motivo';
+            <div class="viz-cols" role="img"
+                 aria-label="Pacientes atendidos por día en los últimos <?= $rx_dias ?> días. Total <?= $rx_sum_pac ?>. Máximo diario <?= (int)$rx_max_pac ?>.">
+                <?php $rx_pico_pac = false; foreach ($rx_serie as $p):
+                    $esPico = !$rx_pico_pac && $p['pacientes'] > 0 && (float)$p['pacientes'] === $rx_max_pac;
+                    if ($esPico) { $rx_pico_pac = true; }
                 ?>
-                    <div style="padding:10px 12px;border:1px solid var(--border-soft);border-radius:10px;">
-                        <div style="font-size:12px;font-weight:700;color:var(--accent-text);"><?= htmlspecialchars($hora) ?></div>
-                        <strong style="font-size:13.5px;color:var(--text-primary);"><?= htmlspecialchars($row['paciente_nombre'] ?? '') ?></strong>
-                        <div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;"><?= htmlspecialchars($mot) ?></div>
-                        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;"><i class="fa-solid fa-user-doctor"></i> <?= htmlspecialchars($row['profesional_nombre'] ?? 'Por asignar') ?></div>
+                    <div class="viz-col" tabindex="0"
+                         aria-label="<?= htmlspecialchars($p['etiqueta']) ?>: <?= (int)$p['pacientes'] ?> paciente<?= $p['pacientes'] === 1 ? '' : 's' ?>">
+                        <span class="viz-col__tip"><?= htmlspecialchars($p['etiqueta']) ?> · <?= (int)$p['pacientes'] ?></span>
+                        <?php if ($esPico): ?><span class="viz-col__pico"><?= (int)$p['pacientes'] ?></span><?php endif; ?>
+                        <span class="viz-col__bar" style="height:<?= $rx_pct((float)$p['pacientes'], $rx_max_pac) ?>%;"></span>
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div class="viz-xaxis" aria-hidden="true">
+                <?php foreach ($rx_serie as $i => $p): ?>
+                    <span><?= ($i % 3 === 0 || $i === count($rx_serie) - 1) ? htmlspecialchars($p['etiqueta']) : '' ?></span>
+                <?php endforeach; ?>
+            </div>
+            <details class="viz-tabla">
+                <summary>Ver datos</summary>
+                <table>
+                    <thead><tr><th scope="col">Día</th><th scope="col">Pacientes</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($rx_serie as $p): ?>
+                            <tr><td><?= htmlspecialchars($p['etiqueta']) ?></td><td><?= (int)$p['pacientes'] ?></td></tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </details>
         <?php endif; ?>
-    </div>
+    </section>
 
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fa-solid fa-paper-plane" style="color:#6366f1;margin-right:6px;"></i> Solicitudes recientes</h3>
-            <a href="<?= eco_url('citas-pendientes') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Ver todas →</a>
+    <section class="card">
+        <div class="rxp-card__head">
+            <h3 class="rxp-card__title">Cobrado por día</h3>
+            <span class="rxp-card__meta"><?= $rx_dias ?> días · <?= htmlspecialchars(eco_money($rx_sum_cob)) ?></span>
         </div>
-        <?php if (empty($solicitudes_recientes)): ?>
-            <p style="color:var(--text-muted);margin:0;font-size:13.5px;">No hay solicitudes pendientes.</p>
+        <p class="rxp-card__note">Dinero recibido, no facturado. Pendiente: <?= htmlspecialchars(eco_money($rx_tot['pendiente'])) ?>.</p>
+        <?php if ($rx_sum_cob <= 0): ?>
+            <p class="viz-vacio">Sin cobros en este periodo.</p>
         <?php else: ?>
-            <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+            <div class="viz-cols" role="img"
+                 aria-label="Dinero cobrado por día en los últimos <?= $rx_dias ?> días. Total <?= htmlspecialchars(eco_money($rx_sum_cob)) ?>.">
+                <?php $rx_pico_cob = false; foreach ($rx_serie as $p):
+                    $esPico = !$rx_pico_cob && $p['cobrado'] > 0 && (float)$p['cobrado'] === $rx_max_cob;
+                    if ($esPico) { $rx_pico_cob = true; }
+                ?>
+                    <div class="viz-col viz-col--money" tabindex="0"
+                         aria-label="<?= htmlspecialchars($p['etiqueta']) ?>: <?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?>">
+                        <span class="viz-col__tip"><?= htmlspecialchars($p['etiqueta']) ?> · <?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?></span>
+                        <?php if ($esPico): ?><span class="viz-col__pico"><?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?></span><?php endif; ?>
+                        <span class="viz-col__bar" style="height:<?= $rx_pct((float)$p['cobrado'], $rx_max_cob) ?>%;"></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="viz-xaxis" aria-hidden="true">
+                <?php foreach ($rx_serie as $i => $p): ?>
+                    <span><?= ($i % 3 === 0 || $i === count($rx_serie) - 1) ? htmlspecialchars($p['etiqueta']) : '' ?></span>
+                <?php endforeach; ?>
+            </div>
+            <details class="viz-tabla">
+                <summary>Ver datos</summary>
+                <table>
+                    <thead><tr><th scope="col">Día</th><th scope="col">Cobrado</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($rx_serie as $p): ?>
+                            <tr><td><?= htmlspecialchars($p['etiqueta']) ?></td><td><?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?></td></tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </details>
+        <?php endif; ?>
+    </section>
+
+    <section class="card">
+        <div class="rxp-card__head">
+            <h3 class="rxp-card__title">Agenda de hoy</h3>
+            <a href="<?= eco_url('agenda') ?>" class="rxp-card__link">Calendario →</a>
+        </div>
+        <p class="rxp-card__note">Citas confirmadas o reprogramadas.</p>
+        <?php if (empty($agenda_hoy)): ?>
+            <p class="viz-vacio">No hay citas confirmadas para hoy.</p>
+        <?php else: ?>
+            <ul class="rxp-lista">
+                <?php foreach ($agenda_hoy as $row):
+                    $hora = !empty($row['fecha_cita']) ? date('h:i A', strtotime($row['fecha_cita'])) : '—';
+                ?>
+                    <li class="rxp-item">
+                        <span class="rxp-item__meta"><?= htmlspecialchars($hora) ?></span>
+                        <span class="rxp-item__nombre"><?= htmlspecialchars($row['paciente_nombre'] ?? '') ?></span>
+                        <span class="rxp-item__extra"><i class="fa-solid fa-user-doctor"></i> <?= htmlspecialchars($row['profesional_nombre'] ?? 'Por asignar') ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </section>
+
+    <section class="card">
+        <div class="rxp-card__head">
+            <h3 class="rxp-card__title">Por edad</h3>
+            <span class="rxp-card__meta"><?= number_format($rx_por_edad['total'] - $rx_por_edad['sin_fecha']) ?> pacientes</span>
+        </div>
+        <p class="rxp-card__note">
+            <?php if ($rx_por_edad['sin_fecha'] > 0): ?>
+                <?= number_format($rx_por_edad['sin_fecha']) ?> de <?= number_format($rx_por_edad['total']) ?> sin fecha de nacimiento.
+            <?php else: ?>
+                Todos con fecha de nacimiento registrada.
+            <?php endif; ?>
+        </p>
+        <?php
+        $rx_edad_total = array_sum(array_column($rx_por_edad['filas'], 'n'));
+        if ($rx_edad_total === 0): ?>
+            <p class="viz-vacio">Sin fechas de nacimiento registradas.</p>
+        <?php else:
+            $rx_max_edad = (float)max(array_column($rx_por_edad['filas'], 'n')); ?>
+            <div class="viz-cols" role="img"
+                 aria-label="Pacientes por rango de edad, sobre <?= $rx_edad_total ?> con fecha registrada.">
+                <?php $rx_pico_edad = false; foreach ($rx_por_edad['filas'] as $f):
+                    $esPico = !$rx_pico_edad && $f['n'] > 0 && (float)$f['n'] === $rx_max_edad;
+                    if ($esPico) { $rx_pico_edad = true; }
+                ?>
+                    <div class="viz-col" tabindex="0"
+                         aria-label="<?= htmlspecialchars($f['rango']) ?> años: <?= (int)$f['n'] ?> paciente<?= $f['n'] === 1 ? '' : 's' ?>">
+                        <span class="viz-col__tip"><?= htmlspecialchars($f['rango']) ?> años · <?= (int)$f['n'] ?></span>
+                        <?php if ($esPico): ?><span class="viz-col__pico"><?= (int)$f['n'] ?></span><?php endif; ?>
+                        <span class="viz-col__bar" style="height:<?= $rx_pct((float)$f['n'], $rx_max_edad) ?>%;"></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="viz-xaxis" aria-hidden="true">
+                <?php foreach ($rx_por_edad['filas'] as $f): ?>
+                    <span><?= htmlspecialchars($f['rango']) ?></span>
+                <?php endforeach; ?>
+            </div>
+            <details class="viz-tabla">
+                <summary>Ver datos</summary>
+                <table>
+                    <thead><tr><th scope="col">Edad</th><th scope="col">Pacientes</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($rx_por_edad['filas'] as $f): ?>
+                            <tr><td><?= htmlspecialchars($f['rango']) ?> años</td><td><?= (int)$f['n'] ?></td></tr>
+                        <?php endforeach; ?>
+                        <?php if ($rx_por_edad['sin_fecha'] > 0): ?>
+                            <tr><td>Sin registrar</td><td><?= (int)$rx_por_edad['sin_fecha'] ?></td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </details>
+        <?php endif; ?>
+    </section>
+
+    <?php /* Ocupa dos columnas: sin el gráfico de tipos la fila quedaba coja,
+             y aquí el ancho extra sirve (los correos son largos). */ ?>
+    <section class="card rxp-ancho">
+        <div class="rxp-card__head">
+            <h3 class="rxp-card__title">Solicitudes recientes</h3>
+            <a href="<?= eco_url('citas-pendientes') ?>" class="rxp-card__link">Ver todas →</a>
+        </div>
+        <p class="rxp-card__note">Pendientes de asignar ecografista.</p>
+        <?php if (empty($solicitudes_recientes)): ?>
+            <p class="viz-vacio">No hay solicitudes pendientes.</p>
+        <?php else: ?>
+            <ul class="rxp-lista">
                 <?php foreach ($solicitudes_recientes as $sol):
                     $fs = !empty($sol['fecha_solicitud']) ? date('d/m H:i', strtotime($sol['fecha_solicitud'])) : '—';
                 ?>
-                    <li style="padding:10px 12px;border-radius:10px;background:var(--bg-muted);border:1px solid var(--border-soft);">
-                        <div style="font-size:11px;color:var(--text-muted);"><?= htmlspecialchars($fs) ?></div>
-                        <strong style="font-size:13px;color:var(--text-primary);"><?= htmlspecialchars($sol['paciente_nombre'] ?? '') ?></strong>
-                        <div style="font-size:12px;color:var(--text-secondary);"><?= htmlspecialchars($sol['correo'] ?? '') ?></div>
+                    <li class="rxp-item">
+                        <span class="rxp-item__meta"><?= htmlspecialchars($fs) ?></span>
+                        <span class="rxp-item__nombre"><?= htmlspecialchars($sol['paciente_nombre'] ?? '') ?></span>
+                        <span class="rxp-item__extra"><?= htmlspecialchars($sol['correo'] ?? '') ?></span>
                     </li>
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
-    </div>
+    </section>
 
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fa-solid fa-user-plus" style="color:#15803d;margin-right:6px;"></i> Pacientes recientes</h3>
-            <a href="<?= eco_url('gestion-pacientes') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Gestión →</a>
-        </div>
-        <?php if (empty($pacientes_recientes)): ?>
-            <p style="color:var(--text-muted);margin:0;font-size:13.5px;">Sin registros recientes.</p>
-        <?php else: ?>
-            <ul style="margin:0;padding:0;list-style:none;">
-                <?php foreach ($pacientes_recientes as $px):
-                    $fr = !empty($px['fecha_registro']) ? date('d/m', strtotime($px['fecha_registro'])) : '—';
-                ?>
-                    <li style="padding:8px 0;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;gap:10px;align-items:center;">
-                        <span style="font-weight:600;font-size:13.5px;color:var(--text-primary);"><?= htmlspecialchars($px['nombre_completo'] ?? '') ?></span>
-                        <span style="font-size:12px;color:var(--text-muted);"><?= htmlspecialchars($fr) ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-    </div>
 </div>
+
+</div><!-- /.rxp -->
 
 <?php
 /* ===================================================================
@@ -606,6 +767,9 @@ if ($rol === 'administrador') {
 
     $page_scripts_extra = ($admin_kpi_modals_html ?? '')
         . '<script src="assets/js/admin/admin-dashboard-modals.js"></script>';
+} elseif ($rol === 'recepcionista') {
+    // ?v=auto lo resuelve shell.php con filemtime.
+    $page_head_extra = '<link rel="stylesheet" href="assets/css/panel/panel-recepcion.css?v=auto">';
 }
 
 include __DIR__ . '/../layouts/shell.php';
