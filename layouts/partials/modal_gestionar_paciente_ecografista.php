@@ -157,7 +157,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 </div>
 
 <div id="eco-modal-notas-paciente-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-modal-notas-eco-title">
-    <div class="eco-modal__dialog ns-dialog" style="max-width:660px;width:100%;">
+    <div class="eco-modal__dialog eco-modal__dialog--wide ns-dialog">
         <div class="eco-modal__main ns-main">
             <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 

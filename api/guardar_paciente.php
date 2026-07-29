@@ -3,11 +3,18 @@ session_start();
 require_once __DIR__ . '/../lib/core/api.php';
 include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/seguridad/seguridad.php';
+require_once __DIR__ . '/../lib/facturacion/facturacion.php';
+require_once __DIR__ . '/../lib/citas/citas.php';
+require_once __DIR__ . '/../lib/citas/atencion.php';
+require_once __DIR__ . '/../lib/comunicaciones/notificaciones.php';
 
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];
 
 api_require_roles(['ecografista', 'administrador', 'recepcionista']);
+
+/* eco_crear_cita_de_alta() vive en lib/citas/atencion.php: la comparten esta
+   alta rápida y el alta extendida. */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode($response);
@@ -69,11 +76,23 @@ $insert = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimien
 $insert->bind_param("sssssssssii", $nombre, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hash, $rol, $estado, $email_verificado, $creado_por_id);
 
 if ($insert->execute()) {
-    eco_auditar($conex, 'paciente_creado', ['entidad' => 'usuario', 'entidad_id' => $insert->insert_id, 'detalle' => ['correo' => $correo]]);
+    $paciente_id = (int)$insert->insert_id;
+    eco_auditar($conex, 'paciente_creado', ['entidad' => 'usuario', 'entidad_id' => $paciente_id, 'detalle' => ['correo' => $correo]]);
     $response['success']  = true;
     $response['message']  = 'Paciente creado con exito.';
     $response['nombre']   = $nombre;
     $response['password'] = $contrasena_temporal;
+
+    // Recepción puede dejar asentado en el mismo paso el servicio que viene a
+    // hacerse el paciente. Eso crea la cita, y la cita es lo que hace aparecer
+    // al paciente en "Mis Pacientes" del ecografista asignado.
+    // El bloque de servicio solo lo muestra el formulario de recepción.
+    $cita = (($_SESSION['rol'] ?? '') === 'recepcionista')
+        ? eco_crear_cita_de_alta($conex, $paciente_id, $_POST)
+        : null;
+    if ($cita !== null) {
+        $response['cita'] = $cita;
+    }
 } else {
     // FIX SEGURIDAD: log interno + mensaje genérico; detecta duplicado (correo/cédula).
     error_log('guardar_paciente: ' . $insert->error);

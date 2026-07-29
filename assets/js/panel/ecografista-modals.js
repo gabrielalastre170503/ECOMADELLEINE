@@ -2212,6 +2212,67 @@
             });
     };
 
+    /* --- Estudios, servicios y total de "Nueva cita" ---
+       El total lo calcula el servidor: precios y promociones viven en
+       lib/facturacion y no se duplican aqui. */
+    var _ecoProgMontoManual = false;
+
+    function ecoProgRecalcular() {
+        var resumenEl = byId('eco-prog-estudios-resumen');
+        var notaEl = byId('eco-prog-monto-sugerido');
+        var montoEl = byId('eco-prog-monto');
+        if (!resumenEl && !montoEl) return;
+
+        var tipos = [], nombres = [], servicios = [];
+        document.querySelectorAll('[data-ecop-estudio]:checked').forEach(function (c) {
+            tipos.push(parseInt(c.value, 10));
+            var txt = c.parentElement.querySelector('.mcp-opcion__nombre');
+            if (txt) nombres.push(txt.textContent.trim());
+        });
+        document.querySelectorAll('[data-ecop-servicio]:checked').forEach(function (c) {
+            servicios.push(c.value);
+        });
+
+        if (resumenEl) {
+            resumenEl.textContent = nombres.length
+                ? nombres.length + (nombres.length === 1 ? ' ecografía: ' : ' ecografías: ') + nombres.join(', ')
+                : 'Ninguna seleccionada.';
+        }
+
+        if (!tipos.length && !servicios.length) {
+            if (notaEl) notaEl.textContent = 'Se calcula solo al elegir estudios y servicios. Puedes cambiarlo.';
+            if (montoEl && !_ecoProgMontoManual) montoEl.value = '';
+            return;
+        }
+
+        fetch((window.ECO_BASE || '') + 'api/calcular_total_servicios.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipos_ecografia: tipos, servicios: servicios })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (!res || !res.success) return;
+            if (montoEl && !_ecoProgMontoManual) montoEl.value = res.total > 0 ? res.total.toFixed(2) : '';
+            if (notaEl) {
+                notaEl.textContent = 'Sugerido: ' + res.total_texto
+                    + (res.promos && res.promos.length ? ' · ' + res.promos.join(' · ') : '')
+                    + (_ecoProgMontoManual ? ' (monto modificado a mano)' : '');
+            }
+        })
+        .catch(function () {
+            if (notaEl) notaEl.textContent = 'No se pudo calcular el total. Escribe el monto a mano.';
+        });
+    }
+
+    document.querySelectorAll('[data-ecop-estudio], [data-ecop-servicio]').forEach(function (c) {
+        c.addEventListener('change', ecoProgRecalcular);
+    });
+    var _ecoProgMontoEl = byId('eco-prog-monto');
+    if (_ecoProgMontoEl) {
+        _ecoProgMontoEl.addEventListener('input', function () { _ecoProgMontoManual = true; });
+    }
+
     window.abrirProgramarCitaEco = function (pacienteId, pacienteNombre, opts) {
         opts = opts || {};
         if (!window.EcoModal) return;
@@ -2237,6 +2298,8 @@
         idInp.value = pacienteId;
         nameEl.textContent = pacienteNombre || '—';
         setError('eco-prog-cita-error', '');
+        _ecoProgMontoManual = false;
+        ecoProgRecalcular();
 
         EcoModal.open('eco-modal-programar-cita-eco');
 

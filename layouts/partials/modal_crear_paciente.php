@@ -9,6 +9,29 @@ if (!isset($conex) || !($conex instanceof mysqli)) {
     return;
 }
 $rol_modal = $_SESSION['rol'] ?? '';
+
+/* Recepción registra al paciente y, en el mismo paso, deja asentado el servicio
+   que viene a hacerse: estudio, servicios adicionales, ecografista y cobro.
+   Eso crea una cita, que es lo que hace aparecer al paciente en "Mis Pacientes"
+   del ecografista asignado. */
+$mcp_con_servicio = ($rol_modal === 'recepcionista');
+$mcp_ecografistas = [];
+$mcp_tipos        = [];
+$mcp_servicios    = [];
+$mcp_metodos      = [];
+if ($mcp_con_servicio) {
+    require_once __DIR__ . '/../../lib/informes/catalogo.php';
+    require_once __DIR__ . '/../../lib/facturacion/facturacion.php';
+    if ($q = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado' ORDER BY nombre_completo ASC")) {
+        while ($row = $q->fetch_assoc()) {
+            $mcp_ecografistas[] = $row;
+        }
+        $q->free();
+    }
+    $mcp_tipos     = eco_catalogo_tipos_activos($conex);
+    $mcp_servicios = eco_servicios_adicionales();
+    $mcp_metodos   = eco_metodos_pago();
+}
 ?>
 <div id="eco-modal-crear-paciente" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-modal-crear-paciente-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide">
@@ -56,6 +79,98 @@ $rol_modal = $_SESSION['rol'] ?? '';
                         <label for="telefono_eco">Teléfono</label>
                         <input type="tel" name="telefono" id="telefono_eco" required maxlength="30" autocomplete="tel" placeholder="Ej: 0412-1234567">
                     </div>
+
+                    <?php if ($mcp_con_servicio): ?>
+                    <fieldset class="mcp-bloque">
+                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-stethoscope"></i> Servicio a realizar</legend>
+                        <p class="mcp-bloque__nota">Opcional. Si lo completas se agenda la atención y el paciente pasa a la lista del ecografista asignado.</p>
+
+                        <div class="eco-field">
+                            <label for="mcp_ecografista">Ecografista responsable</label>
+                            <?php if (empty($mcp_ecografistas)): ?>
+                                <p class="mcp-bloque__vacio">No hay ecografistas aprobados.</p>
+                            <?php else: ?>
+                                <select name="ecografista_id" id="mcp_ecografista">
+                                    <option value="">Sin asignar</option>
+                                    <?php foreach ($mcp_ecografistas as $eco): ?>
+                                        <option value="<?= (int)$eco['id'] ?>"><?= htmlspecialchars($eco['nombre_completo']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="eco-field">
+                            <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
+                            <div class="mcp-estudios" role="group" aria-label="Tipos de ecografía a realizar">
+                                <?php
+                                $mcp_cat_previa = null;
+                                foreach ($mcp_tipos as $t):
+                                    $cat = (string)($t['categoria'] ?? '');
+                                    if ($cat !== $mcp_cat_previa):
+                                        $mcp_cat_previa = $cat;
+                                        ?>
+                                        <p class="mcp-estudios__cat"><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
+                                    <?php endif; ?>
+                                    <label class="mcp-opcion">
+                                        <input type="checkbox" name="tipos_ecografia[]" value="<?= (int)$t['id'] ?>"
+                                               data-precio="<?= htmlspecialchars((string)(float)$t['precio']) ?>" data-mcp-estudio>
+                                        <span class="mcp-opcion__nombre"><?= htmlspecialchars($t['nombre']) ?></span>
+                                        <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$t['precio'])) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="mcp-resumen" id="mcp-estudios-resumen">Ninguna seleccionada.</p>
+                        </div>
+
+                        <div class="eco-field">
+                            <span class="mcp-label">Otros servicios</span>
+                            <div class="mcp-servicios">
+                                <?php foreach ($mcp_servicios as $s): ?>
+                                    <label class="mcp-opcion">
+                                        <input type="checkbox" name="servicios[]" value="<?= htmlspecialchars($s['key']) ?>" data-mcp-servicio>
+                                        <span class="mcp-opcion__nombre"><?= htmlspecialchars($s['label']) ?></span>
+                                        <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$s['price'])) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <div class="eco-field">
+                            <label for="mcp_otro_servicio">Otro servicio <span class="mcp-opcional">(opcional)</span></label>
+                            <input type="text" name="otro_servicio" id="mcp_otro_servicio" maxlength="120" placeholder="Describe el servicio">
+                        </div>
+
+                        <div class="eco-field">
+                            <label for="mcp_fecha_cita">Fecha y hora de atención <span class="mcp-opcional">(opcional)</span></label>
+                            <input type="text" name="fecha_cita" id="mcp_fecha_cita" autocomplete="off" placeholder="Ahora mismo si lo dejas vacío">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mcp-bloque">
+                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-receipt"></i> Facturación</legend>
+
+                        <div class="eco-field">
+                            <label for="mcp_monto">Monto a cobrar</label>
+                            <div class="mcp-monto-row">
+                                <span class="mcp-monto-row__simbolo">$</span>
+                                <input type="number" name="monto_total" id="mcp_monto" min="0" step="0.01" placeholder="0.00" inputmode="decimal">
+                            </div>
+                            <p class="mcp-sugerido" id="mcp-monto-sugerido">Se calcula solo al elegir estudio y servicios. Puedes cambiarlo.</p>
+                        </div>
+
+                        <div class="eco-field">
+                            <label for="mcp_metodo_pago">Método de pago</label>
+                            <select name="metodo_pago" id="mcp_metodo_pago">
+                                <option value="">Sin cobrar todavía</option>
+                                <?php foreach ($mcp_metodos as $m): ?>
+                                    <option value="<?= htmlspecialchars($m) ?>"><?= htmlspecialchars($m) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="mcp-bloque__nota">Al elegir un método el cobro queda registrado como pagado.</p>
+                        </div>
+                    </fieldset>
+                    <?php endif; ?>
+
                     <div class="eco-modal__footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
                         <button type="submit" class="btn-primary" id="btn-submit-crear-paciente-eco"><i class="fa-solid fa-check"></i> Crear paciente</button>
@@ -75,6 +190,18 @@ $rol_modal = $_SESSION['rol'] ?? '';
             <p class="eco-modal__body-text" style="text-align:center;">Cuenta para <strong id="eco-exito-paciente-nombre"></strong>. Contraseña temporal:</p>
             <div class="temp-pass-box" id="eco-exito-paciente-pass">—</div>
             <p class="eco-modal__body-text" style="text-align:center;font-size:12px;">Anótela y entréguela al paciente.</p>
+            <div class="mcp-exito-cita" id="eco-exito-cita" hidden>
+                <div class="mcp-exito-cita__fila">
+                    <span>Ecografista</span><strong id="eco-exito-cita-eco">—</strong>
+                </div>
+                <div class="mcp-exito-cita__fila">
+                    <span>Monto</span><strong id="eco-exito-cita-total">—</strong>
+                </div>
+                <div class="mcp-exito-cita__fila">
+                    <span>Pago</span><strong id="eco-exito-cita-pago">—</strong>
+                </div>
+                <p class="mcp-exito-cita__detalle" id="eco-exito-cita-detalle"></p>
+            </div>
             <div class="eco-modal__footer" style="border-top:none;justify-content:center;margin-top:8px;">
                 <button type="button" class="btn-primary" id="btn-eco-exito-cerrar"><i class="fa-solid fa-check"></i> Entendido</button>
             </div>

@@ -51,17 +51,104 @@
         var nameEl = byId('rx-prog-paciente-nombre');
         if (!modal || !pidIn || !nameEl || !window.EcoModal) return;
 
-        pidIn.value = pacienteId;
-        nameEl.textContent = pacienteNombre || '—';
         rxSetErr('rx-prog-error', '');
         var form = byId('rx-form-programar-cita');
         if (form) form.reset();
         pidIn.value = pacienteId;
         nameEl.textContent = pacienteNombre || '—';
+        rxProgAtencion.reiniciar();
 
         EcoModal.open('eco-modal-rx-programar-cita');
         setTimeout(initRxProgFp, 0);
     };
+
+    /* --- Estudios, servicios y total ---
+       El mismo bloque de campos aparece en "Programar cita" y en el alta
+       extendida, así que se monta una vez por formulario en lugar de repetir
+       el código. El total lo calcula el servidor: precios y promociones viven
+       en lib/facturacion y no se duplican aquí. */
+    function rxBloqueAtencion(cfg) {
+        var montoManual = false;
+        var montoEl = byId(cfg.monto);
+
+        function refrescar() {
+            var resumenEl = byId(cfg.resumen);
+            var notaEl = byId(cfg.nota);
+
+            var tipos = [], nombres = [], servicios = [];
+            document.querySelectorAll(cfg.estudio + ':checked').forEach(function (c) {
+                tipos.push(parseInt(c.value, 10));
+                var txt = c.parentElement.querySelector('.mcp-opcion__nombre');
+                if (txt) nombres.push(txt.textContent.trim());
+            });
+            document.querySelectorAll(cfg.servicio + ':checked').forEach(function (c) {
+                servicios.push(c.value);
+            });
+
+            if (resumenEl) {
+                resumenEl.textContent = nombres.length
+                    ? nombres.length + (nombres.length === 1 ? ' ecografía: ' : ' ecografías: ') + nombres.join(', ')
+                    : 'Ninguna seleccionada.';
+            }
+
+            if (!tipos.length && !servicios.length) {
+                if (notaEl) notaEl.textContent = 'Se calcula solo al elegir estudios y servicios. Puedes cambiarlo.';
+                if (montoEl && !montoManual) montoEl.value = '';
+                return;
+            }
+
+            fetch((window.ECO_BASE || '') + 'api/calcular_total_servicios.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipos_ecografia: tipos, servicios: servicios })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res || !res.success) return;
+                if (montoEl && !montoManual) montoEl.value = res.total > 0 ? res.total.toFixed(2) : '';
+                if (notaEl) {
+                    notaEl.textContent = 'Sugerido: ' + res.total_texto
+                        + (res.promos && res.promos.length ? ' · ' + res.promos.join(' · ') : '')
+                        + (montoManual ? ' (monto modificado a mano)' : '');
+                }
+            })
+            .catch(function () {
+                if (notaEl) notaEl.textContent = 'No se pudo calcular el total. Escribe el monto a mano.';
+            });
+        }
+
+        document.querySelectorAll(cfg.estudio + ', ' + cfg.servicio).forEach(function (c) {
+            c.addEventListener('change', refrescar);
+        });
+        if (montoEl) {
+            montoEl.addEventListener('input', function () { montoManual = true; });
+        }
+
+        return {
+            /* Al reabrir el modal el formulario ya se reseteó: hay que olvidar
+               también que el monto se había tocado a mano. */
+            reiniciar: function () {
+                montoManual = false;
+                refrescar();
+            }
+        };
+    }
+
+    var rxProgAtencion = rxBloqueAtencion({
+        estudio: '[data-rxp-estudio]',
+        servicio: '[data-rxp-servicio]',
+        resumen: 'rx-prog-estudios-resumen',
+        nota: 'rx-prog-monto-sugerido',
+        monto: 'rx-prog-monto'
+    });
+
+    var rxExtAtencion = rxBloqueAtencion({
+        estudio: '[data-rxe-estudio]',
+        servicio: '[data-rxe-servicio]',
+        resumen: 'rx-ext-estudios-resumen',
+        nota: 'rx-ext-monto-sugerido',
+        monto: 'rx-ext-monto'
+    });
 
     /** --- Informes --- */
     window.rxAbrirInformesPaciente = function (pacienteId, pacienteNombre) {
@@ -124,14 +211,35 @@
 
     /** --- Alta extendida --- */
     var rxExtFp = null;
+    var rxExtFpCita = null;
     function initRxExtFp() {
-        var fn = byId('rx-ext-fnac');
-        if (!fn || typeof flatpickr === 'undefined') return;
-        destroyFp(fn);
-        rxExtFp = null;
-        fn.value = '';
+        if (typeof flatpickr === 'undefined') return;
         var loc = flatpickr.l10ns && flatpickr.l10ns.es ? flatpickr.l10ns.es : undefined;
-        rxExtFp = flatpickr(fn, { locale: loc, dateFormat: 'Y-m-d', maxDate: 'today', altInput: true, altFormat: 'd/m/Y' });
+
+        var fn = byId('rx-ext-fnac');
+        if (fn) {
+            destroyFp(fn);
+            rxExtFp = null;
+            fn.value = '';
+            rxExtFp = flatpickr(fn, { locale: loc, dateFormat: 'Y-m-d', maxDate: 'today', altInput: true, altFormat: 'd/m/Y' });
+        }
+
+        // Fecha de atención: sí admite futuro y lleva hora, al revés que la de
+        // nacimiento.
+        var fc = byId('rx-ext-fecha-cita');
+        if (fc) {
+            destroyFp(fc);
+            rxExtFpCita = null;
+            fc.value = '';
+            rxExtFpCita = flatpickr(fc, {
+                locale: loc,
+                enableTime: true,
+                dateFormat: 'Y-m-d H:i',
+                altInput: true,
+                altFormat: 'd/m/Y h:i K',
+                minuteIncrement: 15
+            });
+        }
     }
 
     window.rxAbrirCrearPacienteExtendido = function () {
@@ -139,7 +247,9 @@
         var form = byId('rx-form-crear-paciente-extendido');
         rxSetErr('rx-ext-error', '');
         if (form) form.reset();
+        rxExtAtencion.reiniciar();
         destroyFp(byId('rx-ext-fnac'));
+        destroyFp(byId('rx-ext-fecha-cita'));
         EcoModal.open('eco-modal-rx-crear-paciente-extendido');
         setTimeout(initRxExtFp, 0);
     };
@@ -254,7 +364,16 @@
                         }
                         if (data.success) {
                             EcoModal.close('eco-modal-rx-crear-paciente-extendido');
-                            window.alert(data.message || 'Paciente registrado.');
+                            var aviso = data.message || 'Paciente registrado.';
+                            if (data.cita) {
+                                // Confirma lo que quedó cobrado y a quién se asignó:
+                                // sin esto no hay forma de saber si la atención se guardó.
+                                aviso += '\n\nAtención registrada: ' + (data.cita.detalle || '')
+                                    + '\nEcografista: ' + (data.cita.ecografista || 'Sin asignar')
+                                    + '\nCobro: ' + (data.cita.estado_pago || '')
+                                    + (data.cita.metodo_pago ? ' · ' + data.cita.metodo_pago : '');
+                            }
+                            window.alert(aviso);
                             if (typeof window.buscarPacientesRecepcion === 'function') {
                                 var inp = byId('buscador-pacientes-rx');
                                 window.buscarPacientesRecepcion(inp ? inp.value : '');

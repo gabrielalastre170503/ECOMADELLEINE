@@ -5,6 +5,7 @@
 session_start();
 require_once __DIR__ . '/../lib/core/api.php';
 include __DIR__ . '/../core/conexion.php';
+require_once __DIR__ . '/../lib/citas/atencion.php';
 
 api_json();
 $response = ['success' => false, 'message' => ''];
@@ -84,9 +85,20 @@ $insert = $conex->prepare('INSERT INTO usuarios (nombre_completo, fecha_nacimien
 $insert->bind_param('sssssssssii', $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado, $creado_por_id);
 
 if ($insert->execute()) {
+    $paciente_id = (int)$insert->insert_id;
     $response['success'] = true;
     $response['message'] = 'Paciente registrado.';
     $response['nombre'] = $nombre_completo;
+
+    // Igual que en el alta rápida: si recepción dejó asentado el servicio, se
+    // crea la cita, y esa cita es lo que hace aparecer al paciente en
+    // "Mis Pacientes" del ecografista asignado.
+    $cita = (($_SESSION['rol'] ?? '') === 'recepcionista')
+        ? eco_crear_cita_de_alta($conex, $paciente_id, $_POST)
+        : null;
+    if ($cita !== null) {
+        $response['cita'] = $cita;
+    }
 } else {
     // FIX SEGURIDAD: log interno + mensaje genérico; detecta duplicado (correo/cédula).
     error_log('guardar_paciente_extendido: ' . $insert->error);
