@@ -594,3 +594,38 @@ button { font-family: inherit; cursor: pointer; }
     transition: opacity .25s;
 }
 .sidebar-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+/* ── FullCalendar en modo oscuro ─────────────────────────────────────
+   Su CSS viene de la CDN y trae `--fc-page-bg-color: #fff`, que pinta de
+   blanco la cabecera fija de días (LUN..DOM) sobre el fondo oscuro.
+   Se reasignan sus variables en vez de sobrescribir reglas: la CDN se carga
+   DESPUÉS de este archivo, así que un `.fc` suelto perdería por orden;
+   `[data-theme="dark"] .fc` gana por especificidad pase lo que pase.
+   Nombres tomados del bundle 6.1.11, no de memoria. */
+[data-theme="dark"] .fc {
+    --fc-page-bg-color:            var(--bg-surface);
+    --fc-neutral-bg-color:         rgba(148, 163, 184, .12);
+    --fc-neutral-text-color:       var(--text-secondary);
+    --fc-border-color:             var(--border);
+
+    --fc-button-text-color:        var(--text-primary);
+    --fc-button-bg-color:          var(--bg-muted);
+    --fc-button-border-color:      var(--border);
+    --fc-button-hover-bg-color:    var(--bg-hover);
+    --fc-button-hover-border-color: var(--accent);
+    --fc-button-active-bg-color:   var(--accent);
+    --fc-button-active-border-color: var(--accent);
+
+    --fc-today-bg-color:           rgba(56, 189, 248, .10);
+    --fc-highlight-color:          rgba(56, 189, 248, .14);
+    --fc-non-business-color:       rgba(15, 23, 42, .40);
+    --fc-more-link-bg-color:       var(--bg-hover);
+    --fc-more-link-text-color:     var(--text-primary);
+    --fc-list-event-hover-bg-color: var(--bg-hover);
+    --fc-now-indicator-color:      #f87171;
+
+    color: var(--text-primary);
+}
+
+/* Los enlaces de día y de "+N más" heredan color en vez del azul del navegador. */
+[data-theme="dark"] .fc a { color: inherit; }

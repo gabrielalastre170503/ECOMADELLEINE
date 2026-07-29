@@ -71,18 +71,33 @@ button.admin-dash-stat-link:hover .admin-dash-stat-card,
     margin-top: 2px;
 }
 
-/* Rejilla de gráficos — mismas medidas que panel.php (.dashboard-widgets-grid-full) */
+/* El panel llena el alto disponible: las filas de gráficos reparten el espacio
+   sobrante en vez de dejar un hueco muerto al final de la página. */
+.admin-dash {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+/* Rejilla de gráficos — mismas medidas que panel.php (.dashboard-widgets-grid-full).
+   Las columnas son divisores de 6 (los gráficos que hay) para que nunca quede
+   una fila a medias con huecos vacíos; auto-fit daba 4 columnas y sobraban 2. */
 .admin-dash-charts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(min-content, 1fr);
     gap: 0 19px;
     margin-top: 19px;
+    flex: 1 1 auto;
 }
 
 .admin-dash-chart-card {
     padding: 30px;
     margin-bottom: 20px;
     overflow: visible;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 .admin-dash-chart-card .card-header {
     margin-bottom: 0;
@@ -95,16 +110,34 @@ button.admin-dash-stat-link:hover .admin-dash-stat-card,
     font-weight: 600;
     color: var(--text-primary);
 }
-/* Altura original del panel administrador (#vista-admin-dashboard .chart-container) */
+/* 135px era la altura fija del panel administrador viejo; ahora es solo el
+   suelo y el lienzo crece con la tarjeta. Sin tope: cualquier máximo dejaría
+   el hueco sobrante dentro de la tarjeta, debajo del gráfico. */
 .admin-dash-chart-card .chart-wrap {
     position: relative;
-    height: 135px !important;
+    flex: 1 1 auto;
+    min-height: 135px;
     width: 100%;
     padding: 0;
     margin: 0;
 }
 
-@media (max-width: 1200px) {
+/* El lienzo va fuera de flujo a propósito: Chart.js le fija una altura en px
+   tomada del contenedor, y si contara para el alto intrínseco de la fila la
+   haría crecer, lo que agranda el contenedor otra vez (bucle de reajuste). */
+.admin-dash-chart-card .chart-wrap > canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+@media (max-width: 1400px) {
+    .admin-dash-charts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1000px) {
     .admin-dash-charts {
         grid-template-columns: 1fr;
     }

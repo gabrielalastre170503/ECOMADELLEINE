@@ -62,7 +62,9 @@ $menu = [
             'label' => 'Reportes',
             'icon' => 'fa-solid fa-chart-line',
             'href' => 'reportes',
-            'roles' => ['administrador', 'recepcionista'],
+            // Recepción tiene su propia entrada más abajo ("Estadísticas"), para
+            // poder colocarla en su orden sin alterar el menú del administrador.
+            'roles' => ['administrador'],
         ],
 
         /* === ECOGRAFISTA === */
@@ -123,12 +125,20 @@ $menu = [
             'roles' => ['ecografista'],
         ],
 
-        /* === RECEPCIONISTA === */
+        /* === RECEPCIONISTA ===
+           El orden del menú es el de este array. */
         [
             'id' => 'dashboard',
             'label' => 'Panel de Control',
             'icon' => 'fa-solid fa-gauge-high',
             'href' => 'dashboard',
+            'roles' => ['recepcionista'],
+        ],
+        [
+            'id' => 'gestion-pacientes',
+            'label' => 'Gestión Pacientes',
+            'icon' => 'fa-solid fa-address-book',
+            'href' => 'gestion-pacientes',
             'roles' => ['recepcionista'],
         ],
         [
@@ -146,17 +156,26 @@ $menu = [
             'roles' => ['recepcionista'],
         ],
         [
-            'id' => 'gestion-pacientes',
-            'label' => 'Gestión Pacientes',
-            'icon' => 'fa-solid fa-address-book',
-            'href' => 'gestion-pacientes',
-            'roles' => ['recepcionista'],
-        ],
-        [
             'id' => 'facturacion',
             'label' => 'Facturación',
             'icon' => 'fa-solid fa-cash-register',
             'href' => 'facturacion',
+            'roles' => ['recepcionista'],
+        ],
+        [
+            'id' => 'control-precios',
+            'label' => 'Control de Precios',
+            'icon' => 'fa-solid fa-tags',
+            'href' => 'control-precios',
+            'roles' => ['recepcionista'],
+        ],
+        [
+            // El id debe seguir siendo 'reportes': es el $active_section que fija
+            // common/reportes.php para marcar la entrada activa.
+            'id' => 'reportes',
+            'label' => 'Estadísticas',
+            'icon' => 'fa-solid fa-chart-pie',
+            'href' => 'reportes',
             'roles' => ['recepcionista'],
         ],
 
@@ -230,6 +249,13 @@ $menu = [
             'label' => 'Mis Informes',
             'icon' => 'fa-solid fa-file-medical',
             'href' => 'mis-informes',
+            'roles' => ['paciente'],
+        ],
+        [
+            'id' => 'mis-pagos',
+            'label' => 'Mi Historial de Pagos',
+            'icon' => 'fa-solid fa-receipt',
+            'href' => 'mis-pagos',
             'roles' => ['paciente'],
         ],
         [

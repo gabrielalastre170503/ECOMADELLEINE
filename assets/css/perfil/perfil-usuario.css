@@ -1,8 +1,9 @@
 /* Mi Perfil — alineado al shell premium del sistema */
 
+/* Sin tope de ancho propio: la página ocupa el mismo ancho útil que el resto
+   del sistema. El margen lateral lo pone .app-page (28px) en el shell. */
 .perfil-page-wrap {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 /* Alertas */
@@ -121,6 +122,27 @@
 
 .perfil-estado-badge i {
     font-size: 10px;
+}
+
+/* Estado que requiere acción del usuario (2FA apagada, correo sin verificar). */
+.perfil-estado-badge--warn {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.28);
+}
+
+/* Acción que resuelve el aviso de al lado. */
+.perfil-hero-accion {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+.perfil-hero-accion:hover {
+    color: var(--accent);
 }
 
 /* Contenedor: solo layout; las tarjetas flotan sobre el fondo de la página */
@@ -438,6 +460,11 @@
 [data-theme="dark"] .perfil-estado-badge {
     background: rgba(34, 197, 94, 0.15);
     color: #4ade80;
+}
+
+[data-theme="dark"] .perfil-estado-badge--warn {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
 }
 
 [data-theme="dark"] .perfil-page-wrap .alert-box.success {

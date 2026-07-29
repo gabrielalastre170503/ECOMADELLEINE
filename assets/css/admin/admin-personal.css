@@ -1,7 +1,178 @@
-/* Añadir personal — fila superior: 3 registros + métrica */
+/* Añadir personal — tarjetas de alta + rejillas de equipo activo.
+   Criterio: superficie silenciosa, una sola señal de color por tarjeta
+   (el chip de identidad). Sin degradados, brillos ni halos. */
 
-/* Tarjetas de equipo activo (premium) */
+/* ── Color por rol ──────────────────────────────────────────────────
+   --staff-ink: glifo/iniciales (contraste AA sobre superficie clara)
+   --staff-fill: relleno sólido en hover
+   --staff-soft: tinte de fondo del chip
+   --staff-ring: borde del chip y de la tarjeta en hover              */
+.staff-register-card__icon--eco,
+.staff-profile-card__avatar--eco {
+    --staff-ink:  #0284c7;
+    --staff-fill: #02b1f4;
+    --staff-soft: rgba(2, 177, 244, 0.10);
+    --staff-ring: rgba(2, 177, 244, 0.26);
+}
 
+.staff-register-card__icon--rx,
+.staff-profile-card__avatar--rx {
+    --staff-ink:  #7c3aed;
+    --staff-fill: #8b5cf6;
+    --staff-soft: rgba(139, 92, 246, 0.10);
+    --staff-ring: rgba(139, 92, 246, 0.26);
+}
+
+.staff-register-card__icon--pat {
+    --staff-ink:  #15803d;
+    --staff-fill: #22c55e;
+    --staff-soft: rgba(34, 197, 94, 0.10);
+    --staff-ring: rgba(34, 197, 94, 0.26);
+}
+
+[data-theme="dark"] .staff-register-card__icon--eco,
+[data-theme="dark"] .staff-profile-card__avatar--eco {
+    --staff-ink:  #38bdf8;
+    --staff-soft: rgba(56, 189, 248, 0.14);
+}
+
+[data-theme="dark"] .staff-register-card__icon--rx,
+[data-theme="dark"] .staff-profile-card__avatar--rx {
+    --staff-ink:  #a78bfa;
+    --staff-soft: rgba(139, 92, 246, 0.16);
+}
+
+[data-theme="dark"] .staff-register-card__icon--pat {
+    --staff-ink:  #4ade80;
+    --staff-soft: rgba(34, 197, 94, 0.14);
+}
+
+/* ── Tarjetas de alta + métrica ─────────────────────────────────── */
+.staff-register-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 26px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.staff-register-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    box-sizing: border-box;
+}
+
+a.staff-register-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--card-ring, var(--border));
+    box-shadow: var(--shadow);
+}
+
+a.staff-register-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* El borde en hover toma el color del rol que contiene la tarjeta. */
+.staff-register-card:has(.staff-register-card__icon--eco) { --card-ring: rgba(2, 177, 244, 0.32); }
+.staff-register-card:has(.staff-register-card__icon--rx)  { --card-ring: rgba(139, 92, 246, 0.32); }
+.staff-register-card:has(.staff-register-card__icon--pat) { --card-ring: rgba(34, 197, 94, 0.32); }
+
+/* Chip de identidad: plano, tinte del rol, glifo del mismo color. */
+.staff-register-card__icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: var(--staff-soft);
+    box-shadow: inset 0 0 0 1px var(--staff-ring);
+    color: var(--staff-ink);
+    font-size: 18px;
+    transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Firma de la página: el chip se invierte a color sólido en hover. */
+a.staff-register-card:hover .staff-register-card__icon {
+    background: var(--staff-fill);
+    box-shadow: inset 0 0 0 1px var(--staff-fill);
+    color: #fff;
+}
+
+.staff-register-card__title {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+
+.staff-register-card__desc {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.staff-register-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--staff-cta, var(--accent-text));
+}
+
+.staff-register-card:has(.staff-register-card__icon--rx)  { --staff-cta: #7c3aed; }
+.staff-register-card:has(.staff-register-card__icon--pat) { --staff-cta: #15803d; }
+
+[data-theme="dark"] .staff-register-card:has(.staff-register-card__icon--rx)  { --staff-cta: #a78bfa; }
+[data-theme="dark"] .staff-register-card:has(.staff-register-card__icon--pat) { --staff-cta: #4ade80; }
+
+.staff-register-card__cta i {
+    font-size: 11px;
+    transition: transform 0.22s ease;
+}
+
+a.staff-register-card:hover .staff-register-card__cta i {
+    transform: translateX(3px);
+}
+
+/* Métrica: no es una acción, así que no se eleva ni se ilumina.
+   La regla superior ocupa el sitio del CTA y marca "valor, no enlace". */
+.staff-register-card--metric {
+    cursor: default;
+}
+
+.staff-register-card__metric-value {
+    display: block;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+
+/* ── Equipo activo ─────────────────────────────────────────────── */
 .staff-section {
     margin-bottom: 22px;
 }
@@ -20,59 +191,48 @@
 
 .staff-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
 }
 
 .staff-profile-card {
     position: relative;
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .staff-profile-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.22);
-    box-shadow:
-        0 10px 28px rgba(99, 102, 241, 0.1),
-        0 4px 14px rgba(15, 23, 42, 0.06);
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
 }
 
 .staff-profile-card__main {
     display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px 48px 16px 16px;
+    align-items: center;
+    gap: 13px;
+    padding: 16px 46px 16px 16px;
     text-decoration: none;
     color: inherit;
     min-width: 0;
 }
 
 .staff-profile-card__avatar {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.02em;
-    color: #fff;
-}
-
-.staff-profile-card__avatar--eco {
-    background: linear-gradient(135deg, var(--accent), #38bdf8);
-    box-shadow: 0 4px 12px rgba(2, 177, 244, 0.25);
-}
-
-.staff-profile-card__avatar--rx {
-    background: linear-gradient(135deg, #8b5cf6, #6366f1);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.28);
+    background: var(--staff-soft);
+    box-shadow: inset 0 0 0 1px var(--staff-ring);
+    color: var(--staff-ink);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.01em;
 }
 
 .staff-profile-card__body {
@@ -81,11 +241,11 @@
 }
 
 .staff-profile-card__name {
-    margin: 0 0 6px;
-    font-size: 15.5px;
+    margin: 0 0 3px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.3;
-    color: #0f172a;
+    color: var(--text-primary);
     letter-spacing: -0.01em;
     text-transform: capitalize;
     overflow: hidden;
@@ -93,44 +253,35 @@
     white-space: nowrap;
 }
 
+/* El encabezado de la sección ya dice el rol: aquí basta un pie de foto,
+   no una etiqueta de color que compita con el chip. */
 .staff-profile-card__role {
-    display: inline-block;
-    margin: 0 0 10px;
-    padding: 3px 10px;
-    font-size: 11px;
+    display: block;
+    margin: 0 0 9px;
+    font-size: 10.5px;
     font-weight: 600;
     line-height: 1.2;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
-    border-radius: 999px;
-}
-
-.staff-profile-card__role--eco {
-    background: var(--accent-soft);
-    color: var(--accent-text);
-}
-
-.staff-profile-card__role--rx {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    color: var(--text-muted);
 }
 
 .staff-profile-card__email {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     margin: 0;
     font-size: 12.5px;
     line-height: 1.4;
-    color: #94a3b8;
+    color: var(--text-secondary);
     min-width: 0;
 }
 
 .staff-profile-card__email i {
     flex-shrink: 0;
-    width: 14px;
-    font-size: 12px;
-    color: #cbd5e1;
+    width: 13px;
+    font-size: 11px;
+    color: var(--text-muted);
     text-align: center;
 }
 
@@ -144,184 +295,30 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-decoration: none;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .staff-profile-card__action:hover {
-    background: rgba(99, 102, 241, 0.08);
-    color: #6366f1;
+    background: var(--accent-soft);
+    color: var(--accent-text);
 }
 
 .staff-profile-card__action i {
     font-size: 14px;
 }
 
-/* Tarjetas de alta (registro) + métrica — 4 columnas */
-.staff-register-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 26px;
-    align-items: stretch;
-    width: 100%;
-}
-
-.staff-register-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 100%;
-    padding: 20px;
-    text-decoration: none;
-    color: inherit;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    box-sizing: border-box;
-}
-
-.staff-register-card--metric {
-    cursor: default;
-    text-decoration: none;
-}
-
-.staff-register-card--metric:hover {
-    transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-}
-
-.staff-register-card__metric-value {
-    display: block;
-    margin-top: auto;
-    padding-top: 12px;
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1.1;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-}
-
-.staff-register-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-}
-
-.staff-register-card__icon {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 21px;
-    color: #fff;
-    margin-bottom: 14px;
-    /* Relieve: halo del color del rol + filo superior iluminado. */
-    box-shadow:
-        0 8px 18px -6px var(--staff-icon-glow, rgba(15, 23, 42, 0.3)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.45),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.08);
-    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.22);
-    transition:
-        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.28s ease;
-}
-
-/* Brillo diagonal: da la sensación de superficie curva. */
-.staff-register-card__icon::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(150deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 58%);
-    pointer-events: none;
-}
-
-.staff-register-card__icon > i {
-    position: relative;
-    z-index: 1;
-}
-
-/* Al pasar el cursor por la tarjeta el icono se eleva y el halo crece. */
-.staff-register-card:hover .staff-register-card__icon {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow:
-        0 14px 26px -6px var(--staff-icon-glow, rgba(15, 23, 42, 0.3)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.staff-register-card__icon--eco {
-    background: linear-gradient(140deg, #5fd8ff 0%, var(--accent) 48%, #0284c7 100%);
-    --staff-icon-glow: rgba(2, 177, 244, 0.5);
-}
-
-.staff-register-card__icon--rx {
-    background: linear-gradient(140deg, #a78bfa 0%, #8b5cf6 48%, #4f46e5 100%);
-    --staff-icon-glow: rgba(124, 92, 246, 0.48);
-}
-
-.staff-register-card__icon--pat {
-    background: linear-gradient(140deg, #4ade80 0%, #22c55e 48%, #15803d 100%);
-    --staff-icon-glow: rgba(34, 197, 94, 0.45);
-}
-
-[data-theme="dark"] .staff-register-card__icon {
-    box-shadow:
-        0 8px 20px -6px var(--staff-icon-glow, rgba(0, 0, 0, 0.5)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .staff-register-card__icon,
-    .staff-register-card:hover .staff-register-card__icon {
-        transform: none;
-        transition: none;
-    }
-}
-
-.staff-register-card__title {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 14.5px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.staff-register-card__desc {
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-}
-
-.staff-register-card__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: auto;
-    padding-top: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent-text);
-}
-
+/* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
     .staff-register-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -329,23 +326,25 @@
 }
 
 @media (max-width: 640px) {
-    .staff-register-grid {
+    .staff-register-grid,
+    .staff-grid {
         grid-template-columns: 1fr;
     }
 }
 
-[data-theme="dark"] .staff-profile-card,
-[data-theme="dark"] .staff-register-card {
-    background: var(--bg-surface);
-    border-color: var(--border);
-}
+@media (prefers-reduced-motion: reduce) {
+    .staff-register-card,
+    .staff-profile-card,
+    .staff-register-card__cta i {
+        transition: none;
+    }
 
-[data-theme="dark"] .staff-profile-card__name {
-    color: var(--text-primary);
-}
+    a.staff-register-card:hover,
+    .staff-profile-card:hover {
+        transform: none;
+    }
 
-@media (max-width: 640px) {
-    .staff-grid {
-        grid-template-columns: 1fr;
+    a.staff-register-card:hover .staff-register-card__cta i {
+        transform: none;
     }
 }

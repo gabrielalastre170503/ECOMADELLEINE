@@ -1,5 +1,47 @@
-/* Contenido web — tarjetas de acceso */
+/* Contenido web — tarjetas de acceso + accesos rápidos.
+   Cada tipo de contenido tiene un color fijo que se repite abajo en su
+   fila de "Accesos rápidos": los dos bloques se leen como un solo sistema. */
 
+/* ── Color por tipo de contenido (.cw-tone--*) ──────────────────────
+   Se aplica tanto a la tarjeta como a su fila en "Accesos rápidos".
+   --cw-ink: glifo (contraste AA sobre superficie clara)
+   --cw-fill: relleno sólido en hover
+   --cw-soft: tinte de fondo del chip
+   --cw-ring: aro del chip y borde de la tarjeta en hover              */
+.cw-tone--faq {
+    --cw-ink:  #7c3aed;
+    --cw-fill: #8b5cf6;
+    --cw-soft: rgba(139, 92, 246, 0.10);
+    --cw-ring: rgba(139, 92, 246, 0.30);
+}
+
+.cw-tone--textos {
+    --cw-ink:  #15803d;
+    --cw-fill: #22c55e;
+    --cw-soft: rgba(34, 197, 94, 0.10);
+    --cw-ring: rgba(34, 197, 94, 0.30);
+}
+
+.cw-tone--preview {
+    --cw-ink:  #0284c7;
+    --cw-fill: #02b1f4;
+    --cw-soft: rgba(2, 177, 244, 0.10);
+    --cw-ring: rgba(2, 177, 244, 0.30);
+}
+
+.cw-tone--estudios {
+    --cw-ink:  #b45309;
+    --cw-fill: #f59e0b;
+    --cw-soft: rgba(245, 158, 11, 0.12);
+    --cw-ring: rgba(245, 158, 11, 0.32);
+}
+
+[data-theme="dark"] .cw-tone--faq      { --cw-ink: #a78bfa; --cw-soft: rgba(139, 92, 246, 0.16); }
+[data-theme="dark"] .cw-tone--textos   { --cw-ink: #4ade80; --cw-soft: rgba(34, 197, 94, 0.14); }
+[data-theme="dark"] .cw-tone--preview  { --cw-ink: #38bdf8; --cw-soft: rgba(56, 189, 248, 0.14); }
+[data-theme="dark"] .cw-tone--estudios { --cw-ink: #fbbf24; --cw-soft: rgba(245, 158, 11, 0.16); }
+
+/* ── Tarjetas de acceso ────────────────────────────────────────── */
 .admin-contenido-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -11,102 +53,48 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 100%;
     padding: 20px;
     text-decoration: none;
     color: inherit;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     box-sizing: border-box;
 }
 
-.admin-contenido-card:hover {
+a.admin-contenido-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    border-color: var(--cw-ring);
+    box-shadow: var(--shadow);
 }
 
+a.admin-contenido-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Chip de identidad: plano, tinte del tipo, glifo del mismo color. */
 .admin-contenido-card__icon {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 21px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: var(--cw-soft);
+    box-shadow: inset 0 0 0 1px var(--cw-ring);
+    color: var(--cw-ink);
+    font-size: 18px;
+    transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* El chip se invierte a color sólido en hover: única micro-interacción. */
+a.admin-contenido-card:hover .admin-contenido-card__icon {
+    background: var(--cw-fill);
+    box-shadow: inset 0 0 0 1px var(--cw-fill);
     color: #fff;
-    margin-bottom: 14px;
-    /* Relieve: halo del color de la tarjeta + filo superior iluminado. */
-    box-shadow:
-        0 8px 18px -6px var(--contenido-icon-glow, rgba(15, 23, 42, 0.3)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.45),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.08);
-    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.22);
-    transition:
-        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.28s ease;
-}
-
-/* Brillo diagonal: da la sensación de superficie curva. */
-.admin-contenido-card__icon::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(150deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 58%);
-    pointer-events: none;
-}
-
-.admin-contenido-card__icon > i {
-    position: relative;
-    z-index: 1;
-}
-
-/* Al pasar el cursor por la tarjeta el icono se eleva y el halo crece. */
-.admin-contenido-card:hover .admin-contenido-card__icon {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow:
-        0 14px 26px -6px var(--contenido-icon-glow, rgba(15, 23, 42, 0.3)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.admin-contenido-card__icon--faq {
-    background: linear-gradient(140deg, #a78bfa 0%, #8b5cf6 48%, #6d28d9 100%);
-    --contenido-icon-glow: rgba(139, 92, 246, 0.48);
-}
-
-.admin-contenido-card__icon--textos {
-    background: linear-gradient(140deg, #4ade80 0%, #22c55e 48%, #15803d 100%);
-    --contenido-icon-glow: rgba(34, 197, 94, 0.45);
-}
-
-.admin-contenido-card__icon--preview {
-    background: linear-gradient(140deg, #5fd8ff 0%, var(--accent) 48%, #0284c7 100%);
-    --contenido-icon-glow: rgba(2, 177, 244, 0.5);
-}
-
-.admin-contenido-card__icon--estudios {
-    background: linear-gradient(140deg, #fbbf24 0%, #f59e0b 48%, #b45309 100%);
-    --contenido-icon-glow: rgba(245, 158, 11, 0.5);
-}
-
-[data-theme="dark"] .admin-contenido-card__icon {
-    box-shadow:
-        0 8px 20px -6px var(--contenido-icon-glow, rgba(0, 0, 0, 0.5)),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .admin-contenido-card__icon,
-    .admin-contenido-card:hover .admin-contenido-card__icon {
-        transform: none;
-        transition: none;
-    }
 }
 
 .admin-contenido-card__title {
@@ -114,13 +102,15 @@
     margin-bottom: 6px;
     font-size: 14.5px;
     font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
 }
 
 .admin-contenido-card__desc {
     margin: 0;
     font-size: 12.5px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--text-secondary);
     flex: 1;
 }
@@ -128,14 +118,131 @@
 .admin-contenido-card__cta {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     margin-top: auto;
-    padding-top: 12px;
+    padding-top: 16px;
     font-size: 12px;
     font-weight: 600;
+    color: var(--cw-ink);
+}
+
+.admin-contenido-card__cta i {
+    font-size: 11px;
+    transition: transform 0.22s ease;
+}
+
+a.admin-contenido-card:hover .admin-contenido-card__cta i {
+    transform: translateX(3px);
+}
+
+/* ── Accesos rápidos ───────────────────────────────────────────── */
+.admin-contenido-quick {
+    margin-top: 22px;
+}
+
+.admin-contenido-quick__glyph {
+    margin-right: 7px;
+    color: var(--accent);
+}
+
+.quick-link-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 12px;
+    border-radius: var(--radius);
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.15s ease;
+}
+
+.quick-link:last-child {
+    border-bottom: none;
+}
+
+.quick-link:hover {
+    background: var(--bg-muted);
+}
+
+/* Marca del mismo color que la tarjeta del tipo de contenido. */
+.quick-link__mark {
+    flex-shrink: 0;
+    width: 3px;
+    height: 18px;
+    border-radius: 2px;
+    background: var(--cw-fill);
+}
+
+.quick-link__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.quick-link__meta {
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.quick-link__actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-link__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.quick-link__btn i {
+    font-size: 10px;
+}
+
+.quick-link__btn:hover {
+    background: var(--bg-surface);
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+/* "Editar" es la acción principal del par, pero sigue siendo una
+   utilidad: tinte del acento en vez de un bloque azul sólido. */
+.quick-link__btn--edit {
+    border-color: transparent;
+    background: var(--accent-soft);
     color: var(--accent-text);
 }
 
+.quick-link__btn--edit:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.quick-link__btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
     .admin-contenido-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -146,9 +253,38 @@
     .admin-contenido-grid {
         grid-template-columns: 1fr;
     }
+
+    .quick-link {
+        flex-wrap: wrap;
+    }
+
+    .quick-link__name {
+        flex: 1 1 100%;
+        order: 1;
+    }
+
+    .quick-link__mark {
+        order: 0;
+    }
+
+    .quick-link__actions {
+        order: 2;
+        width: 100%;
+        padding-left: 15px;
+    }
 }
 
-[data-theme="dark"] .admin-contenido-card {
-    background: var(--bg-surface);
-    border-color: var(--border);
+@media (prefers-reduced-motion: reduce) {
+    .admin-contenido-card,
+    .admin-contenido-card__cta i {
+        transition: none;
+    }
+
+    a.admin-contenido-card:hover {
+        transform: none;
+    }
+
+    a.admin-contenido-card:hover .admin-contenido-card__cta i {
+        transform: none;
+    }
 }

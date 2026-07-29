@@ -49,10 +49,20 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
             <p>Gestiona tu información personal y la seguridad de tu cuenta.</p>
         </div>
     </div>
+    <?php /* Rol, alta y estado viven en la ficha de identidad de abajo.
+             Aquí va lo que promete el subtítulo: cómo está protegida la cuenta. */ ?>
     <div class="perfil-hero-estado">
-        <span class="perfil-estado-badge"><i class="fa-solid fa-circle-check"></i> Perfil activo</span>
-        <span class="perfil-hero-meta">Rol: <?= htmlspecialchars(ucfirst($rol_usuario)) ?></span>
-        <span class="perfil-hero-meta">Miembro desde: <?= htmlspecialchars($fechaRegistroTexto) ?></span>
+        <span class="perfil-estado-badge<?= !empty($dosFactorActivo) ? '' : ' perfil-estado-badge--warn' ?>">
+            <i class="fa-solid fa-shield-halved"></i>
+            <?= !empty($dosFactorActivo) ? '2FA activada' : '2FA desactivada' ?>
+        </span>
+        <span class="perfil-estado-badge<?= !empty($correoVerificado) ? '' : ' perfil-estado-badge--warn' ?>">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+            <?= !empty($correoVerificado) ? 'Correo verificado' : 'Correo sin verificar' ?>
+        </span>
+        <?php if (empty($correoVerificado)): ?>
+            <a class="perfil-hero-accion" href="<?= eco_url('publico/reenviar_verificacion.php') ?>">Reenviar enlace</a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -164,12 +174,8 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
                 <li><i class="fa-solid fa-calendar-check"></i> En el sistema desde: <?= htmlspecialchars($fechaRegistroTexto) ?><?php if (!empty($antiguedadTexto)): ?> <span style="color:var(--text-muted);">(<?= htmlspecialchars($antiguedadTexto) ?>)</span><?php endif; ?>.</li>
                 <li><i class="fa-solid fa-user-tag"></i> Tipo de cuenta: <?= htmlspecialchars(ucfirst($rol_usuario)) ?>.</li>
                 <li><i class="fa-solid fa-circle-check" style="color:#15803d;"></i> Estado de la cuenta: <?= htmlspecialchars($estadoCuentaTexto ?? 'Activa') ?>.</li>
-                <?php if (!empty($correoVerificado)): ?>
-                    <li><i class="fa-solid fa-envelope-circle-check" style="color:#15803d;"></i> Correo verificado.</li>
-                <?php else: ?>
-                    <li><i class="fa-solid fa-envelope" style="color:#d97706;"></i> Correo sin verificar — <a href="<?= eco_url('publico/reenviar_verificacion.php') ?>" style="color:var(--accent,#02b1f4);font-weight:600;">reenviar enlace</a>.</li>
-                <?php endif; ?>
-                <li><i class="fa-solid fa-shield<?= !empty($dosFactorActivo) ? '-halved' : '' ?>"></i> 2FA: <?= !empty($dosFactorActivo) ? 'activada' : 'desactivada' ?>.</li>
+                <?php /* Correo verificado y 2FA se muestran ahora en el estado
+                         de seguridad de la cabecera, no se repiten aquí. */ ?>
             </ul>
             <?php if ($rol_usuario === 'paciente'): ?>
             <a href="<?= eco_url('api/descargar_historial.php') ?>" class="perfil-action-link"><i class="fa-solid fa-download"></i> Descargar historial</a>

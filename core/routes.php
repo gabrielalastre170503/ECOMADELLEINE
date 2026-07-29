@@ -57,12 +57,14 @@ $r->get('/notas-sesion',   'ecografista/mis_notas_sesion.php');
 /* ── Recepcionista ── */
 $r->get('/citas-pendientes',    'recepcion/recepcion_citas_pendientes.php');
 $r->get('/gestion-pacientes',   'recepcion/recepcion_gestion_pacientes.php');
+$r->get('/control-precios',     'recepcion/control_precios.php');
 $r->get('/historial-recepcion', 'recepcion/recepcion_historial_citas.php');
 $r->get('/directorio',          'recepcion/recepcion_directorio.php');
 $r->get('/ficha-paciente',      'recepcion/recepcion_ficha_paciente.php');
 
 /* ── Paciente ── */
 $r->get('/mis-citas',       'paciente/mis_citas_paciente.php');
+$r->get('/mis-pagos',       'paciente/historial_pagos_paciente.php');
 $r->get('/solicitar-cita',  'paciente/solicitar_cita_paciente.php');
 $r->get('/ecografistas',    'paciente/ecografistas_paciente.php');
 $r->get('/preparacion',     'paciente/preparacion_estudios_paciente.php');

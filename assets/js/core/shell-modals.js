@@ -17,16 +17,19 @@
     var VENTANA_SALTO_MS = 60;
     var elementoSaliente = null;
 
+    // Debe superar la animación de entrada del diálogo (0.09s al saltar): si se
+    // quitara antes, la duración cambiaría a mitad de la animación y se vería
+    // un tirón. Se limpia el temporizador anterior por si hay saltos seguidos.
+    var MS_MARCA_SALTO = 180;
+
     function marcarInstantaneo(el) {
         if (!el) return;
         el.classList.add('eco-modal--instant');
-        // Se quita tras dos frames: solo afecta a este salto, no a los
-        // cierres normales (que sí deben desvanecerse).
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                el.classList.remove('eco-modal--instant');
-            });
-        });
+        if (el._tempSalto) clearTimeout(el._tempSalto);
+        el._tempSalto = setTimeout(function () {
+            el.classList.remove('eco-modal--instant');
+            el._tempSalto = null;
+        }, MS_MARCA_SALTO);
     }
 
     function getEl(id) {
