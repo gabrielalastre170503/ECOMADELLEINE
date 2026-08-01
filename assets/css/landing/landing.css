@@ -1105,6 +1105,37 @@
     }
     .form-check a { color: var(--azul-dark); font-weight: 600; text-decoration: underline; }
 
+    /* Ventajas de crear cuenta: sustituyen al formulario de registro que vivia
+       en la landing (ahora se registra en la pagina oficial de registro). */
+    .form-ventajas {
+        list-style: none;
+        margin: 0 0 22px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .form-ventajas li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--gris);
+        line-height: 1.45;
+    }
+    .form-ventajas i {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        color: var(--azul-dark);
+        background: rgba(2, 177, 244, .1);
+    }
+
     /* ════════════════════════════════════════════════════════════════
        FOOTER
        ════════════════════════════════════════════════════════════════ */

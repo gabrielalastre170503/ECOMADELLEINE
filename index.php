@@ -5,7 +5,6 @@
     while ($fila = $resultado->fetch_assoc()) {
         $contenido_web[$fila['clave']] = $fila['valor'];
     }
-    include __DIR__ . '/publico/send.php';
 
     /* ───────────────────────────────────────────────────────────────
        MÉTRICAS REALES desde la base de datos
@@ -559,54 +558,26 @@
                 </div>
             </aside>
 
+            <!-- Este panel tenia su propio formulario de registro, que enviaba a
+                 publico/send.php: un segundo camino de alta, mas debil que el
+                 oficial (sin token CSRF, aceptaba cualquier contrasena en el
+                 servidor, nunca enviaba el correo de verificacion y abria sesion
+                 sin regenerar el id). Ahora la landing lleva al registro real,
+                 que es el unico sitio donde se crean cuentas. -->
             <div class="formulario reveal" data-delay="1">
                 <h3>Crea tu cuenta</h3>
-                <p class="form-sub">Regístrate para agendar tu próxima ecografía.</p>
-                <form method="post" autocomplete="off">
-                    <div class="input-group">
-                        <div class="input-container">
-                            <i class="fa-solid fa-user"></i>
-                            <input type="text" name="name" placeholder="Nombre y Apellido" aria-label="Nombre y Apellido" required>
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-calendar-day"></i>
-                            <input type="text" id="fecha_nacimiento_flatpickr" name="fecha_nacimiento" placeholder="Fecha de nacimiento" aria-label="Fecha de nacimiento" required>
-                        </div>
-                        <div class="input-container cedula-group">
-                            <select name="nacionalidad" class="cedula-select" aria-label="Nacionalidad del documento" required>
-                                <option value="V">V</option>
-                                <option value="E">E</option>
-                                <option value="P">P</option>
-                            </select>
-                            <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de documento" aria-label="Número de documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-phone"></i>
-                            <input type="tel" name="telefono" placeholder="Teléfono" aria-label="Teléfono" required pattern="[0-9()+\-\s]{7,20}" title="Número de teléfono (7 a 20 caracteres)">
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <input type="text" name="direccion" placeholder="Dirección" aria-label="Dirección" required maxlength="255">
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" name="email" placeholder="Correo electrónico" aria-label="Correo electrónico" required>
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" name="password" placeholder="Crea una contraseña" aria-label="Crea una contraseña" required
-                                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
-                                   title="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.">
-                        </div>
-                        <button type="submit" name="send" class="btn-submit">
-                            Registrarme y solicitar estudio <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                        <label class="form-check">
-                            <input type="checkbox" name="acepto_privacidad" value="1" required>
-                            <span>He leído y acepto el <a href="<?= eco_url('privacidad') ?>" target="_blank" rel="noopener">aviso de privacidad</a> y los <a href="<?= eco_url('terminos') ?>" target="_blank" rel="noopener">términos y condiciones</a>.</span>
-                        </label>
-                    </div>
-                </form>
+                <p class="form-sub">Regístrate para agendar tu próxima ecografía y consultar tus informes.</p>
+                <ul class="form-ventajas">
+                    <li><i class="fa-solid fa-calendar-check"></i> Agenda y sigue tus citas en línea</li>
+                    <li><i class="fa-solid fa-file-medical"></i> Consulta tus informes cuando quieras</li>
+                    <li><i class="fa-solid fa-shield-halved"></i> Tus datos clínicos, siempre privados</li>
+                </ul>
+                <a href="<?= eco_url('registro') ?>" class="btn-submit">
+                    Registrarme <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <p class="form-sub" style="margin:16px 0 0;text-align:center;">
+                    ¿Ya tienes cuenta? <a href="<?= eco_url('login') ?>" style="color:var(--azul-dark);font-weight:600;">Inicia sesión</a>
+                </p>
             </div>
         </div>
     </div>
