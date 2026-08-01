@@ -174,6 +174,134 @@ if (!function_exists('eco_mis_pacientes')) {
      *
      * @return array<int,array<string,mixed>>
      */
+    /**
+     * ¿Este paciente es "de" este ecografista?
+     *
+     * Usa EXACTAMENTE el mismo criterio que eco_mis_pacientes() —lo registró él
+     * o tienen una cita en común—, más los informes que él haya firmado. Si el
+     * permiso y el listado usaran definiciones distintas, el ecografista vería
+     * pacientes en su lista que luego no puede abrir, o al revés.
+     *
+     * Se cachea por petición: estas comprobaciones se repiten varias veces al
+     * pintar una ficha.
+     */
+    function eco_ecografista_atiende(mysqli $conex, int $ecografistaId, int $pacienteId): bool
+    {
+        static $cache = [];
+        if ($ecografistaId <= 0 || $pacienteId <= 0) {
+            return false;
+        }
+        $clave = $ecografistaId . ':' . $pacienteId;
+        if (isset($cache[$clave])) {
+            return $cache[$clave];
+        }
+
+        $sql = "SELECT 1 FROM usuarios u
+                WHERE u.id = ? AND u.rol = 'paciente'
+                  AND (u.creado_por_id = ?
+                       OR EXISTS (SELECT 1 FROM citas c
+                                   WHERE c.paciente_id = u.id AND c.ecografista_id = ?)
+                       OR EXISTS (SELECT 1 FROM informes_estudios i
+                                   WHERE i.paciente_id = u.id AND i.ecografista_id = ?))
+                LIMIT 1";
+        if (!($st = $conex->prepare($sql))) {
+            return $cache[$clave] = false;   // ante la duda, no se concede acceso
+        }
+        $st->bind_param('iiii', $pacienteId, $ecografistaId, $ecografistaId, $ecografistaId);
+        $st->execute();
+        $hay = (bool)$st->get_result()->fetch_row();
+        $st->close();
+        return $cache[$clave] = $hay;
+    }
+
+    /* ── Acceso excepcional ("romper el cristal") ──────────────────────
+     * Un ecografista no queda bloqueado ante un paciente que no es suyo: puede
+     * abrirlo justificando por qué. Ese acceso NO es silencioso — se registra
+     * como excepción en la bitácora, con el motivo escrito, y solo dura un rato
+     * dentro de la sesión, para que no se convierta en un permiso permanente.
+     */
+    if (!defined('ECO_ACCESO_EXCEPCIONAL_MIN')) {
+        define('ECO_ACCESO_EXCEPCIONAL_MIN', 30);      // vigencia del permiso
+    }
+    if (!defined('ECO_ACCESO_EXCEPCIONAL_MOTIVO_MIN')) {
+        define('ECO_ACCESO_EXCEPCIONAL_MOTIVO_MIN', 10); // caracteres mínimos
+    }
+
+    /** ¿Hay un permiso excepcional vigente en esta sesión para ese paciente? */
+    function eco_acceso_excepcional_activo(int $pacienteId): bool
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE || $pacienteId <= 0) {
+            return false;
+        }
+        $exp = (int)($_SESSION['eco_acceso_excepcional'][$pacienteId] ?? 0);
+        if ($exp <= 0) {
+            return false;
+        }
+        if ($exp < time()) {
+            unset($_SESSION['eco_acceso_excepcional'][$pacienteId]);   // caducado
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Concede el permiso excepcional y lo deja escrito en la bitácora.
+     * @return array{ok:bool, error:string}
+     */
+    function eco_acceso_excepcional_conceder(mysqli $conex, int $ecografistaId, int $pacienteId, string $motivo): array
+    {
+        $motivo = trim($motivo);
+        if ($pacienteId <= 0) {
+            return ['ok' => false, 'error' => 'Paciente no válido.'];
+        }
+        if (mb_strlen($motivo) < ECO_ACCESO_EXCEPCIONAL_MOTIVO_MIN) {
+            return ['ok' => false, 'error' => 'Explica el motivo del acceso (mínimo '
+                . ECO_ACCESO_EXCEPCIONAL_MOTIVO_MIN . ' caracteres).'];
+        }
+        // Si ya es su paciente no hay excepción que registrar.
+        if (eco_ecografista_atiende($conex, $ecografistaId, $pacienteId)) {
+            return ['ok' => true, 'error' => ''];
+        }
+
+        require_once __DIR__ . '/../seguridad/seguridad.php';
+        eco_auditar($conex, 'acceso_excepcional_concedido', [
+            'usuario_id' => $ecografistaId,
+            'entidad'    => 'paciente',
+            'entidad_id' => $pacienteId,
+            'detalle'    => ['motivo' => mb_substr($motivo, 0, 500)],
+        ]);
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['eco_acceso_excepcional'][$pacienteId] = time() + ECO_ACCESO_EXCEPCIONAL_MIN * 60;
+        }
+        return ['ok' => true, 'error' => ''];
+    }
+
+    /**
+     * Puerta única para los endpoints: ¿este ecografista puede ver a este
+     * paciente? Es suyo, o tiene un permiso excepcional vigente.
+     */
+    function eco_ecografista_puede_ver_paciente(mysqli $conex, int $ecografistaId, int $pacienteId): bool
+    {
+        return eco_ecografista_atiende($conex, $ecografistaId, $pacienteId)
+            || eco_acceso_excepcional_activo($pacienteId);
+    }
+
+    /**
+     * Respuesta JSON estándar cuando hace falta justificar el acceso. El cliente
+     * distingue este caso de un 403 normal por 'requiere_confirmacion' y pide el
+     * motivo en vez de mostrar un error sin salida.
+     */
+    function eco_responder_requiere_confirmacion(int $pacienteId): void
+    {
+        http_response_code(403);
+        echo json_encode([
+            'error'                 => 'Este paciente no está bajo tu atención.',
+            'requiere_confirmacion' => true,
+            'paciente_id'           => $pacienteId,
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
     function eco_mis_pacientes_export(array $pacientes): array
     {
         return array_map(static function (array $p): array {

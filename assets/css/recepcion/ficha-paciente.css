@@ -245,8 +245,11 @@
 .fpx-item__cuerpo { flex: 1; min-width: 0; }
 .fpx-item__cuerpo strong { font-size: 13.5px; color: var(--text-primary); }
 
+/* Es un <button>: hay que reponer lo que el navegador no hereda. */
 .fpx-item__link {
     flex-shrink: 0;
+    font-family: inherit;
+    cursor: pointer;
     padding: 5px 11px;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -290,6 +293,20 @@
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+/* Recepción ve que la nota existe (fecha y autor), no lo que dice. */
+.fpx-nota__texto--restringido {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--text-muted, #94a3b8);
+    background: var(--bg-muted, #f1f5f9);
+}
+.fpx-nota__texto--restringido i { font-size: 11px; opacity: .8; }
 
 /* ── Vacíos ──────────────────────────────────────────────────────── */
 .fpx-vacio {

@@ -27,6 +27,16 @@ if ($paciente_id <= 0) {
     exit();
 }
 
+/* Un ecografista solo llega a SUS pacientes: los que registró o con los que
+   tiene cita o informe. Antes bastaba cambiar el paciente_id de la URL para
+   abrir el historial de cualquiera. Recepción y administración no se limitan:
+   necesitan a todos los pacientes para agendar y gestionar. */
+require_once __DIR__ . '/../lib/pacientes/mis_pacientes.php';
+if (api_rol() === 'ecografista' && !eco_ecografista_puede_ver_paciente($conex, api_uid(), $paciente_id)) {
+    eco_responder_requiere_confirmacion($paciente_id);
+    exit();
+}
+
 $paciente = eco_paciente_ficha($conex, $paciente_id);
 if (!$paciente) {
     http_response_code(404);
@@ -43,11 +53,22 @@ eco_auditar($conex, 'acceso_historia_clinica', [
 
 $historia = eco_historia_clinica($conex, $paciente_id);
 
+/* La recepción no ve contenido clínico. La línea de tiempo incluye las notas de
+   sesión con un extracto del texto en 'detalle': se vacía para quien no deba
+   leerlo. El evento se mantiene —fecha, autor, que existe una nota— porque eso
+   sí le sirve para agendar y cobrar. */
+$ve_clinico = in_array(api_rol(), ['ecografista', 'administrador'], true);
+
 // Fecha visible; fecha_orden solo servía para ordenar.
 $eventos = [];
 foreach ($historia['eventos'] as $ev) {
     $ev['fecha_fmt'] = $ev['fecha'] ? date('d/m/Y', strtotime($ev['fecha'])) : '—';
     unset($ev['fecha_orden']);
+    if (!$ve_clinico && ($ev['tipo'] ?? '') === 'nota') {
+        $ev['detalle']     = '';
+        $ev['recortada']   = false;
+        $ev['restringido'] = true;
+    }
     $eventos[] = $ev;
 }
 

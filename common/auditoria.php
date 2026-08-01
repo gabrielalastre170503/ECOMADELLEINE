@@ -52,6 +52,11 @@ $stmt->close();
 $conex->close();
 
 $accion_label = [
+    // En rojo y con nombre explícito: es el acceso de un ecografista a un
+    // paciente fuera de su ámbito, justificado por él. El motivo que escribió
+    // viaja en la columna "detalle". Es la línea que hay que mirar primero.
+    'acceso_excepcional_concedido' => ['ACCESO EXCEPCIONAL', '#b91c1c'],
+    'acceso_informe_denegado'      => ['Acceso denegado',    '#b91c1c'],
     'acceso_historia_clinica' => ['Vio historia clínica', '#7c3aed'],
     'acceso_informe'          => ['Vio informe',          '#0284c7'],
     'acceso_ficha_paciente'   => ['Vio ficha de paciente','#0f766e'],

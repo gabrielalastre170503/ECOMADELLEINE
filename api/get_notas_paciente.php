@@ -14,6 +14,17 @@ if ($paciente_id <= 0) {
     echo json_encode(['ok' => false, 'error' => 'Paciente inválido']); exit;
 }
 
+/* Las notas de sesión son datos clínicos: solo las ve el ecografista que
+   atiende a ese paciente (ver eco_ecografista_atiende). */
+require_once __DIR__ . '/../lib/pacientes/mis_pacientes.php';
+if (!eco_ecografista_puede_ver_paciente($conex, api_uid(), $paciente_id)) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'Este paciente no está bajo tu atención.',
+                      'requiere_confirmacion' => true, 'paciente_id' => $paciente_id],
+                     JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $paciente = null;
 if ($s = $conex->prepare("SELECT id, nombre_completo, cedula, correo FROM usuarios WHERE id=? AND rol='paciente' LIMIT 1")) {
     $s->bind_param('i', $paciente_id); $s->execute();

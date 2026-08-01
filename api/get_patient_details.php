@@ -19,6 +19,16 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $paciente_id = (int)$_GET['id'];
+
+/* Un ecografista solo accede a SUS pacientes (ver eco_ecografista_atiende).
+   Recepción y administración siguen viendo a todos: lo necesitan para agendar
+   y gestionar. */
+require_once __DIR__ . '/../lib/pacientes/mis_pacientes.php';
+if (api_rol() === 'ecografista' && !eco_ecografista_puede_ver_paciente($conex, api_uid(), $paciente_id)) {
+    eco_responder_requiere_confirmacion($paciente_id);
+    exit();
+}
+
 $response = [];
 
 $stmt = $conex->prepare("SELECT nombre_completo, cedula, direccion, correo, telefono, TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad, fecha_nacimiento, fecha_registro FROM usuarios WHERE id = ? AND rol = 'paciente'");

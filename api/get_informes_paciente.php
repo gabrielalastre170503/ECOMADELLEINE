@@ -18,6 +18,13 @@ if (!$paciente_id) {
     exit();
 }
 
+/* Un ecografista solo accede a SUS pacientes (ver eco_ecografista_atiende). */
+require_once __DIR__ . '/../lib/pacientes/mis_pacientes.php';
+if (api_rol() === 'ecografista' && !eco_ecografista_puede_ver_paciente($conex, api_uid(), $paciente_id)) {
+    eco_responder_requiere_confirmacion($paciente_id);
+    exit();
+}
+
 // Datos del paciente
 $stmt = $conex->prepare("SELECT id, nombre_completo, cedula, TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad FROM usuarios WHERE id = ? AND rol = 'paciente'");
 $stmt->bind_param('i', $paciente_id);

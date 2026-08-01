@@ -83,11 +83,29 @@ eco_auditar($conex, 'acceso_informe', [
     'detalle'    => ['paciente' => $informe['paciente_nombre'] ?? '', 'numero' => $informe['numero_informe'] ?? ''],
 ]);
 
-$esquema        = json_decode($informe['esquema_campos'],  true) ?: ['secciones' => []];
-$datos_clinicos = json_decode($informe['datos_clinicos'],  true) ?: [];
+/* Contenido clinico solo para quien deba verlo. La recepcion abre esta misma
+   modal para su trabajo administrativo, asi que en vez de un 403 —que le
+   romperia la pantalla— recibe la ficha sin los hallazgos y un aviso claro.
+   Los datos clinicos ni siquiera se decodifican si no se van a enviar. */
+$ve_clinico = eco_puede_ver_clinico(
+    $sesion_rol, $sesion_uid,
+    (int)$informe['paciente_id'], (string)$informe['estado'],
+    $conex, (int)$informe['ecografista_id']
+);
 
-// Renderizar en modo solo lectura
-$html = eco_render_formulario($esquema, $datos_clinicos, true);
+if ($ve_clinico) {
+    $esquema        = json_decode($informe['esquema_campos'], true) ?: ['secciones' => []];
+    $datos_clinicos = json_decode($informe['datos_clinicos'], true) ?: [];
+    // Renderizar en modo solo lectura
+    $html = eco_render_formulario($esquema, $datos_clinicos, true);
+} else {
+    $html = '<div class="inf-det-sin-clinico">'
+        . '<i class="fa-solid fa-lock" aria-hidden="true"></i>'
+        . '<p><strong>Contenido clínico restringido</strong></p>'
+        . '<p>Los hallazgos y conclusiones del estudio solo puede consultarlos el personal clínico. '
+        . 'Aquí tienes los datos del informe para gestión y facturación.</p>'
+        . '</div>';
+}
 
 $fecha_raw = $informe['fecha_estudio'] ?: substr($informe['creado_en'], 0, 10);
 $fecha_fmt = $fecha_raw ? date('d/m/Y', strtotime($fecha_raw)) : '—';
@@ -105,7 +123,8 @@ $fmt_dt = static function ($v) {
 $puede_gestionar = eco_puede_gestionar_informe($sesion_rol, $sesion_uid, (int)$informe['ecografista_id']);
 
 echo json_encode([
-    'html'    => $html,
+    'html'            => $html,
+    'clinico_visible' => $ve_clinico,   // el cliente oculta imprimir/descargar si es false
     'informe' => [
         'id'              => (int)$informe['id'],
         'numero_informe'  => $informe['numero_informe'] ?? '—',

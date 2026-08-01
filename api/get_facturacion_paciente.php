@@ -27,6 +27,14 @@ if ($paciente_id <= 0) {
     exit();
 }
 
+/* Un ecografista solo accede a SUS pacientes (ver eco_ecografista_atiende).
+   Recepción y administración no se limitan: facturan a todos. */
+require_once __DIR__ . '/../lib/pacientes/mis_pacientes.php';
+if ($es_eco && !eco_ecografista_puede_ver_paciente($conex, $uid, $paciente_id)) {
+    eco_responder_requiere_confirmacion($paciente_id);
+    exit();
+}
+
 $stmt = $conex->prepare("SELECT nombre_completo, cedula FROM usuarios WHERE id = ? AND rol = 'paciente'");
 $stmt->bind_param('i', $paciente_id);
 $stmt->execute();

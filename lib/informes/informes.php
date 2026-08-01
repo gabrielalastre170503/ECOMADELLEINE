@@ -54,4 +54,53 @@ if (!function_exists('eco_puede_gestionar_informe')) {
         }
         return $rol === 'ecografista' && $usuarioId === $ecografistaIdInforme;
     }
+
+    /**
+     * ¿Puede este usuario ver el CONTENIDO CLINICO de un informe (hallazgos,
+     * mediciones, conclusiones)? Distinto de gestionarlo y distinto de ver sus
+     * datos administrativos (numero, fecha, estado, tipo, paciente).
+     *
+     * Criterio de "minimo necesario":
+     *   - administrador : si (responsable del sistema).
+     *   - ecografista   : si (personal clinico).
+     *   - paciente      : solo lo suyo, y solo finalizado o firmado.
+     *   - recepcionista : NO. Agenda y cobra; para eso le bastan los datos
+     *                     administrativos. Los hallazgos no le hacen falta.
+     *
+     * Hay DOS vias al contenido clinico —la modal (api/get_informe_detalle.php)
+     * y la version imprimible (informes/ver_informe_estudio.php)—: las dos deben
+     * preguntar aqui, o cerrar una sola no sirve de nada.
+     */
+    function eco_puede_ver_clinico(
+        string $rol,
+        int $usuarioId,
+        int $pacienteIdInforme,
+        string $estadoInforme,
+        ?mysqli $conex = null,
+        int $ecografistaIdInforme = 0
+    ): bool {
+        if ($rol === 'administrador') {
+            return true;
+        }
+        if ($rol === 'ecografista') {
+            // Su propio informe, siempre. Si no, solo si el paciente está bajo
+            // su atención (lo registró él, o tienen cita/informe en común).
+            if ($ecografistaIdInforme > 0 && $usuarioId === $ecografistaIdInforme) {
+                return true;
+            }
+            if ($conex === null) {
+                return false;           // sin conexión no se puede comprobar: no se concede
+            }
+            require_once __DIR__ . '/../pacientes/mis_pacientes.php';
+            // Incluye el permiso excepcional vigente ("romper el cristal"): si
+            // el ecografista ya justificó el acceso a ese paciente, el informe
+            // entra en lo que puede consultar.
+            return eco_ecografista_puede_ver_paciente($conex, $usuarioId, $pacienteIdInforme);
+        }
+        if ($rol === 'paciente') {
+            return $usuarioId === $pacienteIdInforme
+                && in_array($estadoInforme, ['finalizado', 'firmado'], true);
+        }
+        return false;   // recepcionista y cualquier otro rol
+    }
 }

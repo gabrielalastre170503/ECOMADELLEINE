@@ -42,7 +42,10 @@ eco_auditar($conex, 'acceso_historia_clinica', [
 
 $citas    = eco_historia_citas($conex, $paciente_id);
 $informes = eco_historia_informes($conex, $paciente_id);
-$notas    = eco_historia_notas($conex, $paciente_id, 0); // texto completo
+// Recorte a 1 carácter: aquí solo se usan la fecha, el autor y el número de
+// notas. El texto es clínico y esta vista no lo muestra, así que tampoco se
+// trae entero desde la base.
+$notas    = eco_historia_notas($conex, $paciente_id, 1);
 
 // Cobros: lo facturado y lo que queda por cobrar.
 $facturado = 0.0;
@@ -252,9 +255,11 @@ ob_start();
                         </span>
                     </div>
                     <span class="fpx-estado fpx-estado--inf-<?= htmlspecialchars($inf['estado']) ?>"><?= htmlspecialchars(eco_informe_estado_label($inf['estado'])) ?></span>
-                    <a class="fpx-item__link" href="<?= eco_url('informe/' . (int)$inf['id']) ?>" target="_blank" rel="noopener">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver
-                    </a>
+                    <!-- Mismo gancho que la lista del modal: abre el informe aquí
+                         dentro en vez de mandar a otra pestaña. -->
+                    <button type="button" class="fpx-item__link rx-js-inf-det" data-rx-inf="<?= (int)$inf['id'] ?>">
+                        <i class="fa-solid fa-file-lines"></i> Ver
+                    </button>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -276,7 +281,14 @@ ob_start();
                         <strong><?= htmlspecialchars($fmt($n['fecha'])) ?></strong>
                         <span class="fpx-sub"><?= htmlspecialchars($n['profesional'] ?: 'Sin ecografista') ?></span>
                     </div>
-                    <p class="fpx-nota__texto"><?= nl2br(htmlspecialchars($n['detalle'])) ?></p>
+                    <?php /* El texto de la nota es contenido clínico y esta ficha
+                             es la vista de recepción: se deja constancia de que
+                             la nota existe (fecha y autor, útiles para agendar)
+                             pero no su contenido. Antes se imprimía entero. */ ?>
+                    <p class="fpx-nota__texto fpx-nota__texto--restringido">
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                        Contenido clínico restringido
+                    </p>
                 </li>
             <?php endforeach; ?>
         </ul>

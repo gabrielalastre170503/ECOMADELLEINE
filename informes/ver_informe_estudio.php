@@ -42,13 +42,24 @@ if (!$informe) {
     die("Error: Informe no encontrado.");
 }
 
-// Control de acceso del paciente: solo SUS informes y solo si están finalizados/firmados.
-if (($_SESSION['rol'] ?? '') === 'paciente') {
-    if ((int)$informe['paciente_id'] !== (int)$_SESSION['usuario_id']
-        || !in_array($informe['estado'], ['finalizado', 'firmado'], true)) {
-        http_response_code(403);
-        die('No tienes acceso a este informe.');
-    }
+/* Esta página ES el informe clínico completo (hallazgos, mediciones,
+   conclusiones y firma). Un único criterio decide quién puede verla, el mismo
+   que usa la modal: eco_puede_ver_clinico(). Cubre de una vez el caso del
+   paciente (solo lo suyo, finalizado o firmado) y el de la recepción, que
+   antes entraba aquí y leía el informe entero. */
+require_once __DIR__ . '/../lib/informes/informes.php';
+if (!eco_puede_ver_clinico(
+        (string)($_SESSION['rol'] ?? ''),
+        (int)$_SESSION['usuario_id'],
+        (int)$informe['paciente_id'],
+        (string)$informe['estado'],
+        $conex,
+        (int)$informe['ecografista_id'])) {
+    eco_auditar($conex, 'acceso_informe_denegado', [
+        'entidad' => 'informe', 'entidad_id' => $informe_id,
+    ]);
+    http_response_code(403);
+    die('No tienes acceso a este informe.');
 }
 
 // Bitácora de acceso a datos clínicos (cumplimiento): quién abrió este informe.
@@ -103,8 +114,28 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
     <meta charset="UTF-8">
     <title>Informe <?php echo htmlspecialchars($informe['numero_informe']); ?> - EcoMadelleine</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700;900&family=Great+Vibes&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700;900&display=swap" rel="stylesheet">
     <style>
+        /* La firma del membrete se servía desde Google Fonts y, si no llegaba
+           antes de imprimir, el nombre salía con la letra de reserva del
+           sistema. Se sirve desde el propio servidor para que siempre sea la
+           misma. Great Vibes — SIL Open Font License 1.1. */
+        @font-face {
+            font-family: 'Great Vibes';
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;   /* block, no swap: antes de imprimir se espera a la buena */
+            src: url('<?php echo eco_url('assets/fonts/great-vibes-v21-latin.woff2'); ?>') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2122;
+        }
+        @font-face {
+            font-family: 'Great Vibes';
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url('<?php echo eco_url('assets/fonts/great-vibes-v21-latin-ext.woff2'); ?>') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+2C60-2C7F, U+A720-A7FF;
+        }
         /* ============================================================
            VISTA EN PANTALLA  (web)  — diseño moderno
            ============================================================ */
@@ -284,9 +315,13 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
            Una sola hoja Letter. Tipografía Times, blanco y negro,
            flujo inline tipo "label: valor".
            ============================================================ */
+        /* Margen 0 en la hoja y el margen real como relleno del cuerpo: el
+           navegador dibuja su encabezado (fecha y hora, título) DENTRO del
+           margen de página, así que sin margen no lo imprime. La fecha ya
+           está en el propio informe. */
         @page {
             size: Letter;
-            margin: 10mm 12mm 9mm 12mm;
+            margin: 0;
         }
 
         @media print {
@@ -306,7 +341,8 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
                 max-width: 100% !important;
             }
             .barra-acciones, .no-print { display: none !important; }
-            .documento { padding: 0 !important; }
+            /* El margen que antes ponía @page: la hoja sigue igual de holgada. */
+            .documento { padding: 10mm 12mm 9mm 12mm !important; }
 
             /* Ocultar diseño moderno en impresión */
             .documento > .membrete,
@@ -791,8 +827,23 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
 
 <?php if (isset($_GET['print']) && $_GET['print'] === '1'): ?>
 <script>
+    /* El evento load no espera a los ficheros de fuente: se descargan cuando
+       hacen falta. Imprimir sin esperar sacaba el membrete con la letra de
+       reserva del sistema. Se espera a la firma, con tope de 4 s para no
+       dejar la impresión colgada si algo falla. */
     window.addEventListener('load', function () {
-        setTimeout(function () { window.print(); }, 500);
+        function imprimir() { window.print(); }
+
+        if (!document.fonts || !document.fonts.load) {
+            setTimeout(imprimir, 500);
+            return;
+        }
+
+        var firma = document.fonts.load('26pt "Great Vibes"', 'Dra. Madelleine Toro');
+        var tope  = new Promise(function (r) { setTimeout(r, 4000); });
+
+        Promise.race([firma.catch(function () {}), tope])
+            .then(function () { setTimeout(imprimir, 120); });
     });
 </script>
 <?php endif; ?>
