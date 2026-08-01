@@ -33,9 +33,11 @@ if ((int)$u['email_verificado'] === 1) {
 }
 
 $token  = eco_token();
+// En la BD solo el sha256; el token en claro va unicamente en el enlace.
+$tokenHash = hash('sha256', $token);
 $expira = date('Y-m-d H:i:s', strtotime('+24 hours'));
 $upd = $conex->prepare("UPDATE usuarios SET token_verificacion = ?, token_verificacion_expira = ? WHERE id = ?");
-$upd->bind_param('ssi', $token, $expira, $uid);
+$upd->bind_param('ssi', $tokenHash, $expira, $uid);
 $upd->execute();
 $upd->close();
 

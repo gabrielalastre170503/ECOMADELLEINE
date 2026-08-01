@@ -85,12 +85,14 @@
         var buscador = $('buscador-usuarios');
         var container = $('tabla-usuarios-container');
 
-        var urlParams = new URLSearchParams(window.location.search);
-        var tempPass = urlParams.get('temp_pass');
+        /* La contraseña temporal la entrega el servidor en el propio modal
+           (viene de la sesion). Antes se leia de la URL, donde quedaba en el
+           historial y en los logs; por eso ya no hace falta limpiarla. */
+        var modalTP = $('eco-modal-vu-temp-pass');
+        var tempPass = modalTP ? modalTP.getAttribute('data-temp-pass') : '';
         if (tempPass) {
+            modalTP.removeAttribute('data-temp-pass');
             showTempPassModal(tempPass);
-            var clean = window.location.pathname + '?filtro=' + encodeURIComponent(urlParams.get('filtro') || filtroActual);
-            history.replaceState(null, '', clean);
         }
 
         buscarUsuarios('');

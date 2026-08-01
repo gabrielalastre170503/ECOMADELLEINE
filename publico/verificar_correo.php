@@ -15,9 +15,11 @@ $token = isset($_GET['token']) ? trim((string)$_GET['token']) : '';
 if ($token === '' || !preg_match('/^[a-f0-9]{64}$/', $token)) {
     $mensaje = 'El enlace de verificación no es válido.';
 } else {
+    // La columna guarda el sha256: se busca por el hash de lo que trae el enlace.
+    $tokenHash = hash('sha256', $token);
     $stmt = $conex->prepare("SELECT id, nombre_completo, email_verificado, token_verificacion_expira
                              FROM usuarios WHERE token_verificacion = ? LIMIT 1");
-    $stmt->bind_param('s', $token);
+    $stmt->bind_param('s', $tokenHash);
     $stmt->execute();
     $u = $stmt->get_result()->fetch_assoc();
     $stmt->close();

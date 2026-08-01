@@ -77,7 +77,15 @@ $page_content = ob_get_clean();
 
 ob_start();
 ?>
-<div id="eco-modal-vu-temp-pass" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="vu-temp-pass-title">
+<?php
+/* La contraseña recién generada llega por la sesión (antes venía en la URL, que
+   queda en el historial y en los logs del servidor). Se consume una sola vez:
+   al recargar la página ya no vuelve a mostrarse. */
+$vu_temp_pass = (string)($_SESSION['vu_temp_pass'] ?? '');
+unset($_SESSION['vu_temp_pass']);
+?>
+<div id="eco-modal-vu-temp-pass" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="vu-temp-pass-title"
+     data-temp-pass="<?= htmlspecialchars($vu_temp_pass, ENT_QUOTES, 'UTF-8') ?>">
     <div class="eco-modal__dialog">
         <div class="eco-modal__main" style="padding:28px 24px 24px;text-align:center;">
             <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>

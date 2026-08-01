@@ -14,8 +14,11 @@ $usuario_id = null;
 /* Localiza y valida el token (de GET o de POST). */
 $token = trim((string)($_POST['token'] ?? $_GET['token'] ?? ''));
 if ($token !== '' && preg_match('/^[a-f0-9]{64}$/', $token)) {
+    /* La columna guarda el sha256, no el token: se busca por el hash de lo que
+       llega en el enlace (ver auth/recuperar.php). */
+    $tokenHash = hash('sha256', $token);
     $stmt = $conex->prepare("SELECT id, token_recuperacion_expira FROM usuarios WHERE token_recuperacion = ? LIMIT 1");
-    $stmt->bind_param('s', $token);
+    $stmt->bind_param('s', $tokenHash);
     $stmt->execute();
     $u = $stmt->get_result()->fetch_assoc();
     $stmt->close();

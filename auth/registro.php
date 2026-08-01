@@ -45,10 +45,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $contrasena_hasheada = password_hash($contrasena, PASSWORD_DEFAULT);
             $email_verificado = 0;
             $token_verif  = eco_token();
+            // En la BD solo el sha256; el token en claro viaja unicamente en el
+            // correo (mismo criterio que recuperacion y descarga_tokens).
+            $token_verif_hash = hash('sha256', $token_verif);
             $token_expira = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
             $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado, token_verificacion, token_verificacion_expira) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $insert_stmt->bind_param("sssssssssiss", $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado, $token_verif, $token_expira);
+            $insert_stmt->bind_param("sssssssssiss", $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado, $token_verif_hash, $token_expira);
 
             if ($insert_stmt->execute()) {
                 // Correo de verificación (no bloquea el registro si el envío falla)

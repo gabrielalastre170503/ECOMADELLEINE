@@ -34,8 +34,11 @@ $stmt->bind_param("si", $contrasena_hasheada, $usuario_id_a_resetear);
 
 if ($stmt->execute()) {
     eco_auditar($conex, 'password_reset', ['entidad' => 'usuario', 'entidad_id' => $usuario_id_a_resetear]);
-    // 3. Redirigir de vuelta a la lista de usuarios con la contraseña en la URL
-    $redirect_url = eco_url('usuarios') . '?filtro=' . urlencode($filtro_origen) . '&status=password_reset&temp_pass=' . urlencode($contrasena_temporal);
+    /* 3. La contraseña se pasa por la SESION, no por la URL. En la URL quedaba
+          registrada en el historial del navegador, en los logs de acceso de
+          Apache y se filtraba por la cabecera Referer hacia terceros. */
+    $_SESSION['vu_temp_pass'] = $contrasena_temporal;
+    $redirect_url = eco_url('usuarios') . '?filtro=' . urlencode($filtro_origen) . '&status=password_reset';
     header('Location: ' . $redirect_url);
 } else {
     header('Location: ' . eco_url('usuarios') . '?filtro=' . urlencode($filtro_origen) . '&error=reset_failed');

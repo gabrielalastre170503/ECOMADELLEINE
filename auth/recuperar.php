@@ -26,9 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($u) {
             $token  = eco_token();
+            /* En la BD va solo el sha256, nunca el token en claro: es el mismo
+               criterio que descarga_tokens. Quien lea la base (un respaldo, una
+               copia de la tabla) no obtiene enlaces de restablecimiento usables;
+               el token en claro existe unicamente en el correo del usuario. */
+            $tokenHash = hash('sha256', $token);
             $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
             $upd = $conex->prepare("UPDATE usuarios SET token_recuperacion = ?, token_recuperacion_expira = ? WHERE id = ?");
-            $upd->bind_param('ssi', $token, $expira, $u['id']);
+            $upd->bind_param('ssi', $tokenHash, $expira, $u['id']);
             $upd->execute();
             $upd->close();
 
