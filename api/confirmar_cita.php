@@ -10,11 +10,20 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit();
 }
 
-if (!isset($_GET['cita_id']) || !is_numeric($_GET['cita_id'])) {
-    die("ID de cita no válido.");
+// Confirmar una cita cambia datos: POST + token CSRF. Con un enlace GET
+// bastaba que el ecografista abriera un enlace ajeno para confirmarla.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . eco_url('solicitudes'));
+    exit();
+}
+require_csrf();
+
+if (!isset($_POST['cita_id']) || !is_numeric($_POST['cita_id'])) {
+    header('Location: ' . eco_url('solicitudes') . '?error=parametros_invalidos');
+    exit();
 }
 
-$cita_id        = (int)$_GET['cita_id'];
+$cita_id        = (int)$_POST['cita_id'];
 $ecografista_id = (int)$_SESSION['usuario_id'];
 
 // Confirma la cita (solo si está pendiente y asignada a este ecografista)

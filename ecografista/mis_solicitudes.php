@@ -133,7 +133,9 @@ function confirmarSolicitud(id) {
                     text: 'La cita quedará confirmada y el paciente recibirá la notificación.',
                     acceptLabel: 'Confirmar', acceptIcon: 'fa-solid fa-check',
                     acceptStyle: 'background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 12px rgba(34,197,94,.3);',
-                    onAccept: function () { window.location.href = (window.ECO_BASE || '') + 'api/confirmar_cita.php?cita_id=' + encodeURIComponent(id); }
+                    /* POST + token CSRF: confirmar cambia datos y el enlace GET
+                       anterior se podia disparar desde otra web. */
+                    onAccept: function () { window.ecoPost((window.ECO_BASE || '') + 'api/confirmar_cita.php', { cita_id: id }); }
                 });
             }
         })

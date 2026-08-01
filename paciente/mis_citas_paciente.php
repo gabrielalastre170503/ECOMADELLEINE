@@ -466,6 +466,20 @@ $page_scripts_extra = <<<'HTML'
     var bodyEl  = document.getElementById('modal-cita-body');
     var subEl   = document.getElementById('modal-cita-num');
 
+    /* Aceptar/rechazar la fecha propuesta. Delegado porque esos botones se
+       crean al vuelo en renderDetalle() cada vez que se abre el detalle. */
+    if (bodyEl) {
+        bodyEl.addEventListener('click', function (ev) {
+            var b = ev.target.closest('[data-prop-accion]');
+            if (!b) return;
+            ev.preventDefault();
+            window.ecoPost((window.ECO_BASE || '') + 'api/gestionar_propuesta.php', {
+                cita_id: b.getAttribute('data-prop-id'),
+                accion:  b.getAttribute('data-prop-accion')
+            });
+        });
+    }
+
     var mesesAbbr = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     var estadoMeta = {
         /* El mismo azul que las tarjetas: si el modal usara otro color, la
@@ -521,8 +535,11 @@ $page_scripts_extra = <<<'HTML'
                 html += '<p class="cd-banner__text"><strong>Motivo:</strong> <em>' + multiline(data.reprogramacion_motivo) + '</em></p>';
             }
             html += '<div class="cd-banner__actions">';
-            html += '<a href="' + (window.ECO_BASE || '') + 'api/gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=rechazar" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Rechazar</a>';
-            html += '<a href="' + (window.ECO_BASE || '') + 'api/gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=aceptar" class="btn-primary"><i class="fa-solid fa-check"></i> Aceptar nueva fecha</a>';
+            /* Botones, no enlaces: gestionar_propuesta.php exige POST + token
+               CSRF. Como enlace GET, abrir un enlace ajeno movia la fecha de
+               la cita. El envio lo hace el manejador delegado de mas abajo. */
+            html += '<button type="button" class="btn-secondary" data-prop-accion="rechazar" data-prop-id="' + esc(data.id) + '"><i class="fa-solid fa-xmark"></i> Rechazar</button>';
+            html += '<button type="button" class="btn-primary" data-prop-accion="aceptar" data-prop-id="' + esc(data.id) + '"><i class="fa-solid fa-check"></i> Aceptar nueva fecha</button>';
             html += '</div></div>';
         }
 
@@ -570,8 +587,14 @@ $page_scripts_extra = <<<'HTML'
 
     /* Cancelar una próxima cita (con confirmación en modal) */
     window.cancelarCitaPaciente = function (id) {
+        /* El endpoint exige POST + token CSRF: se envia formulario en vez de
+           navegar por href (el enlace GET se podia disparar desde otra web). */
         var a = document.getElementById('cancelar-cita-confirm');
-        if (a) a.href = (window.ECO_BASE || '') + 'api/cancelar_cita_paciente.php?cita_id=' + encodeURIComponent(id);
+        if (a) a.onclick = function (ev) {
+            ev.preventDefault();
+            window.ecoPost((window.ECO_BASE || '') + 'api/cancelar_cita_paciente.php', { cita_id: id });
+            return false;
+        };
         if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-cancelar-cita');
     };
 

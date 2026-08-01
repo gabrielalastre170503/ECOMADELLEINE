@@ -153,8 +153,14 @@ ob_start();
 function cancelarCitaEco(id, paciente) {
     var p = document.getElementById('cce-paciente');
     if (p) p.textContent = paciente || '—';
+    /* El endpoint exige POST + token CSRF: se envia formulario en vez de
+       navegar por href (el enlace GET se podia disparar desde otra web). */
     var a = document.getElementById('cce-confirm');
-    if (a) a.href = (window.ECO_BASE || '') + 'api/cancelar_cita_ecografista.php?cita_id=' + encodeURIComponent(id);
+    if (a) a.onclick = function (ev) {
+        ev.preventDefault();
+        window.ecoPost((window.ECO_BASE || '') + 'api/cancelar_cita_ecografista.php', { cita_id: id });
+        return false;
+    };
     if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-cancelar-cita-eco');
 }
 </script>

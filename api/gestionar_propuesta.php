@@ -9,9 +9,17 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
     exit();
 }
 
-if (isset($_GET['cita_id']) && isset($_GET['accion'])) {
-    $cita_id = $_GET['cita_id'];
-    $accion = $_GET['accion'];
+// Aceptar/rechazar una propuesta cambia datos: POST + token CSRF. Como enlace
+// GET, abrir un enlace ajeno movia la fecha de la cita del paciente.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . eco_url('mis-citas'));
+    exit();
+}
+require_csrf();
+
+if (isset($_POST['cita_id']) && isset($_POST['accion'])) {
+    $cita_id = $_POST['cita_id'];
+    $accion = $_POST['accion'];
     $paciente_id = $_SESSION['usuario_id'];
 
     if ($accion == 'aceptar') {

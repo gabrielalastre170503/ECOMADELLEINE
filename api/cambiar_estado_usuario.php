@@ -12,6 +12,11 @@ if (api_rol() !== 'administrador') {
     api_fail('Acción no permitida.', 403);
 }
 
+// Habilitar/inhabilitar una cuenta es una escritura sensible: exige token.
+// Los dos llamadores usan fetch(), y el envoltorio de shell.php ya adjunta
+// la cabecera X-CSRF-Token en cada peticion al propio origen.
+api_require_csrf();
+
 // Usamos POST para recibir los datos de JavaScript
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['nuevo_estado'])) {
     $usuario_id = $_POST['id'];

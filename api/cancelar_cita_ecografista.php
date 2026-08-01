@@ -8,7 +8,15 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'ecografista') {
     exit();
 }
 
-$cita_id        = isset($_GET['cita_id']) ? (int)$_GET['cita_id'] : 0;
+// Cancelar cambia datos: POST + token CSRF (antes era un enlace GET, que
+// SameSite=Lax no frena en una navegacion de primer nivel).
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . eco_url('proximas-citas'));
+    exit();
+}
+require_csrf();
+
+$cita_id        = isset($_POST['cita_id']) ? (int)$_POST['cita_id'] : 0;
 $ecografista_id = (int)$_SESSION['usuario_id'];
 
 if ($cita_id > 0) {
