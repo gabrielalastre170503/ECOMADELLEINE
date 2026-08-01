@@ -35,6 +35,11 @@ if (!function_exists('api_session')) {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
+        /* OJO: aquí NO se marca actividad. Al hacerlo, la marca se refrescaba
+           antes de que api_require_login() comprobara la caducidad, así que la
+           sesión no expiraba nunca por esta vía. Quien renueva la marca es
+           eco_sesion_inactividad(true) desde api_require_login(), y solo
+           después de comprobar que no había vencido. */
     }
 }
 
@@ -79,6 +84,10 @@ if (!function_exists('api_require_login')) {
     /** Exige sesion iniciada; si no, 401. */
     function api_require_login(): void
     {
+        api_session();
+        if (function_exists('eco_sesion_inactividad') && eco_sesion_inactividad(true)) {
+            api_fail('Tu sesión expiró por inactividad. Vuelve a iniciar sesión.', 401);
+        }
         if (api_uid() <= 0) {
             api_fail('No autenticado.', 401);
         }

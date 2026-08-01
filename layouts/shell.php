@@ -21,6 +21,14 @@
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// Cierra la sesión si lleva demasiado tiempo inactiva (ver bootstrap.php).
+// Va antes del guardián de login para que el usuario acabe en la pantalla de
+// acceso, no en una página a medio dibujar.
+if (function_exists('eco_sesion_inactividad') && eco_sesion_inactividad(true)) {
+    header('Location: ' . eco_url('login') . '?status=sesion_expirada');
+    exit;
+}
+
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
     exit;
@@ -188,9 +196,42 @@ $body_class = trim($body_class . ' ' . $role_class . ' eco-glass');
 
     </div>
 
+    <?php /* Acceso excepcional: solo lo necesita el ecografista, que es quien
+             puede toparse con un paciente fuera de su ámbito. */
+    if (($_SESSION['rol'] ?? '') === 'ecografista'): ?>
+    <div id="eco-modal-acceso-excepcional" class="eco-modal" aria-hidden="true" role="dialog"
+         aria-labelledby="eco-acx-titulo">
+        <div class="eco-modal__dialog eco-modal__dialog--sm">
+            <div class="eco-modal__main eco-acx">
+                <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="eco-acx__icono" aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h4 class="eco-modal__title" id="eco-acx-titulo">Paciente fuera de tu ámbito</h4>
+                <p class="eco-acx__texto">
+                    <strong id="eco-acx-paciente">Este paciente</strong> no está bajo tu atención.
+                    Puedes acceder si lo necesitas, pero el acceso se registrará en la bitácora
+                    de auditoría junto con el motivo que escribas.
+                </p>
+                <label class="eco-acx__label" for="eco-acx-motivo">Motivo del acceso</label>
+                <textarea id="eco-acx-motivo" class="eco-acx__motivo" rows="3"
+                          placeholder="Ej.: cubro la guardia de la Dra. Toro y el paciente viene por control."></textarea>
+                <p class="eco-acx__error" id="eco-acx-error" hidden></p>
+                <div class="eco-acx__pie">
+                    <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
+                    <button type="button" class="btn-primary" id="eco-acx-confirmar">
+                        <i class="fa-solid fa-unlock"></i> Acceder y registrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <script src="assets/js/core/shell.js"></script>
     <script src="assets/js/core/shell-modals.js"></script>
     <script src="assets/js/core/notificaciones.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/notificaciones.js') ?: '1' ?>"></script>
+    <script src="assets/js/core/topbar-search.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/topbar-search.js') ?: '1' ?>"></script>
     <?= $page_scripts_extra ?>
 </body>
 </html>

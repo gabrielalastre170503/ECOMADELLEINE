@@ -15,16 +15,35 @@ $pend = &$_SESSION['2fa_pending'];
 $error = '';
 $info  = '';
 
-/* Reenviar código */
+/* Reenviar código.
+   Antes esto reiniciaba 'intentos' a 0 y no tenía tope: bastaba encadenar
+   reenvíos para saltarse el límite de 5 intentos —y de paso llenar el buzón
+   del usuario de correos—. Ahora el contador de intentos NO se toca, hay
+   espera mínima entre envíos y un máximo por sesión pendiente. */
+define('ECO_2FA_REENVIO_ESPERA', 60);   // segundos entre reenvíos
+define('ECO_2FA_REENVIO_MAX',     3);   // reenvíos por intento de acceso
+
 if (isset($_GET['reenviar'])) {
-    $otp = eco_otp_codigo();
-    $pend['otp_hash'] = password_hash($otp, PASSWORD_DEFAULT);
-    $pend['expira']   = time() + 600;
-    $pend['intentos'] = 0;
-    $cuerpo = "Hola {$pend['nombre']},\n\nTu nuevo código de verificación es:\n\n    {$otp}\n\n"
-        . "Vence en 10 minutos.\n\n— EcoMadelleine · Centro de Diagnóstico";
-    eco_enviar_correo((string)$pend['correo'], 'Tu código de acceso · EcoMadelleine', $cuerpo);
-    $info = 'Te enviamos un nuevo código a tu correo.';
+    $ahora     = time();
+    $reenvios  = (int)($pend['reenvios'] ?? 0);
+    $ultimo    = (int)($pend['ultimo_envio'] ?? 0);
+    $restante  = ECO_2FA_REENVIO_ESPERA - ($ahora - $ultimo);
+
+    if ($reenvios >= ECO_2FA_REENVIO_MAX) {
+        $error = 'Has pedido demasiados códigos. Vuelve a iniciar sesión para empezar de nuevo.';
+    } elseif ($ultimo > 0 && $restante > 0) {
+        $error = 'Espera ' . $restante . ' segundo(s) antes de pedir otro código.';
+    } else {
+        $otp = eco_otp_codigo();
+        $pend['otp_hash']     = password_hash($otp, PASSWORD_DEFAULT);
+        $pend['expira']       = $ahora + 600;
+        $pend['reenvios']     = $reenvios + 1;
+        $pend['ultimo_envio'] = $ahora;
+        $cuerpo = "Hola {$pend['nombre']},\n\nTu nuevo código de verificación es:\n\n    {$otp}\n\n"
+            . "Vence en 10 minutos.\n\n— EcoMadelleine · Centro de Diagnóstico";
+        eco_enviar_correo((string)$pend['correo'], 'Tu código de acceso · EcoMadelleine', $cuerpo);
+        $info = 'Te enviamos un nuevo código a tu correo.';
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

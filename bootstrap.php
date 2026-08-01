@@ -24,6 +24,20 @@ define('ECO_BOOTSTRAP', 1);
 require_once __DIR__ . '/config/env_loader.php';
 eco_load_env(__DIR__ . '/.env');
 
+/* ── 0. Visibilidad de errores según el entorno ────────────────────────
+ * php.ini de XAMPP trae display_errors=On, que es lo correcto para
+ * desarrollar y lo peor posible en producción: cualquier error fatal
+ * imprime al navegador la traza completa con rutas absolutas, nombres de
+ * tabla y fragmentos de consulta. Fuera de 'development' los errores se
+ * registran en el log del servidor y no se muestran nunca.
+ * Se controla con APP_ENV en el .env (development | production). */
+$eco_entorno = strtolower(trim((string)eco_env('APP_ENV', 'production')));
+$eco_es_dev  = in_array($eco_entorno, ['development', 'dev', 'local'], true);
+@ini_set('display_errors',         $eco_es_dev ? '1' : '0');
+@ini_set('display_startup_errors', $eco_es_dev ? '1' : '0');
+@ini_set('log_errors', '1');   // registrar SIEMPRE, se muestren o no
+unset($eco_entorno, $eco_es_dev);
+
 /* ── 1. Endurecimiento de la sesión ───────────────────────────────── */
 if (session_status() === PHP_SESSION_NONE) {
     $secure = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
@@ -50,6 +64,12 @@ if (session_status() === PHP_SESSION_NONE) {
  * orígenes externos, bloquea objetos y el framing por terceros (anti-clickjacking).
  * No se usa upgrade-insecure-requests para no romper el desarrollo en http. */
 if (!headers_sent()) {
+    /* php.ini trae expose_php=On, que anuncia la version exacta de PHP en cada
+       respuesta y facilita buscar exploits conocidos para ella. Se quita aqui
+       porque es determinista: "Header unset" en .htaccess no alcanza de forma
+       fiable las cabeceras que anade el propio PHP. */
+    header_remove('X-Powered-By');
+
     header('Content-Security-Policy: ' . implode('; ', [
         "default-src 'self'",
         "base-uri 'self'",
@@ -67,6 +87,49 @@ if (!headers_sent()) {
     header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+}
+
+/* ── 1c. Caducidad de sesión por inactividad ──────────────────────────
+ * php.ini trae gc_maxlifetime=1440 (24 min), pero con gc_probability 1/1000
+ * el recolector solo corre en el 0,1 % de las peticiones: en la práctica una
+ * sesión abandonada sobrevive indefinidamente. En un puesto compartido —la
+ * recepción de una clínica— eso significa que quien se siente después sigue
+ * dentro de la sesión anterior. Aquí la caducidad es determinista.
+ *
+ * Cobertura: se REFRESCA en cada página y en los endpoints que usan la capa
+ * api_*, y se APLICA al cargar cualquier página (layouts/shell.php) y en
+ * api_require_login(). Los endpoints que leen $_SESSION a pelo no la refrescan
+ * ni la aplican: no alargan la sesión, que es el lado seguro del fallo. */
+if (!defined('ECO_SESION_INACTIVIDAD_MIN')) {
+    define('ECO_SESION_INACTIVIDAD_MIN', 30);
+}
+
+if (!function_exists('eco_sesion_inactividad')) {
+    /**
+     * @param bool $aplicar  true = cierra la sesión si venció; false = solo marca actividad.
+     * @return bool  true si la sesión se cerró por inactividad.
+     */
+    function eco_sesion_inactividad(bool $aplicar = true): bool
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['usuario_id'])) {
+            return false;
+        }
+        $limite = ECO_SESION_INACTIVIDAD_MIN * 60;
+        $ultima = (int)($_SESSION['eco_ultima_actividad'] ?? 0);
+
+        if ($aplicar && $ultima > 0 && (time() - $ultima) > $limite) {
+            $_SESSION = [];
+            if (ini_get('session.use_cookies') && !headers_sent()) {
+                $p = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000,
+                    $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+            }
+            @session_destroy();
+            return true;
+        }
+        $_SESSION['eco_ultima_actividad'] = time();
+        return false;
+    }
 }
 
 /* ── 2. Helpers CSRF ──────────────────────────────────────────────── */

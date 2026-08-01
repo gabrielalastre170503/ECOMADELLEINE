@@ -53,12 +53,21 @@ if (!function_exists('eco_client_ip')) {
 
         $sql = "INSERT INTO auditoria (usuario_id, accion, entidad, entidad_id, detalle, ip, user_agent)
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
-        if (!($st = @$conex->prepare($sql))) {
-            return;
+        // El try/catch es imprescindible: desde PHP 8 mysqli lanza excepciones y
+        // '@' NO las suprime, solo silencia warnings. Sin esto, un fallo al
+        // auditar (tabla ausente, restriccion de clave ajena, disco lleno) no
+        // "degradaba en silencio" como promete la cabecera: abortaba la peticion
+        // con un error fatal, que ademas imprime la traza y las rutas absolutas.
+        try {
+            if (!($st = @$conex->prepare($sql))) {
+                return;
+            }
+            $st->bind_param('ississs', $usuarioId, $accion, $entidad, $entidadId, $detalle, $ip, $ua);
+            $st->execute();
+            $st->close();
+        } catch (\Throwable $e) {
+            error_log('eco_auditar: no se pudo registrar "' . $accion . '" — ' . $e->getMessage());
         }
-        $st->bind_param('ississs', $usuarioId, $accion, $entidad, $entidadId, $detalle, $ip, $ua);
-        @$st->execute();
-        $st->close();
     }
 
     /**
@@ -69,14 +78,18 @@ if (!function_exists('eco_client_ip')) {
         $correo = substr($correo, 0, 100);
         $ip     = eco_client_ip();
         $ex     = $exito ? 1 : 0;
-        if (!($st = @$conex->prepare(
-            "INSERT INTO intentos_login (correo, ip, exito) VALUES (?, ?, ?)"
-        ))) {
-            return;
+        try {
+            if (!($st = @$conex->prepare(
+                "INSERT INTO intentos_login (correo, ip, exito) VALUES (?, ?, ?)"
+            ))) {
+                return;
+            }
+            $st->bind_param('ssi', $correo, $ip, $ex);
+            $st->execute();
+            $st->close();
+        } catch (\Throwable $e) {
+            error_log('eco_login_registrar: ' . $e->getMessage());
         }
-        $st->bind_param('ssi', $correo, $ip, $ex);
-        @$st->execute();
-        $st->close();
     }
 
     /**
@@ -100,16 +113,23 @@ if (!function_exists('eco_client_ip')) {
                 WHERE exito = 0
                   AND creado_en > (NOW() - INTERVAL {$ventana} MINUTE)
                   AND (correo = ? OR ip = ?)";
-        if (!($st = @$conex->prepare($sql))) {
-            return $out;
-        }
-        $st->bind_param('ss', $correo, $ip);
-        if (!@$st->execute()) {
+        try {
+            if (!($st = @$conex->prepare($sql))) {
+                return $out;
+            }
+            $st->bind_param('ss', $correo, $ip);
+            if (!$st->execute()) {
+                $st->close();
+                return $out;
+            }
+            $row = $st->get_result()->fetch_assoc();
             $st->close();
+        } catch (\Throwable $e) {
+            // Si el throttling no puede consultarse, NO se bloquea el login:
+            // se devuelve "sin bloqueo" y queda constancia en el log.
+            error_log('eco_login_estado: ' . $e->getMessage());
             return $out;
         }
-        $row = $st->get_result()->fetch_assoc();
-        $st->close();
 
         $fallos        = (int)($row['fallos'] ?? 0);
         $espera        = (int)($row['espera'] ?? 0);
@@ -125,13 +145,17 @@ if (!function_exists('eco_client_ip')) {
     /** Limpia los fallos de un correo tras un login correcto (resetea el contador). */
     function eco_login_limpiar(mysqli $conex, string $correo): void
     {
-        if (!($st = @$conex->prepare(
-            "DELETE FROM intentos_login WHERE correo = ? AND exito = 0"
-        ))) {
-            return;
+        try {
+            if (!($st = @$conex->prepare(
+                "DELETE FROM intentos_login WHERE correo = ? AND exito = 0"
+            ))) {
+                return;
+            }
+            $st->bind_param('s', $correo);
+            $st->execute();
+            $st->close();
+        } catch (\Throwable $e) {
+            error_log('eco_login_limpiar: ' . $e->getMessage());
         }
-        $st->bind_param('s', $correo);
-        @$st->execute();
-        $st->close();
     }
 }

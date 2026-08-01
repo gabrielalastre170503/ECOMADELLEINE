@@ -20,7 +20,17 @@ if (!function_exists('eco_base_url')) {
         $https  = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
             || (($_SERVER['SERVER_PORT'] ?? null) == 443);
         $scheme = $https ? 'https' : 'http';
-        $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        /* La cabecera Host la elige quien hace la peticion. Como esta URL es la
+           base de los enlaces que se ENVIAN POR CORREO (restablecer contrasena,
+           verificar cuenta, resultados), un Host falso produciria un correo
+           legitimo del sistema apuntando al dominio del atacante. Solo se acepta
+           si tiene forma de nombre de dominio o IP, con puerto opcional. */
+        $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+        if (!preg_match('/^[A-Za-z0-9._\-]+(:\d{1,5})?$/', $host)) {
+            error_log('eco_base_url: cabecera Host descartada por formato invalido: ' . $host);
+            $host = 'localhost';
+        }
 
         // Subcarpeta del proyecto: reutiliza eco_url() (robusta, derivada de la raíz
         // del proyecto vía DOCUMENT_ROOT) cuando está disponible — así no se rompe

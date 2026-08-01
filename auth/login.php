@@ -13,6 +13,8 @@ if (isset($_GET['status'])) {
         $mensaje_exito = '¡Cuenta creada! Te enviamos un correo para verificar tu cuenta. Revisa tu bandeja de entrada.';
     } elseif ($_GET['status'] == 'password_actualizada') {
         $mensaje_exito = 'Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.';
+    } elseif ($_GET['status'] == 'sesion_expirada') {
+        $error = 'Tu sesión se cerró por inactividad. Vuelve a iniciar sesión.';
     }
 }
 
@@ -57,6 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             'otp_hash'      => password_hash($otp, PASSWORD_DEFAULT),
                             'expira'        => time() + 600,
                             'intentos'      => 0,
+                            // Control de reenvios (ver auth/verificar_2fa.php):
+                            // la espera minima cuenta ya desde este primer envio.
+                            'reenvios'      => 0,
+                            'ultimo_envio'  => time(),
                         ];
                         $cuerpo = "Hola {$usuario['nombre_completo']},\n\n"
                             . "Tu código de verificación en dos pasos es:\n\n    {$otp}\n\n"

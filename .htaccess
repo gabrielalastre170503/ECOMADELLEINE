@@ -24,6 +24,9 @@ php_value auto_prepend_file "C:/xampp/htdocs/Sistema_EcoMadelleineV1/bootstrap.p
     Header always set X-XSS-Protection "1; mode=block"
     # Cookies de sesión con flags seguros (refuerza lo fijado en PHP)
     Header always edit Set-Cookie ^(.*)$ "$1; HttpOnly; SameSite=Lax"
+    # X-Powered-By la quita bootstrap.php con header_remove(): "Header unset"
+    # aqui no la alcanza de forma fiable por ser una cabecera que anade PHP.
+    # (La cabecera "Server:" de Apache se quita con ServerTokens Prod en httpd.conf.)
 </IfModule>
 
 # --- No listar directorios ---

@@ -187,11 +187,18 @@ if (!function_exists('eco_token_hash')) {
     /** URL absoluta del enlace de resultados a partir del token en claro. */
     function eco_token_url(string $raw): string
     {
+        /* Se delega en eco_base_url(), que ya deriva la subcarpeta con eco_url()
+           y donde se valida la cabecera Host. Antes esta funcion componia la
+           ruta con dirname(SCRIPT_NAME): como el unico llamador vive en api/,
+           el enlace salia como .../api/publico/resultado.php y no abria. */
+        if (function_exists('eco_base_url')) {
+            return eco_base_url() . '/publico/resultado.php?t=' . $raw;
+        }
         $https = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
             || (($_SERVER['SERVER_PORT'] ?? null) == 443);
         $scheme = $https ? 'https' : 'http';
-        $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
-        $dir  = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+        $host   = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $dir    = function_exists('eco_url') ? rtrim(eco_url(''), '/') : '';
         return $scheme . '://' . $host . $dir . '/publico/resultado.php?t=' . $raw;
     }
 }
