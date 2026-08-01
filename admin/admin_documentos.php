@@ -37,7 +37,9 @@ $documentos_data = [
         'por_categoria' => [],
     ],
     'carpeta_disponible' => true,
-    'base_url' => 'documentos/',
+    // Los documentos ya NO se enlazan a la carpeta (ahora denegada por su
+    // .htaccess): se piden al handler, que comprueba sesion y rol.
+    'base_url' => eco_url('api/descargar_documento.php') . '?f=',
     'feedback' => null,
 ];
 
@@ -48,7 +50,9 @@ if (isset($_SESSION['documentos_feedback'])) {
 
 $documentos_base_path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'documentos';
 if (!is_dir($documentos_base_path)) {
-    @mkdir($documentos_base_path, 0777, true);
+    // 0775, no 0777: el repositorio no tiene por que ser escribible por todo el
+    // sistema. Mismo permiso que usa eco_uploads_base() para los adjuntos.
+    @mkdir($documentos_base_path, 0775, true);
 }
 $documentos_data['carpeta_disponible'] = is_dir($documentos_base_path) && is_writable($documentos_base_path);
 
@@ -70,6 +74,9 @@ $peso_maximo_bytes = 10 * 1024 * 1024;
 $redirectUrl = eco_url('repositorio');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['documento_action'])) {
+    // Subir y eliminar escriben en disco: exigen token, como el resto de
+    // acciones de escritura del sistema.
+    require_csrf();
     $accionDocumento = $_POST['documento_action'];
 
     if ($accionDocumento === 'upload') {
@@ -140,7 +147,10 @@ if (is_dir($documentos_base_path)) {
     $archivos = scandir($documentos_base_path);
     $carpetaReal = realpath($documentos_base_path);
     foreach ($archivos as $archivo) {
-        if ($archivo === '.' || $archivo === '..') {
+        // Se saltan TODOS los archivos ocultos, no solo . y ..: en la carpeta
+        // viven .gitkeep y el .htaccess que la protege, y no son documentos
+        // del repositorio (aparecian como filas en la tabla).
+        if ($archivo === '' || $archivo[0] === '.') {
             continue;
         }
         $rutaArchivo = $documentos_base_path . DIRECTORY_SEPARATOR . $archivo;
@@ -249,6 +259,7 @@ ob_start();
     </div>
     <p style="color:var(--text-secondary);font-size:13px;margin:0 0 14px;">PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP y RAR — máximo 10 MB.</p>
     <form method="POST" enctype="multipart/form-data" class="doc-upload-form" id="doc-upload-form">
+        <?= csrf_field() ?>
         <input type="hidden" name="documento_action" value="upload">
         <div class="doc-upload-zone<?= $carpetaDisponibleDocs ? '' : ' is-disabled' ?>" id="doc-upload-zone">
             <div class="doc-file-picker-wrap">
@@ -306,6 +317,7 @@ ob_start();
                                 <a href="<?= htmlspecialchars($docUrl) ?>" target="_blank" rel="noopener" class="btn-secondary" style="padding:4px 10px;font-size:11.5px;"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                                 <button type="button" class="btn-secondary document-copy-link" style="padding:4px 10px;font-size:11.5px;" data-url="<?= htmlspecialchars($docUrl) ?>"><i class="fa-solid fa-link"></i></button>
                                 <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este documento?');">
+                                    <?= csrf_field() ?>
                                     <input type="hidden" name="documento_action" value="delete">
                                     <input type="hidden" name="documento_nombre" value="<?= htmlspecialchars($docNombre) ?>">
                                     <button type="submit" class="btn-secondary" style="padding:4px 10px;font-size:11.5px;color:var(--danger);border-color:rgba(239,68,68,.3);"><i class="fa-solid fa-trash"></i></button>

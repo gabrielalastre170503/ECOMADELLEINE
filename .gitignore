@@ -496,6 +496,9 @@ lib/uploads/
 # Se conserva la carpeta (con .gitkeep) porque admin_documentos.php escribe ahi.
 documentos/*
 !documentos/.gitkeep
+# El .htaccess SI debe viajar: es lo que impide servir la carpeta por HTTP.
+# Sin el, al desplegar en otra maquina los documentos vuelven a ser publicos.
+!documentos/.htaccess
 
 ##### EcoMadelleine - tooling local y artefactos generados (NO subir)
 .claude/

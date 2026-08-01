@@ -1,0 +1,6 @@
+# Repositorio de documentos internos (contratos, manuales, archivos del centro).
+# NUNCA se sirven directamente por HTTP: solo a traves de api/descargar_documento.php,
+# que valida sesion y rol. Sin esto la carpeta era publica: bastaba conocer el
+# nombre del archivo para descargarlo sin haber iniciado sesion.
+Require all denied
+Options -Indexes
