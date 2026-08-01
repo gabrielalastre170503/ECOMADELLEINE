@@ -110,18 +110,27 @@
     list-style: none;
 }
 
+/* Promociones: son dos y con nombres largos. Con auto-fit se reparten el ancho
+   completo en lugar de quedarse en la columna estrecha del catálogo. */
+.cp-lista--anchas {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
 .cp-fila {
     display: flex;
     align-items: center;
     gap: 11px;
     padding: 10px 12px;
-    border: 1px solid var(--border-soft);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--bg-muted);
+    background: var(--bg-surface);
     transition: border-color .15s ease, background .15s ease;
 }
 
-.cp-fila:focus-within { border-color: var(--accent); background: var(--bg-surface); }
+/* En oscuro la tarjeta ya es var(--bg-surface): la fila se perdería dentro. */
+[data-theme="dark"] .cp-fila { background: var(--bg-muted); }
+
+.cp-fila:focus-within { border-color: var(--accent); }
 
 .cp-fila--oculta { display: none; }
 
@@ -153,23 +162,25 @@
     min-width: 0;
 }
 
+/* Los nombres largos (promociones, obstétricas) se parten en varias líneas:
+   antes se cortaban con puntos suspensivos y no se leía qué se estaba
+   tarifando. La rejilla iguala la altura de cada fila. */
 .cp-fila__nombre {
     display: block;
     font-size: 13px;
     font-weight: 600;
+    line-height: 1.35;
     color: var(--text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: break-word;
 }
 
 .cp-fila__cat {
     display: block;
+    margin-top: 1px;
     font-size: 11px;
+    line-height: 1.35;
     color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: break-word;
 }
 
 /* Campo de precio */

@@ -18,7 +18,9 @@ if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
     exit;
 }
-if (!in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador'], true)) {
+// El ecografista también entra: la sección sustituye a "Notas de sesión" en su
+// menú. Sigue fuera del alcance del paciente.
+if (!in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador', 'ecografista'], true)) {
     header('Location: ' . eco_url('dashboard'));
     exit;
 }
@@ -115,7 +117,7 @@ ob_start();
     <?php if (empty($cp_promos)): ?>
         <p class="cp-vacio">No hay promociones configuradas.</p>
     <?php else: ?>
-        <ul class="cp-lista">
+        <ul class="cp-lista cp-lista--anchas">
             <?php foreach ($cp_promos as $p): ?>
                 <li class="cp-fila cp-fila--promo">
                     <span class="cp-fila__icono" aria-hidden="true"><i class="<?= htmlspecialchars($p['icono']) ?>"></i></span>

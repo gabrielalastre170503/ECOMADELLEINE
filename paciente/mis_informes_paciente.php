@@ -349,7 +349,10 @@ $page_scripts_extra = <<<'HTML'
         iframe.id = 'inf-print-frame';
         iframe.setAttribute('aria-hidden', 'true');
         iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
-        iframe.src = '<?= eco_url('informe') ?>/' + encodeURIComponent(currentId) + '?print=1';
+        /* Sin PHP: este bloque va en un nowdoc (<<<'HTML'), que no interpola.
+           La etiqueta llegaba tal cual al navegador y rompía el <script>
+           entero, así que no se registraba ni el clic de «Ver informe». */
+        iframe.src = (window.ECO_BASE || '') + 'informe/' + encodeURIComponent(currentId) + '?print=1';
         document.body.appendChild(iframe);
         setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
     });

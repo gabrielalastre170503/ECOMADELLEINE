@@ -117,21 +117,85 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 .ng-block { background:var(--bg-surface); border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:12.5px; color:var(--text-secondary); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
 .ng-block.is-empty { color:var(--text-muted); font-style:italic; }
 
-/* Modal Notas de sesión — layout 2 columnas */
-.ns-main { padding:0 !important; }
-.ns-header { display:flex; align-items:center; gap:14px; padding:20px 24px; background:linear-gradient(135deg,var(--accent-soft),var(--bg-surface)); border-bottom:1px solid var(--border); }
-.ns-header__icon { width:46px; height:46px; border-radius:13px; flex-shrink:0; background:linear-gradient(135deg,var(--accent),#38bdf8); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 4px 12px rgba(2,177,244,.3); }
-.ns-header__title { margin:0; font-size:17px; font-weight:800; color:var(--text-primary); }
-.ns-header__sub { margin:3px 0 0; font-size:12.5px; color:var(--text-secondary); line-height:1.45; }
-.ns-body { display:block; padding:20px 24px 24px; }
-.ns-col { min-width:0; }
-.ns-col__label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); display:flex; align-items:center; gap:7px; margin:0 0 10px; }
-.ns-col__label i { color:var(--accent); }
-.ns-card { border:1px solid var(--border); border-radius:14px; background:var(--bg-surface); padding:16px; margin-bottom:18px; }
-.ns-history { border-top:1px solid var(--border-soft); padding-top:16px; }
-.ns-history__head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px; font-size:13px; }
-#eco-modal-notas-paciente-eco .eco-field label i { color:var(--accent); margin-right:5px; }
-#eco-modal-notas-paciente-eco .ng-grid { grid-template-columns:1fr 1fr; }
+/* ── Modal "Notas de sesión" ─────────────────────────────────────────
+   Mismo lenguaje que el historial de informes (héroe + tira de datos): son
+   modales encadenados y conviene que se lean como uno solo.
+   Dos columnas de verdad: se redacta a la izquierda sin perder de vista lo
+   ya escrito, que es lo que se consulta mientras se escribe. */
+.ns-dialog { max-width:940px; padding:0; overflow:hidden; display:flex; flex-direction:column; }
+.ns-close { top:14px; right:14px; z-index:3; box-shadow:var(--shadow-sm); }
+
+.ns-hero { display:flex; align-items:flex-start; gap:18px; padding:26px 56px 22px 24px; background:linear-gradient(122deg,var(--accent-soft) 0%,var(--bg-muted) 42%,var(--bg-surface) 100%); border-bottom:1px solid var(--border-soft); }
+.ns-hero__icon { width:52px; height:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:var(--radius); background:var(--accent-soft); color:var(--accent-text); border:1px solid rgba(2,177,244,.2); font-size:1.3rem; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.ns-hero__copy { min-width:0; }
+.ns-hero__kicker { margin:0 0 4px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-text); }
+.ns-hero__title { margin:0 0 8px; font-size:1.35rem; font-weight:700; letter-spacing:-.02em; color:var(--text-primary); }
+.ns-hero__lead { margin:0; font-size:13px; line-height:1.55; color:var(--text-secondary); }
+
+.ns-strip { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:14px 24px; border-bottom:1px solid var(--border-soft); background:var(--bg-surface); }
+.ns-pill { display:inline-flex; align-items:center; gap:7px; max-width:100%; padding:6px 11px; border-radius:999px; border:1px solid var(--border); background:var(--bg-muted); font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; }
+.ns-pill i { font-size:11px; color:var(--text-muted); }
+.ns-pill span { overflow:hidden; text-overflow:ellipsis; }
+.ns-pill--name { background:var(--accent-soft); border-color:rgba(2,177,244,.28); color:var(--accent-text); }
+.ns-pill--name i { color:var(--accent-text); }
+
+.ns-body { display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr); flex:1; min-height:0; }
+.ns-col { min-width:0; padding:18px 22px 22px; overflow-y:auto; contain:paint; overscroll-behavior-y:contain; }
+.ns-col--form { border-right:1px solid var(--border-soft); }
+.ns-col__label { display:flex; align-items:center; gap:7px; margin:0 0 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); }
+.ns-col__label i { color:var(--accent-text); }
+#eco-modal-notas-paciente-eco .eco-field label i { color:var(--accent-text); margin-right:5px; }
+
+.ns-error { padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:13px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.35); color:#b91c1c; }
+
+/* El área de escritura y su contador son un solo campo: el marco y el foco
+   los lleva el envoltorio, y el contador vive dentro en vez de flotar suelto
+   debajo, donde chocaba con el tirador de redimensionar. */
+.ns-campo { border:1px solid #d1d5db; border-radius:10px; background:var(--bg-surface); transition:border-color .2s ease, box-shadow .2s ease; }
+.ns-campo:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+[data-theme="dark"] .ns-campo { border-color:var(--border); }
+#eco-modal-notas-paciente-eco .ns-campo textarea {
+    display:block; width:100%; min-height:160px; margin:0;
+    padding:12px 14px 4px; box-sizing:border-box;
+    border:none; background:transparent; border-radius:10px 10px 0 0;
+    font-family:inherit; font-size:13.5px; line-height:1.6; color:var(--text-primary);
+    resize:vertical;   /* solo vertical: en diagonal se salía de la columna */
+}
+#eco-modal-notas-paciente-eco .ns-campo textarea:focus { outline:none; border:none; box-shadow:none; }
+.ns-contador { margin:0; padding:0 14px 9px; text-align:right; font-size:11px; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+.ns-contador.is-tope { color:#b91c1c; font-weight:700; }
+.ns-submit { width:100%; justify-content:center; margin-top:16px; }
+
+.ns-hist__head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.ns-hist__head .ns-col__label { margin:0; }
+.ns-btn-borrar { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:8px; border:1px solid rgba(239,68,68,.35); background:transparent; color:#b91c1c; font-family:inherit; font-size:11.5px; font-weight:600; cursor:pointer; transition:background .15s ease, border-color .15s ease; }
+.ns-btn-borrar:hover { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.55); }
+
+/* Línea de tiempo: las notas son un seguimiento, no una lista suelta. */
+.ns-list { position:relative; }
+.ns-list--llena { padding-left:22px; }
+.ns-list--llena::before { content:""; position:absolute; left:4px; top:10px; bottom:10px; width:2px; border-radius:2px; background:var(--border); }
+.ns-nota { position:relative; margin-bottom:10px; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--bg-surface); }
+.ns-nota::before { content:""; position:absolute; left:-22px; top:16px; width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--bg-surface); }
+.ns-nota:last-child { margin-bottom:0; }
+.ns-nota__head { display:flex; flex-wrap:wrap; align-items:center; gap:5px 12px; margin-bottom:7px; padding-bottom:7px; border-bottom:1px dashed var(--border-soft); }
+.ns-nota__fecha { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--text-primary); }
+.ns-nota__fecha i { font-size:11px; color:var(--accent-text); }
+.ns-nota__autor { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:var(--text-muted); }
+.ns-nota__body { margin:0; font-size:13px; line-height:1.55; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; }
+
+.ns-vacio { display:flex; flex-direction:column; align-items:center; gap:9px; padding:38px 12px; text-align:center; }
+.ns-vacio i { font-size:26px; color:var(--border); }
+.ns-vacio p { margin:0; font-size:12.5px; line-height:1.5; color:var(--text-muted); }
+
+@media (max-width: 860px) {
+    /* Una sola columna: el diálogo entero pasa a ser lo que se desplaza. */
+    .ns-body { display:block; flex:1; min-height:0; overflow-y:auto; }
+    .ns-col { overflow:visible; contain:none; }
+    .ns-col--form { border-right:none; border-bottom:1px solid var(--border-soft); }
+    .ns-hero { padding:22px 52px 18px 20px; }
+    .ns-hero__title { font-size:1.2rem; }
+}
 </style>
 <div id="eco-modal-gestionar-paciente-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-modal-gestionar-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide">
@@ -158,48 +222,55 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 
 <div id="eco-modal-notas-paciente-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-modal-notas-eco-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide ns-dialog">
-        <div class="eco-modal__main ns-main">
-            <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" class="eco-modal__close ns-close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
 
-            <div class="ns-header">
-                <div class="ns-header__icon"><i class="fa-solid fa-notes-medical"></i></div>
-                <div>
-                    <h4 class="ns-header__title" id="eco-modal-notas-eco-title">Notas de sesión</h4>
-                    <p class="ns-header__sub">Registro clínico privado del ecografista. Consulta los datos completos del paciente en su <strong>Historia clínica</strong>.</p>
-                </div>
+        <div class="ns-hero">
+            <div class="ns-hero__icon"><i class="fa-solid fa-notes-medical"></i></div>
+            <div class="ns-hero__copy">
+                <p class="ns-hero__kicker">Registro clínico privado</p>
+                <h2 class="ns-hero__title" id="eco-modal-notas-eco-title">Notas de sesión</h2>
+                <p class="ns-hero__lead">Solo las ve el ecografista. Los datos completos del paciente están en su <strong>Historia clínica</strong>.</p>
             </div>
+        </div>
 
-            <div class="ns-body">
-                <div class="ns-col ns-col--form">
-                    <div id="eco-notas-eco-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
+        <div class="ns-strip">
+            <span class="ns-pill ns-pill--name"><i class="fa-solid fa-user" aria-hidden="true"></i><span id="eco-notas-strip-name">—</span></span>
+            <span class="ns-pill"><i class="fa-solid fa-id-card" aria-hidden="true"></i><span id="eco-notas-strip-ci">CI —</span></span>
+            <span class="ns-pill"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><span id="eco-notas-strip-count">0 notas</span></span>
+            <span class="ns-pill" id="eco-notas-strip-last-wrap" hidden><i class="fa-regular fa-clock" aria-hidden="true"></i><span id="eco-notas-strip-last"></span></span>
+        </div>
 
-                    <form id="eco-form-notas-paciente" class="ns-card" novalidate>
-                        <p class="ns-col__label"><i class="fa-solid fa-pen-to-square"></i> Nueva nota de sesión</p>
-                        <input type="hidden" name="paciente_id" id="eco-notas-paciente-id">
-                        <div class="eco-field">
-                            <label for="eco-notas-fecha"><i class="fa-regular fa-clock"></i> Fecha de la sesión</label>
-                            <input type="datetime-local" name="fecha_sesion" id="eco-notas-fecha" required>
-                        </div>
-                        <div class="eco-field">
-                            <label for="eco-notas-contenido"><i class="fa-solid fa-pen"></i> Nota</label>
-                            <textarea name="contenido" id="eco-notas-contenido" rows="4" required maxlength="2000" placeholder="Observaciones, hallazgos, recomendaciones…"></textarea>
-                        </div>
-                        <div class="eco-modal__footer" style="margin-top:0;padding-top:0;border:none;justify-content:flex-end;">
-                            <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar nota</button>
-                        </div>
-                    </form>
+        <div class="ns-body">
+            <section class="ns-col ns-col--form">
+                <p class="ns-col__label"><i class="fa-solid fa-pen-to-square"></i> Nueva nota</p>
+                <div id="eco-notas-eco-error" class="ns-error" style="display:none;" role="alert"></div>
 
-                    <div class="ns-history">
-                        <div class="ns-history__head">
-                            <strong><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent);margin-right:6px;"></i> Historial de notas</strong>
-                            <button type="button" id="eco-btn-limpiar-notas" class="btn-secondary" style="font-size:11.5px;color:var(--danger, #b91c1c);border-color:rgba(239,68,68,.35);display:none;">
-                                <i class="fa-solid fa-trash"></i> Borrar todas
-                            </button>
-                        </div>
-                        <div id="eco-notas-list"></div>
+                <form id="eco-form-notas-paciente" novalidate>
+                    <input type="hidden" name="paciente_id" id="eco-notas-paciente-id">
+                    <div class="eco-field">
+                        <label for="eco-notas-fecha"><i class="fa-regular fa-clock"></i> Fecha de la sesión</label>
+                        <input type="datetime-local" name="fecha_sesion" id="eco-notas-fecha" required>
                     </div>
+                    <div class="eco-field">
+                        <label for="eco-notas-contenido"><i class="fa-solid fa-pen"></i> Nota</label>
+                        <div class="ns-campo">
+                            <textarea name="contenido" id="eco-notas-contenido" rows="8" required maxlength="2000" placeholder="Observaciones, hallazgos, recomendaciones…"></textarea>
+                            <p class="ns-contador" id="eco-notas-contador" aria-live="polite">0 / 2000</p>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary ns-submit"><i class="fa-solid fa-floppy-disk"></i> Guardar nota</button>
+                </form>
+            </section>
+
+            <section class="ns-col ns-col--hist">
+                <div class="ns-hist__head">
+                    <p class="ns-col__label"><i class="fa-solid fa-clock-rotate-left"></i> Historial</p>
+                    <button type="button" id="eco-btn-limpiar-notas" class="ns-btn-borrar" style="display:none;">
+                        <i class="fa-solid fa-trash"></i> Borrar todas
+                    </button>
                 </div>
-            </div>
+                <div id="eco-notas-list" class="ns-list"></div>
+            </section>
         </div>
     </div>
 </div>

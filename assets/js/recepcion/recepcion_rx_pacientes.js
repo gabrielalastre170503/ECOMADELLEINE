@@ -157,6 +157,10 @@
         var body = byId('rx-inf-body');
         if (!modal || !body || !window.EcoModal) return;
 
+        // Se recuerdan para que "Volver" pueda reabrir esta misma lista.
+        rxInfDetPacienteId = pacienteId;
+        rxInfDetPacienteNom = pacienteNombre || '';
+
         if (sub) {
             sub.textContent = (pacienteNombre || '') + ' · Cargando…';
         }
@@ -196,8 +200,8 @@
                     html += '</div>';
                     html += '<div style="display:flex;align-items:center;gap:8px;">';
                     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);">' + esc(inf.estado_label || inf.estado || '') + '</span>';
-                    html += '<a class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;white-space:nowrap;" href="' + (window.ECO_BASE || '') + 'informe/' + encodeURIComponent(inf.id) + '" target="_blank" rel="noopener">' +
-                        '<i class="fa-solid fa-file-lines"></i> Ver detalle</a>';
+                    html += '<button type="button" class="btn-primary rx-js-inf-det" data-rx-inf="' + esc(inf.id) + '" style="padding:6px 12px;font-size:12px;white-space:nowrap;">' +
+                        '<i class="fa-solid fa-file-lines"></i> Ver detalle</button>';
                     html += '</div></div></div>';
                 });
                 html += '</div>';
@@ -206,6 +210,89 @@
             .catch(function () {
                 if (sub) sub.textContent = esc(pacienteNombre || '');
                 body.innerHTML = '<p style="color:var(--danger);font-size:13px;">No se pudieron cargar los informes.</p>';
+            });
+    };
+
+    /** --- Detalle de un informe (solo lectura) ---
+        Se abre desde la lista de "Estudios e informes". La lista se cierra al
+        abrirlo y el botón "Volver" la reabre: dos modales encima del otro
+        dejan al fondo el que sigue capturando el teclado. */
+    var rxInfDetId = null;
+    var rxInfDetPacienteId = null;
+    var rxInfDetPacienteNom = '';
+
+    function rxInfDetPinta(data) {
+        var body = byId('eco-informe-detalle-body');
+        var icon = byId('eco-inf-det-icon');
+        var titulo = byId('eco-inf-det-titulo');
+        var pac = byId('eco-inf-det-paciente');
+        if (!body) return;
+
+        if (data.error) {
+            body.innerHTML = '<p style="color:var(--danger);padding:20px;">' + esc(data.error) + '</p>';
+            if (icon) icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            return;
+        }
+
+        var inf = data.informe || {}, tipo = data.tipo || {}, p = data.paciente || {};
+        if (icon) icon.innerHTML = '<i class="' + esc(tipo.icono || 'fa-solid fa-wave-square') + '"></i>';
+        if (titulo) titulo.textContent = tipo.nombre || 'Informe de estudio';
+        if (pac) {
+            var edad = p.edad ? (String(p.edad).trim() + ' años') : '';
+            pac.textContent = 'Paciente: ' + (p.nombre || '—')
+                + '  ·  CI: ' + (p.cedula || '—') + '  ·  ' + (edad || '—');
+        }
+
+        var colores = { finalizado: ['#166534', '#dcfce7'], firmado: ['#075985', '#e0f2fe'], anulado: ['#b91c1c', '#fee2e2'] };
+        var c = colores[inf.estado] || ['#374151', '#f3f4f6'];
+        var distintivo = '<span style="background:' + c[1] + ';color:' + c[0] + ';padding:2px 10px;border-radius:12px;font-weight:600;font-size:11px;">'
+            + esc(inf.estado_label || inf.estado || '') + '</span>';
+
+        var meta = '<div class="inf-det-meta">'
+            + '<span><i class="fa-solid fa-hashtag"></i> <strong>' + esc(inf.numero_informe || '-') + '</strong></span>'
+            + '<span><i class="fa-regular fa-calendar"></i> <strong>' + esc(inf.fecha_formateada || '-') + '</strong></span>'
+            + '<span><i class="fa-solid fa-user-doctor"></i> <strong>' + esc(data.ecografista || '-') + '</strong></span>'
+            + '<span>' + distintivo + '</span></div>';
+
+        var firma = '';
+        if (inf.firma) {
+            firma = '<div style="margin:8px 0 4px;padding:8px 12px;border-radius:8px;background:#e0f2fe;color:#075985;font-size:12.5px;">'
+                + '<i class="fa-solid fa-signature"></i> Firmado por <strong>' + esc(inf.firma.por) + '</strong>'
+                + (inf.firma.fecha ? ' · ' + esc(inf.firma.fecha) : '') + '</div>';
+        }
+        body.innerHTML = meta + firma + (data.html || '');
+
+        /* Sin acceso al contenido clínico no tiene sentido ofrecer "imprimir":
+           la versión imprimible ES el informe completo y responde 403. Se
+           oculta el botón en vez de dejar que lleve a un error. */
+        var btnP = byId('rx-inf-det-print');
+        if (btnP) btnP.style.display = (data.clinico_visible === false) ? 'none' : '';
+    }
+
+    window.rxAbrirInformeDetalle = function (informeId) {
+        var body = byId('eco-informe-detalle-body');
+        if (!body || !window.EcoModal) return;
+        rxInfDetId = informeId;
+
+        /* "Volver" solo tiene sentido si se venía de la lista. Desde la ficha
+           el informe se abre directo, y un botón que no lleva a ninguna parte
+           es peor que no tenerlo. */
+        var lista = byId('eco-modal-rx-informes-paciente');
+        var desdeLista = !!(lista && lista.classList.contains('eco-modal--open'));
+        var btnV = byId('rx-inf-det-volver');
+        if (btnV) btnV.style.display = desdeLista ? '' : 'none';
+
+        EcoModal.close('eco-modal-rx-informes-paciente');
+        body.innerHTML = '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando informe…</p></div>';
+        var t = byId('eco-inf-det-titulo');
+        if (t) t.textContent = 'Cargando…';
+        EcoModal.open('eco-modal-informe-detalle-eco');
+
+        fetch((window.ECO_BASE || '') + 'api/get_informe_detalle.php?informe_id=' + encodeURIComponent(informeId))
+            .then(function (r) { return r.json(); })
+            .then(rxInfDetPinta)
+            .catch(function () {
+                body.innerHTML = '<p style="color:var(--danger);padding:20px;">No se pudo cargar el informe.</p>';
             });
     };
 
@@ -284,14 +371,44 @@
                     if (pid) window.rxAbrirProgramarCita(pid, nom);
                     return;
                 }
-                var bInf = e.target.closest('.rx-js-inf');
-                if (bInf) {
-                    e.preventDefault();
-                    var pid2 = parseInt(bInf.getAttribute('data-rx-pid'), 10);
-                    var nom2 = bInf.getAttribute('data-rx-nom');
-                    if (nom2 === null) nom2 = '';
-                    if (pid2) window.rxAbrirInformesPaciente(pid2, nom2);
+            });
+        }
+
+        /* Los botones "Ver detalle" se inyectan dentro del modal de informes,
+           así que el escuchador va delegado en el documento. */
+        document.addEventListener('click', function (e) {
+            var b = e.target.closest('.rx-js-inf-det');
+            if (!b) return;
+            e.preventDefault();
+            var iid = b.getAttribute('data-rx-inf');
+            if (iid) window.rxAbrirInformeDetalle(iid);
+        });
+
+        var btnVolver = byId('rx-inf-det-volver');
+        if (btnVolver) {
+            btnVolver.addEventListener('click', function () {
+                EcoModal.close('eco-modal-informe-detalle-eco');
+                if (rxInfDetPacienteId) {
+                    window.rxAbrirInformesPaciente(rxInfDetPacienteId, rxInfDetPacienteNom);
                 }
+            });
+        }
+
+        /* Imprimir sin salir del modal: se carga la versión imprimible en un
+           iframe oculto que llama solo a window.print(). */
+        var btnPrint = byId('rx-inf-det-print');
+        if (btnPrint) {
+            btnPrint.addEventListener('click', function () {
+                if (!rxInfDetId) return;
+                var previo = byId('rx-inf-print-frame');
+                if (previo) previo.remove();
+                var marco = document.createElement('iframe');
+                marco.id = 'rx-inf-print-frame';
+                marco.setAttribute('aria-hidden', 'true');
+                marco.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
+                marco.src = (window.ECO_BASE || '') + 'informe/' + encodeURIComponent(rxInfDetId) + '?print=1';
+                document.body.appendChild(marco);
+                setTimeout(function () { try { marco.remove(); } catch (err) {} }, 60000);
             });
         }
 

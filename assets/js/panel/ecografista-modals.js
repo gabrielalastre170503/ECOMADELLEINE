@@ -822,7 +822,6 @@
                         '<div class="eco-inform-card__head">' +
                         '<h3 class="eco-inform-card__title">' + esc(inf.tipo_nombre || 'Ecografia') + '</h3>' +
                         catChip +
-                        '<span class="' + ecoInformEstadoClass(inf.estado) + '">' + lab + '</span>' +
                         '</div>' +
                         '<ul class="eco-inform-card__meta">' +
                         '<li class="eco-inform-card__meta-item"><i class="fa-solid fa-hashtag"></i># ' +
@@ -832,7 +831,10 @@
                         '<li class="eco-inform-card__meta-item"><i class="fa-solid fa-user-doctor"></i>' +
                         esc(inf.ecografista || '-') + '</li>' +
                         '</ul></div>' +
+                        /* El estado va aqui, no en el titulo: asi queda a la
+                           altura de los botones en lugar de flotando arriba. */
                         '<div class="eco-inform-card__actions">' +
+                        '<span class="' + ecoInformEstadoClass(inf.estado) + '">' + lab + '</span>' +
                         ((inf.estado === 'borrador' || inf.estado === 'finalizado')
                             ? '<button type="button" class="btn-secondary eco-inform-card__cta" data-edit-informe-id="' +
                               Number(inf.id) + '" title="' + (inf.estado === 'borrador' ? 'Continuar borrador' : 'Editar informe') + '">' +
@@ -1910,11 +1912,20 @@
 
                     if (feedbackEl) {
                         var _infId = data.informe_id || '';
+                        /* Imprimir solo cuando se finaliza, igual que el boton
+                           del pie: un borrador no se imprime. Reusa la misma
+                           funcion, con su paso previo de firma. */
                         feedbackEl.innerHTML =
                             '<div class="eco-msg-ok"><i class="fa-solid fa-circle-check"></i> ' +
                             esc(data.message || 'Informe guardado.') +
-                            ' &nbsp;—&nbsp; <button type="button" class="eco-msg-ok__link" data-ver-informe="' +
-                            esc(String(_infId)) + '">Ver informe <i class="fa-solid fa-arrow-right"></i></button></div>';
+                            ' &nbsp;—&nbsp; <span class="eco-msg-ok__acciones">' +
+                            '<button type="button" class="eco-msg-ok__link" data-ver-informe="' +
+                            esc(String(_infId)) + '">Ver informe <i class="fa-solid fa-arrow-right"></i></button>' +
+                            (accion === 'finalizar'
+                                ? '<button type="button" class="eco-msg-ok__link" data-imprimir-informe="' +
+                                  esc(String(_infId)) + '"><i class="fa-solid fa-print"></i> Imprimir</button>'
+                                : '') +
+                            '</span></div>';
                         var _verBtn = feedbackEl.querySelector('[data-ver-informe]');
                         if (_verBtn) {
                             _verBtn.addEventListener('click', function () {
@@ -1923,6 +1934,10 @@
                                     window.abrirDetalleInformeEco(_infId);
                                 }
                             });
+                        }
+                        var _impBtn = feedbackEl.querySelector('[data-imprimir-informe]');
+                        if (_impBtn) {
+                            _impBtn.addEventListener('click', imprimirInformeEco);
                         }
                     }
                     document.dispatchEvent(new CustomEvent('eco:informes-changed', {
@@ -2109,16 +2124,34 @@
         patientState.id = pacienteId;
         patientState.name = nombre || '';
         byId('eco-notas-paciente-id').value = pacienteId;
-        byId('eco-modal-notas-eco-title').textContent = nombre ? ('Notas de ' + nombre) : 'Notas de sesion';
+        /* El titulo se queda fijo: el paciente se identifica en la tira de
+           datos, igual que en el historial de informes. */
+        notasSet('eco-notas-strip-name', nombre || '—');
+        notasSet('eco-notas-strip-ci', 'CI —');
+        notasSet('eco-notas-strip-count', '…');
+        var ultWrap = byId('eco-notas-strip-last-wrap');
+        if (ultWrap) ultWrap.hidden = true;
 
         var ahora = new Date();
         var offset = ahora.getTimezoneOffset() * 60000;
         byId('eco-notas-fecha').value = new Date(ahora - offset).toISOString().slice(0, 16);
         byId('eco-notas-contenido').value = '';
+        notasContador();
         setError('eco-notas-eco-error', '');
         EcoModal.open('eco-modal-notas-paciente-eco');
         cargarNotasEco();
     };
+
+    function notasSet(id, texto) { var el = byId(id); if (el) el.textContent = texto; }
+
+    function notasContador() {
+        var ta = byId('eco-notas-contenido');
+        var el = byId('eco-notas-contador');
+        if (!ta || !el) return;
+        var n = ta.value.length;
+        el.textContent = n + ' / 2000';
+        el.classList.toggle('is-tope', n >= 1900);
+    }
 
     function cargarNotasEco() {
         var list = byId('eco-notas-list');
@@ -2131,20 +2164,45 @@
                 if (!data.ok) {
                     list.innerHTML = '<p style="color:#b91c1c;">' + esc(data.error || 'Error') + '</p>';
                     if (btnLimpiar) btnLimpiar.style.display = 'none';
+                    notasSet('eco-notas-strip-count', '0 notas');
                     return;
                 }
-                if (!data.notas || !data.notas.length) {
-                    list.innerHTML = '<p class="eco-modal__body-text" style="text-align:center;padding:20px 0;">No hay notas para este paciente.</p>';
+
+                var pac = data.paciente || {};
+                if (pac.nombre_completo) notasSet('eco-notas-strip-name', pac.nombre_completo);
+                notasSet('eco-notas-strip-ci', pac.cedula ? ('CI ' + pac.cedula) : 'Sin cédula');
+
+                var notas = data.notas || [];
+                notasSet('eco-notas-strip-count', notas.length === 1 ? '1 nota' : (notas.length + ' notas'));
+
+                var ultWrap = byId('eco-notas-strip-last-wrap');
+                if (ultWrap) {
+                    ultWrap.hidden = !notas.length;
+                    if (notas.length) notasSet('eco-notas-strip-last', 'Última: ' + formatDate(notas[0].fecha_sesion));
+                }
+
+                if (!notas.length) {
+                    list.className = 'ns-list';
+                    list.innerHTML = '<div class="ns-vacio"><i class="fa-regular fa-note-sticky"></i>' +
+                        '<p>Todavía no hay notas de este paciente.<br>La primera que guardes aparecerá aquí.</p></div>';
                     if (btnLimpiar) btnLimpiar.style.display = 'none';
                     return;
                 }
 
                 if (btnLimpiar) btnLimpiar.style.display = 'inline-flex';
-                list.innerHTML = data.notas.map(function (nota) {
-                    var autor = nota.autor ? (' · ' + esc(nota.autor)) : '';
+                list.className = 'ns-list ns-list--llena';
+                list.innerHTML = notas.map(function (nota) {
+                    var autor = nota.autor
+                        ? '<span class="ns-nota__autor"><i class="fa-solid fa-user-doctor"></i> ' + esc(nota.autor) + '</span>'
+                        : '';
                     var texto = esc(nota.contenido || '').replace(/\n/g, '<br>');
-                    return '<div class="eco-note-item"><div class="eco-note-item__meta"><i class="fa-regular fa-calendar"></i> <strong>' +
-                        esc(formatDate(nota.fecha_sesion)) + '</strong>' + autor + '</div><div class="eco-note-item__body">' + texto + '</div></div>';
+                    return '<article class="ns-nota">' +
+                        '<header class="ns-nota__head">' +
+                            '<span class="ns-nota__fecha"><i class="fa-regular fa-calendar"></i> ' + esc(formatDate(nota.fecha_sesion)) + '</span>' +
+                            autor +
+                        '</header>' +
+                        '<p class="ns-nota__body">' + texto + '</p>' +
+                    '</article>';
                 }).join('');
             })
             .catch(function (e) {
@@ -2268,6 +2326,52 @@
     document.querySelectorAll('[data-ecop-estudio], [data-ecop-servicio]').forEach(function (c) {
         c.addEventListener('change', ecoProgRecalcular);
     });
+
+    /* Filtro del catalogo de estudios. Un estudio ya marcado no se oculta
+       nunca: si desapareciera del filtro se guardaria una seleccion que no
+       se ve. Las cabeceras de categoria se ocultan si se quedan sin filas. */
+    function ecoProgFiltrar() {
+        var caja = byId('eco-prog-estudios');
+        var q = byId('eco-prog-buscar');
+        if (!caja || !q) return;
+
+        var texto = q.value.trim().toLowerCase();
+        var visibles = 0, total = 0;
+        var cat = null, catVisibles = 0;
+
+        Array.prototype.forEach.call(caja.children, function (el) {
+            if (el.hasAttribute('data-ecop-cat')) {
+                if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+                cat = el;
+                catVisibles = 0;
+                return;
+            }
+            var inp = el.querySelector('[data-ecop-estudio]');
+            var coincide = texto === ''
+                || (el.getAttribute('data-ecop-busca') || '').indexOf(texto) !== -1
+                || (inp && inp.checked);
+            el.classList.toggle('pcx-oculto', !coincide);
+            total++;
+            if (coincide) { visibles++; catVisibles++; }
+        });
+        if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+
+        var cuenta = byId('eco-prog-visibles');
+        if (cuenta) cuenta.textContent = visibles + ' de ' + total;
+
+        var aviso = byId('eco-prog-sin-resultados');
+        if (aviso) aviso.hidden = visibles !== 0;
+    }
+
+    var _ecoProgBuscar = byId('eco-prog-buscar');
+    if (_ecoProgBuscar) {
+        _ecoProgBuscar.addEventListener('input', ecoProgFiltrar);
+        /* Enter dentro del buscador enviaria el formulario. */
+        _ecoProgBuscar.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+            if (e.key === 'Escape') { _ecoProgBuscar.value = ''; ecoProgFiltrar(); }
+        });
+    }
     var _ecoProgMontoEl = byId('eco-prog-monto');
     if (_ecoProgMontoEl) {
         _ecoProgMontoEl.addEventListener('input', function () { _ecoProgMontoManual = true; });
@@ -2300,6 +2404,7 @@
         setError('eco-prog-cita-error', '');
         _ecoProgMontoManual = false;
         ecoProgRecalcular();
+        ecoProgFiltrar();   // form.reset() vacia el buscador; hay que repintar la lista
 
         EcoModal.open('eco-modal-programar-cita-eco');
 
@@ -2407,6 +2512,11 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+        var notasTa = byId('eco-notas-contenido');
+        if (notasTa) {
+            notasTa.addEventListener('input', notasContador);
+        }
+
         var notasForm = byId('eco-form-notas-paciente');
         if (notasForm) {
             notasForm.addEventListener('submit', function (e) {
@@ -2417,6 +2527,7 @@
                     .then(function (data) {
                         if (data.ok) {
                             byId('eco-notas-contenido').value = '';
+                            notasContador();
                             cargarNotasEco();
                             document.dispatchEvent(new CustomEvent('eco:notas-changed', {
                                 detail: { pacienteId: patientState.id, action: 'add' }

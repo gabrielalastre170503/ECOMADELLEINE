@@ -1,6 +1,7 @@
 <?php
 /**
- * Guarda un precio desde Control de precios (recepción y administración).
+ * Guarda un precio desde Control de precios (recepción, administración y
+ * ecografista: la sección está en el menú de los tres roles).
  *
  * Dos destinos según el origen:
  *   origen=estudio   → tipos_ecografias.precio   (id numérico)
@@ -17,7 +18,7 @@ require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrió un error.'];
 
-api_require_roles(['recepcionista', 'administrador']);
+api_require_roles(['recepcionista', 'administrador', 'ecografista']);
 api_require_post();
 api_require_csrf();
 

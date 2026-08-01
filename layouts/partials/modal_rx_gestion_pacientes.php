@@ -146,6 +146,40 @@ $rx_modal_metodos   = eco_metodos_pago();
     </div>
 </div>
 
+<!-- Detalle de un informe, en solo lectura. Reutiliza los ids y clases del
+     modal del ecografista para heredar su CSS; recepción no firma ni anula,
+     así que esos botones no están. -->
+<div id="eco-modal-informe-detalle-eco" class="eco-modal eco-modal-panel-ecografista" aria-hidden="true" role="dialog" aria-labelledby="eco-inf-det-titulo">
+    <div class="modal-content-form-eco">
+        <div class="modal-form-eco-header">
+            <div class="eco-modal-tipo-icon" id="eco-inf-det-icon">
+                <i class="fa-solid fa-file-waveform"></i>
+            </div>
+            <div class="eco-header-tipo-info">
+                <h2 id="eco-inf-det-titulo">Informe de estudio</h2>
+                <p id="eco-inf-det-paciente">—</p>
+            </div>
+            <div class="eco-modal-informe-detalle-actions">
+                <button type="button" class="eco-btn-cancel" id="rx-inf-det-volver" title="Volver a la lista de informes">
+                    <i class="fa-solid fa-arrow-left"></i> Volver
+                </button>
+                <button type="button" class="eco-btn-cancel" id="rx-inf-det-print" title="Imprimir informe">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="modal-close-btn" data-eco-modal-close aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="modal-form-eco-body" id="eco-informe-detalle-body">
+            <div class="modal-form-eco-loader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Cargando informe…</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="eco-modal-rx-crear-paciente-extendido" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="rx-ext-aside-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide">
         <div class="eco-modal__split">

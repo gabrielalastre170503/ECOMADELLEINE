@@ -378,6 +378,7 @@ window.abrirModalGestionarPaciente = function (id) {
                         if (typeof EcoModal !== 'undefined') EcoModal.close('eco-modal-crear-paciente');
                         document.getElementById('eco-exito-paciente-nombre').textContent = data.nombre || '';
                         document.getElementById('eco-exito-paciente-pass').textContent = data.password || '—';
+                        if (window.ecoExitoPaciente) window.ecoExitoPaciente(data);
 
                         var boxCita = document.getElementById('eco-exito-cita');
                         if (boxCita) {

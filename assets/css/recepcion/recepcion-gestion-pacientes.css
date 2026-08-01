@@ -340,16 +340,18 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
 .rx-pac-wrap .rx-gestion-pac-table col.col-paciente { width: 178px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-cedula { width: 94px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-edad { width: 70px; }
-.rx-pac-wrap .rx-gestion-pac-table col.col-correo { width: 138px; }
+.rx-pac-wrap .rx-gestion-pac-table col.col-correo { width: 120px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-telefono { width: 106px; }
-.rx-pac-wrap .rx-gestion-pac-table col.col-direccion { width: 94px; }
+.rx-pac-wrap .rx-gestion-pac-table col.col-direccion { width: 81px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-citas { width: 50px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-informes { width: 62px; }
 /* Cabe el badge de cobro y la fecha en la misma línea (~150px útiles). */
 .rx-pac-wrap .rx-gestion-pac-table col.col-atencion { width: 170px; }
 .rx-pac-wrap .rx-gestion-pac-table col.col-ingreso { width: 86px; }
-/* 3 botones-icono de 30px + 2 huecos de 6 + 16 de relleno de celda = 118px. */
-.rx-pac-wrap .rx-gestion-pac-table col.col-acciones { width: 118px; }
+/* 2 botones con etiqueta (67 + 60) + 1 hueco de 6 + 16 de relleno = 149px.
+   Los 31px de mas salen de Correo y Direccion, que ya iban con puntos
+   suspensivos: la tabla no crece respecto a como estaba. */
+.rx-pac-wrap .rx-gestion-pac-table col.col-acciones { width: 149px; }
 .rx-pac-wrap .rx-gestion-pac-table .rx-pac-td-telefono,
 .rx-pac-wrap .rx-gestion-pac-table .rx-pac-td-direccion,
 .rx-pac-wrap .rx-gestion-pac-table .rx-pac-td-email,
@@ -518,27 +520,30 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
    Selectores compuestos a propósito: .rx-btn--prim/--sec/--muted se declaran
    MÁS ABAJO en el archivo, así que con un selector simple ganarían por orden.
    Con dos clases ganan estas por especificidad, pase lo que pase.          */
-.rx-pac-wrap .rx-btn--ico {
-    width: 30px;
-    height: 30px;
-    padding: 0;
+/* Con etiqueta: el ancho lo fija el texto, no un cuadrado. El icono se
+   queda como apoyo visual, no como unica pista. */
+.rx-pac-wrap .rx-btn--accion {
+    height: 32px;
+    padding: 0 9px;
     justify-content: center;
-    gap: 0;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
     border-width: 1px;
     border-radius: 9px;
     transition: background .18s ease, color .18s ease,
                 border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-.rx-pac-wrap .rx-btn--ico i { font-size: 13px; }
+.rx-pac-wrap .rx-btn--accion i { font-size: 11px; opacity: .9; }
 
 /* Ficha — cyan, el acento del sistema */
-.rx-pac-wrap .rx-btn--ico.rx-btn--prim {
+.rx-pac-wrap .rx-btn--accion.rx-btn--prim {
     background: var(--accent-soft);
     color: var(--accent-text);
     border-color: rgba(2, 177, 244, .28);
 }
-.rx-pac-wrap .rx-btn--ico.rx-btn--prim:hover {
+.rx-pac-wrap .rx-btn--accion.rx-btn--prim:hover {
     background: var(--accent);
     border-color: var(--accent);
     color: #fff;
@@ -548,12 +553,12 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
 }
 
 /* Programar cita — azul (--info de la paleta) */
-.rx-pac-wrap .rx-btn--ico.rx-btn--sec {
+.rx-pac-wrap .rx-btn--accion.rx-btn--sec {
     background: rgba(59, 130, 246, .13);
     color: #1d4ed8;
     border-color: rgba(59, 130, 246, .30);
 }
-.rx-pac-wrap .rx-btn--ico.rx-btn--sec:hover {
+.rx-pac-wrap .rx-btn--accion.rx-btn--sec:hover {
     background: #3b82f6;
     border-color: #3b82f6;
     color: #fff;
@@ -562,12 +567,12 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
 }
 
 /* Informes — índigo, el paso más profundo de la gama */
-.rx-pac-wrap .rx-btn--ico.rx-btn--muted {
+.rx-pac-wrap .rx-btn--accion.rx-btn--muted {
     background: rgba(79, 70, 229, .13);
     color: #4338ca;
     border-color: rgba(79, 70, 229, .30);
 }
-.rx-pac-wrap .rx-btn--ico.rx-btn--muted:hover {
+.rx-pac-wrap .rx-btn--accion.rx-btn--muted:hover {
     background: #4f46e5;
     border-color: #4f46e5;
     color: #fff;
@@ -575,26 +580,26 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
     box-shadow: 0 4px 10px rgba(79, 70, 229, .34);
 }
 
-.rx-pac-wrap .rx-btn--ico:active { transform: translateY(0); }
+.rx-pac-wrap .rx-btn--accion:active { transform: translateY(0); }
 
-.rx-pac-wrap .rx-btn--ico:focus-visible {
+.rx-pac-wrap .rx-btn--accion:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
 /* En oscuro el glifo necesita más luz para no apagarse sobre el tinte. */
-[data-theme="dark"] .rx-pac-wrap .rx-btn--ico.rx-btn--sec {
+[data-theme="dark"] .rx-pac-wrap .rx-btn--accion.rx-btn--sec {
     background: rgba(59, 130, 246, .20);
     color: #93c5fd;
 }
-[data-theme="dark"] .rx-pac-wrap .rx-btn--ico.rx-btn--muted {
+[data-theme="dark"] .rx-pac-wrap .rx-btn--accion.rx-btn--muted {
     background: rgba(99, 102, 241, .22);
     color: #a5b4fc;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .rx-pac-wrap .rx-btn--ico,
-    .rx-pac-wrap .rx-btn--ico:hover { transform: none; transition: none; }
+    .rx-pac-wrap .rx-btn--accion,
+    .rx-pac-wrap .rx-btn--accion:hover { transform: none; transition: none; }
 }
 
 /* ── Sin barra de desplazamiento horizontal ────────────────────────
@@ -604,21 +609,21 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
    Los nth-child van acotados a esta tabla: en las otras .rx-pac-table esas
    posiciones son columnas distintas. */
 @media (max-width: 1450px) {
-    .rx-pac-wrap .rx-gestion-pac-table { min-width: 1102px; }
+    .rx-pac-wrap .rx-gestion-pac-table { min-width: 1115px; }
     .rx-pac-wrap .rx-gestion-pac-table col.col-direccion { width: 0; }
     .rx-pac-wrap .rx-gestion-pac-table th:nth-child(7),
     .rx-pac-wrap .rx-gestion-pac-table td:nth-child(7) { display: none; }
 }
 
 @media (max-width: 1320px) {
-    .rx-pac-wrap .rx-gestion-pac-table { min-width: 996px; }
+    .rx-pac-wrap .rx-gestion-pac-table { min-width: 1009px; }
     .rx-pac-wrap .rx-gestion-pac-table col.col-telefono { width: 0; }
     .rx-pac-wrap .rx-gestion-pac-table th:nth-child(6),
     .rx-pac-wrap .rx-gestion-pac-table td:nth-child(6) { display: none; }
 }
 
 @media (max-width: 1150px) {
-    .rx-pac-wrap .rx-gestion-pac-table { min-width: 858px; }
+    .rx-pac-wrap .rx-gestion-pac-table { min-width: 889px; }
     .rx-pac-wrap .rx-gestion-pac-table col.col-correo { width: 0; }
     .rx-pac-wrap .rx-gestion-pac-table th:nth-child(5),
     .rx-pac-wrap .rx-gestion-pac-table td:nth-child(5) { display: none; }
@@ -850,239 +855,4 @@ body.eco-mis-pacientes-page .page-header-actions .btn-secondary {
     text-align: right;
     overflow: visible;
     padding-right: 90px !important;
-}
-
-
-/* ── Registro de paciente: bloques de servicio y facturación ─────────
-   OJO con la especificidad: shell-modals.css declara
-   `.eco-modal .eco-field label { display: block }` (0,2,1). Las filas de
-   servicio SON <label> dentro de .eco-field, así que necesitan al menos
-   ese peso o la casilla se apila encima del texto. De ahí el
-   `label.mcp-opcion` en los selectores.                               */
-
-.eco-modal .mcp-bloque {
-    margin: 18px 0 0;
-    padding: 16px 16px 6px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-surface);
-    /* Los <fieldset> no encogen por defecto y desbordarían el modal. */
-    min-width: 0;
-}
-
-.eco-modal .mcp-bloque__titulo {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 0 6px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-}
-
-.eco-modal .mcp-bloque__titulo i { color: var(--accent-text); font-size: 12px; }
-
-.eco-modal .mcp-bloque__nota {
-    margin: 0 0 14px;
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--text-muted);
-}
-
-.eco-modal .mcp-bloque .eco-field + .eco-field { margin-top: 14px; }
-
-.eco-modal .mcp-bloque__vacio {
-    margin: 0;
-    font-size: 13px;
-    color: var(--danger);
-}
-
-.eco-modal .mcp-opcional {
-    font-weight: 400;
-    color: var(--text-muted);
-}
-
-.eco-modal .mcp-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-}
-
-/* ── Fila seleccionable (estudio o servicio) ────────────────────────
-   Rejilla de 3 columnas: casilla · nombre · precio. Así el precio queda
-   siempre alineado a la derecha aunque el nombre sea largo.            */
-.eco-modal .eco-field label.mcp-opcion,
-.eco-modal label.mcp-opcion {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 10px;
-    margin: 0;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-surface);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
-}
-
-.eco-modal label.mcp-opcion:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.eco-modal label.mcp-opcion:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-/* Estado elegido: se ve de un vistazo qué se marcó. */
-.eco-modal label.mcp-opcion:has(input:checked) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    font-weight: 600;
-}
-
-.eco-modal label.mcp-opcion input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    accent-color: var(--accent);
-    cursor: pointer;
-}
-
-.eco-modal .mcp-opcion__nombre {
-    min-width: 0;
-    line-height: 1.35;
-}
-
-.eco-modal .mcp-opcion__precio {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
-.eco-modal label.mcp-opcion:has(input:checked) .mcp-opcion__precio {
-    color: var(--accent-text);
-}
-
-/* ── Listas ─────────────────────────────────────────────────────── */
-.eco-modal .mcp-servicios {
-    display: grid;
-    gap: 7px;
-}
-
-/* Catálogo de estudios: se despliega entero. Antes tenía scroll propio y
-   quedaban DOS barras anidadas (la del catálogo dentro de la del modal), que
-   es lo peor de navegar. La del modal (.eco-modal__main) basta. */
-.eco-modal .mcp-estudios {
-    display: grid;
-    gap: 7px;
-}
-
-/* Encabezado de categoría: separador de texto, no una barra fija. Sin scroll
-   propio no hay nada a lo que quedarse pegado. */
-.eco-modal .mcp-estudios__cat {
-    margin: 10px 0 1px;
-    padding: 0 2px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.eco-modal .mcp-estudios__cat:first-child { margin-top: 0; }
-
-/* ── Resumen de lo elegido ──────────────────────────────────────── */
-.eco-modal .mcp-resumen {
-    display: flex;
-    align-items: flex-start;
-    gap: 7px;
-    margin: 8px 0 0;
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--text-secondary);
-}
-
-.eco-modal .mcp-resumen i { margin-top: 2px; color: var(--text-muted); font-size: 11px; }
-.eco-modal .mcp-resumen.is-vacio { color: var(--text-muted); }
-.eco-modal .mcp-resumen.is-lleno i { color: var(--accent-text); }
-
-/* ── Facturación ────────────────────────────────────────────────── */
-.eco-modal .mcp-monto-row {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.eco-modal .mcp-monto-row__simbolo {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-.eco-modal .mcp-monto-row input {
-    font-size: 16px !important;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Total sugerido: se lee antes que la nota de ayuda. */
-.eco-modal .mcp-sugerido {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 8px 0 0;
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--text-muted);
-}
-
-.eco-modal .mcp-sugerido strong {
-    color: var(--accent-text);
-    font-variant-numeric: tabular-nums;
-}
-
-/* ── Resumen de la atención en el modal de éxito ─────────────────── */
-.eco-modal .mcp-exito-cita {
-    margin: 14px 0 0;
-    padding: 12px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg-muted);
-}
-
-.eco-modal .mcp-exito-cita__fila {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 12.5px;
-    padding: 3px 0;
-}
-
-.eco-modal .mcp-exito-cita__fila span { color: var(--text-muted); }
-
-.eco-modal .mcp-exito-cita__fila strong {
-    color: var(--text-primary);
-    text-align: right;
-}
-
-.eco-modal .mcp-exito-cita__detalle {
-    margin: 8px 0 0;
-    padding-top: 8px;
-    border-top: 1px solid var(--border-soft);
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: var(--text-muted);
 }

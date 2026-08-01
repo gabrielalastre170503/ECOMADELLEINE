@@ -123,6 +123,77 @@ body.eco-modal-open {
     max-width: 900px;
 }
 
+.eco-modal__dialog--sm {
+    max-width: 440px;
+}
+
+/* ── Acceso excepcional ("romper el cristal") ──────────────────────────
+   El ecografista no queda bloqueado ante un paciente ajeno: justifica y entra,
+   y ese acceso queda en la bitácora. El tono es de advertencia, no de error:
+   la acción está permitida, pero no es rutinaria. */
+.eco-modal .eco-acx { padding: 26px 24px 22px; text-align: center; }
+
+.eco-acx__icono {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    color: #b45309;
+    background: rgba(245, 158, 11, .14);
+}
+.eco-acx__texto {
+    margin: 0 0 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+.eco-acx__texto strong { color: var(--text-primary); }
+
+.eco-acx__label {
+    display: block;
+    margin-bottom: 6px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.eco-acx__motivo {
+    width: 100%;
+    padding: 11px 13px;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    resize: vertical;
+}
+.eco-acx__motivo:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, .14);
+}
+.eco-acx__error {
+    margin: 10px 0 0;
+    text-align: left;
+    font-size: 12.5px;
+    color: var(--danger, #b91c1c);
+}
+.eco-acx__pie {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+[data-theme="dark"] .eco-acx__icono { background: rgba(245, 158, 11, .18); color: #fbbf24; }
+
 /* Legacy panel.php: tarjeta .modal-content-premium dentro del diálogo shell */
 .eco-modal__dialog.eco-modal-dialog--premium-legacy {
     padding: 0;
@@ -381,12 +452,96 @@ body.eco-modal-open {
     font-weight: 700;
     text-align: center;
     padding: 14px;
-    background: var(--bg-muted);
+    background: var(--bg-surface);
     border-radius: var(--radius);
     border: 1px dashed var(--accent);
-    color: var(--accent-text);
+    /* #0284c7 sobre este fondo se queda corto y la clave hay que leerla bien. */
+    color: #0369a1;
     letter-spacing: 0.05em;
 }
+
+/* ── Aviso «Paciente creado» ─────────────────────────────────────────
+   Era un texto centrado con la clave suelta en medio. Ahora la clave va en
+   su propio bloque, con botón de copiar, y debajo se dice qué pasa con ella:
+   que le llega al paciente por correo. */
+.eco-modal .mcx-main { padding-top: 30px; text-align: center; }
+
+.eco-modal .mcx-tick {
+    width: 54px; height: 54px;
+    margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, .12);
+    border: 1px solid rgba(34, 197, 94, .3);
+    color: #15803d;
+    font-size: 1.4rem;
+}
+
+.eco-modal .mcx-titulo { margin: 0 0 5px; font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
+.eco-modal .mcx-sub { margin: 0 0 18px; font-size: 13px; color: var(--text-secondary); }
+.eco-modal .mcx-sub strong { color: var(--text-primary); }
+
+.eco-modal .mcx-clave {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-muted);
+}
+
+.eco-modal .mcx-clave__rotulo {
+    margin: 0 0 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcx-clave__rotulo i { color: var(--accent-text); margin-right: 4px; }
+
+.eco-modal .mcx-copiar {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.eco-modal .mcx-copiar:hover { border-color: var(--accent); color: var(--accent-text); }
+.eco-modal .mcx-copiar.is-ok { border-color: #22c55e; color: #15803d; background: rgba(34, 197, 94, .1); }
+
+.eco-modal .mcx-envio {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    border: 1px solid rgba(2, 177, 244, .28);
+    font-size: 12.5px;
+    line-height: 1.45;
+    text-align: left;
+    color: #0369a1;
+}
+
+.eco-modal .mcx-envio i { margin-top: 2px; flex-shrink: 0; }
+
+/* Si el correo no salió, deja de ser una confirmación y pasa a ser un aviso. */
+.eco-modal .mcx-envio.is-fallo {
+    background: rgba(245, 158, 11, .12);
+    border-color: rgba(245, 158, 11, .35);
+    color: #92400e;
+}
+
+[data-theme="dark"] .eco-modal .temp-pass-box { color: #7dd3fc; }
+[data-theme="dark"] .eco-modal .mcx-envio { color: #7dd3fc; }
+[data-theme="dark"] .eco-modal .mcx-envio.is-fallo { color: #fbbf24; }
 
 /* Tarjetas de acción (gestionar paciente — ecografista) */
 .eco-action-grid {
@@ -885,8 +1040,18 @@ button.eco-action-card:hover {
     border: 1px solid rgba(2, 177, 244, .2);
 }
 
+/* El estado vive en la columna de acciones, alineado con los botones. */
+#eco-modal-informes-paciente-eco .eco-inform-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 #eco-modal-informes-paciente-eco .eco-inform-card__status {
-    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
     padding: 3px 9px;
     border-radius: 999px;
     font-size: 10px;
@@ -984,13 +1149,15 @@ button.eco-action-card:hover {
         margin-bottom: 6px;
     }
 
-    #eco-modal-informes-paciente-eco .eco-inform-card__status {
-        margin-left: 0;
+    /* En dos columnas las acciones bajan a su propia fila: el ancho lo pide
+       el contenedor, no el botón (que no es hijo directo de la rejilla). */
+    #eco-modal-informes-paciente-eco .eco-inform-card__actions {
+        grid-column: 1 / -1;
+        justify-content: space-between;
     }
 
     #eco-modal-informes-paciente-eco .eco-inform-card__cta {
-        grid-column: 1 / -1;
-        width: 100%;
+        flex: 1;
         justify-content: center;
     }
 }
@@ -1320,6 +1487,35 @@ button.eco-action-card:hover {
 .eco-modal-panel-ecografista .inf-det-meta span { display: inline-flex; align-items: center; gap: 5px; }
 .eco-modal-panel-ecografista .inf-det-meta strong { color: #1e293b; }
 
+/* Aviso cuando el rol no puede ver los hallazgos (recepcion). Sustituye al
+   formulario clinico dentro de la misma modal: el resto de la ficha —numero,
+   fecha, estado, paciente— sigue visible para gestion y facturacion. */
+.inf-det-sin-clinico {
+    margin: 22px auto;
+    max-width: 460px;
+    padding: 26px 24px;
+    text-align: center;
+    border: 1px dashed var(--border, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    background: var(--bg-muted, #f8fafc);
+    color: var(--text-secondary, #64748b);
+}
+.inf-det-sin-clinico i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 12px;
+    border-radius: 50%;
+    font-size: 17px;
+    color: #0369a1;
+    background: rgba(2, 132, 199, .12);
+}
+.inf-det-sin-clinico p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.55; }
+.inf-det-sin-clinico p:last-child { margin-bottom: 0; }
+.inf-det-sin-clinico strong { color: var(--text-primary, #1e293b); font-size: 14.5px; }
+
 .eco-modal-panel-ecografista .modal-content-eco-grid {
     position: relative;
     width: 96%;
@@ -1412,7 +1608,12 @@ button.eco-action-card:hover {
     border: 1.5px solid #e8ecf0;
     border-radius: 14px;
     cursor: pointer;
-    transition: all 0.28s ease;
+    /* Propiedades nombradas, no "all": al desplazar con el raton por
+       encima, cada tarjeta que cruza el puntero animaba TODO. */
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1),
+                border-color 0.28s cubic-bezier(.4, 0, .2, 1),
+                box-shadow 0.28s cubic-bezier(.4, 0, .2, 1),
+                background 0.28s cubic-bezier(.4, 0, .2, 1);
     overflow: hidden;
 }
 
@@ -1519,7 +1720,12 @@ button.eco-action-card:hover {
     background: #fff;
     border: 1.5px solid #dcfce7 !important;
     border-radius: 16px;
-    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    /* Propiedades nombradas, no "all": al desplazar con el raton por
+       encima, cada tarjeta que cruza el puntero animaba TODO. */
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1),
+                border-color 0.28s cubic-bezier(.4, 0, .2, 1),
+                box-shadow 0.28s cubic-bezier(.4, 0, .2, 1),
+                background 0.28s cubic-bezier(.4, 0, .2, 1);
     box-shadow: 0 1px 3px rgba(34, 197, 94, 0.06);
 }
 .eco-modal-panel-ecografista .musculo-card:hover {
@@ -1581,7 +1787,12 @@ button.eco-action-card:hover {
     background: #fff;
     border: 1.5px solid #fce7f3 !important;
     border-radius: 16px;
-    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    /* Propiedades nombradas, no "all": al desplazar con el raton por
+       encima, cada tarjeta que cruza el puntero animaba TODO. */
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1),
+                border-color 0.28s cubic-bezier(.4, 0, .2, 1),
+                box-shadow 0.28s cubic-bezier(.4, 0, .2, 1),
+                background 0.28s cubic-bezier(.4, 0, .2, 1);
     box-shadow: 0 1px 3px rgba(236, 72, 153, 0.06);
 }
 .eco-modal-panel-ecografista .obstetrica-card:hover {
@@ -1641,7 +1852,12 @@ button.eco-action-card:hover {
     background: #fff;
     border: 1.5px solid #fef3c7 !important;
     border-radius: 16px;
-    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    /* Propiedades nombradas, no "all": al desplazar con el raton por
+       encima, cada tarjeta que cruza el puntero animaba TODO. */
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1),
+                border-color 0.28s cubic-bezier(.4, 0, .2, 1),
+                box-shadow 0.28s cubic-bezier(.4, 0, .2, 1),
+                background 0.28s cubic-bezier(.4, 0, .2, 1);
     box-shadow: 0 1px 3px rgba(245, 158, 11, 0.06);
 }
 .eco-modal-panel-ecografista .pblandas-card:hover {
@@ -1786,6 +2002,15 @@ button.eco-action-card:hover {
 }
 .eco-modal-panel-ecografista .eco-msg-ok__link:hover { text-decoration: none; }
 
+/* Ver informe e Imprimir van juntos al final del aviso. */
+.eco-modal-panel-ecografista .eco-msg-ok__acciones {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    vertical-align: middle;
+}
+
 .eco-modal-panel-ecografista .modal-form-eco-body {
     flex: 1;
     overflow-y: auto;
@@ -1900,58 +2125,77 @@ button.eco-action-card:hover {
     -moz-appearance: textfield;
 }
 
-.eco-modal-panel-ecografista .modal-form-eco-body .radio-group { display: flex; gap: 7px; flex-wrap: wrap; padding-top: 5px; }
-.eco-modal-panel-ecografista .modal-form-eco-body .radio-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12.5px;
-    color: #334155;
-    cursor: pointer;
-    padding: 4px 10px;
-    border: 1.5px solid #d1d5db;
-    border-radius: 20px;
-    transition: all 0.2s;
+/* Píldoras de opción (SI/NO y radios con etiqueta).
+   Un solo color para lo elegido: el azul del sistema. En estos campos "NO" no
+   es un error ni "SI" un acierto —son hallazgos—, así que el verde y el rojo
+   sugerían una valoración que el informe no hace. */
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-group,
+.eco-modal-panel-ecografista .modal-form-eco-body .sinno-group {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    padding-top: 5px;
 }
 
-.eco-modal-panel-ecografista .modal-form-eco-body .radio-label:has(input:checked) {
-    background: #e0f5fe;
-    border-color: #02b1f4;
-    color: #0284c7;
-    font-weight: 600;
-}
-
-.eco-modal-panel-ecografista .modal-form-eco-body .radio-label input[type=radio] { accent-color: #02b1f4; }
-
-.eco-modal-panel-ecografista .modal-form-eco-body .sinno-group { display: flex; gap: 6px; padding-top: 4px; }
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-label,
 .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 14px;
-    border: 1.5px solid #d1d5db;
-    border-radius: 20px;
-    cursor: pointer;
+    justify-content: center;
+    gap: 6px;
+    min-width: 56px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
     font-size: 12.5px;
     font-weight: 600;
-    transition: all 0.2s;
-    color: #555;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    /* Propiedades nombradas, no "all": el formulario tiene decenas de
+       píldoras y al desplazarse el puntero las cruza todas. */
+    transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
-.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn input[type=radio] { display: none; }
-.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn.sinno-si:has(input:checked) {
-    background: #dcfce7;
-    border-color: #22c55e;
-    color: #15803d;
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-label:hover,
+.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
-.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn.sinno-no:has(input:checked) {
-    background: #fee2e2;
-    border-color: #f87171;
-    color: #b91c1c;
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-label:has(input:checked),
+.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:has(input:checked) {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    /* Azul más oscuro que el de marca: #0284c7 sobre este fondo se queda en
+       3.6:1 y el texto es de 12.5px, que no es texto grande. */
+    color: #0369a1;
 }
 
-.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:hover { background: #f8fafc; border-color: #94a3b8; }
+/* La casilla se esconde a la vista, no al teclado: con display:none no se
+   podía elegir SI/NO sin ratón. */
+.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn input[type=radio] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-label:focus-within,
+.eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.eco-modal-panel-ecografista .modal-form-eco-body .radio-label input[type=radio] { accent-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+    .eco-modal-panel-ecografista .modal-form-eco-body .radio-label,
+    .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn { transition: none; }
+}
 
 .eco-modal-panel-ecografista .modal-form-eco-body .seccion-par-grid {
     display: grid;
@@ -2117,28 +2361,94 @@ button.eco-action-card:hover {
     .eco-modal-panel-ecografista .modal-form-eco-body .seccion-par-grid { grid-template-columns: 1fr; }
 }
 
-/* ---------- Rendimiento scroll: modal «Ver informe» (evita repaint global por backdrop-filter) ---------- */
-#eco-modal-informe-detalle-eco.eco-modal {
+/* =====================================================================
+   RENDIMIENTO DE LOS MODALES ENCADENADOS (Gestionar paciente)
+
+   Antes esto cubría solo «Ver informe». El resto de la cadena arrastraba
+   los mismos costes, y por eso seguía notándose al desplazar.
+
+   Tres cosas, de la más cara a la menos:
+
+   1. backdrop-filter a pantalla completa. El velo desenfocado obliga al
+      navegador a volver a muestrear TODO lo que hay detrás cada vez que
+      algo repinta encima, es decir en cada fotograma del desplazamiento.
+      Se sustituye por un velo más opaco: se ve casi igual y no cuesta nada.
+   2. contain/overscroll en el contenedor que hace scroll, para que lo que
+      se repinta no salga de esa caja ni arrastre a la página de detrás.
+   3. transition: all en las tarjetas de las rejillas. Con «all», pasar el
+      ratón por encima mientras se desplaza dispara una transición de todas
+      las propiedades animables de cada tarjeta que cruza el puntero. Se
+      nombran solo las cuatro que cambian de verdad.
+   ===================================================================== */
+
+/* --- 1. Sin desenfoque de fondo en la cadena --- */
+#eco-modal-gestionar-paciente-eco.eco-modal,
+#eco-modal-notas-paciente-eco.eco-modal,
+#eco-modal-programar-cita-eco.eco-modal,
+#eco-modal-informes-paciente-eco.eco-modal,
+#eco-modal-informe-detalle-eco.eco-modal,
+#eco-modal-expediente-informe-eco.eco-modal,
+#eco-modal-historia-clinica-eco.eco-modal,
+#eco-modal-facturacion-paciente-eco.eco-modal,
+#eco-modal-servicio-eco.eco-modal,
+#eco-modal-firmar-antes-eco.eco-modal,
+.eco-modal-panel-ecografista.eco-modal {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    /* Fondo ligeramente más opaco para compensar falta de blur (misma familia RGB que shell) */
+    /* Más opaco para compensar la falta de desenfoque (misma familia RGB). */
     background: rgba(15, 23, 42, 0.66);
 }
 
-/* Contenedor que hace scroll: capa compositor + aislante de pintura/layout */
-#eco-modal-informe-detalle-eco #eco-informe-detalle-body {
+/* Tampoco lo necesita nada de DENTRO: está sobre una superficie opaca, así
+   que el efecto no se aprecia y cada elemento con desenfoque es una capa
+   más que recomponer al desplazar. Lleva .eco-glass delante porque
+   glass.css se carga después que esta hoja. */
+.eco-glass .eco-modal .card,
+.eco-glass .eco-modal .stat-card,
+.eco-glass .eco-modal .data-table,
+.eco-glass .eco-modal .btn-secondary {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* --- 2. Los contenedores que hacen scroll --- */
+#eco-modal-informe-detalle-eco #eco-informe-detalle-body,
+#eco-modal-informes-paciente-eco .eco-inform-modal__list-wrap,
+#eco-modal-programar-cita-eco .eco-modal__main,
+.eco-modal-panel-ecografista .eco-modal-body,
+.eco-modal-panel-ecografista .modal-form-eco-body {
     contain: paint;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
 }
 
 #eco-modal-informe-detalle-eco #eco-informe-detalle-body .form-seccion {
     contain: layout;
 }
 
-#eco-modal-informe-detalle-eco .modal-content-form-eco {
+#eco-modal-informe-detalle-eco .modal-content-form-eco,
+.eco-modal-panel-ecografista .modal-content-form-eco {
     isolation: isolate;
+}
+
+/* --- 3. Las transiciones de las rejillas se acotan en su propia regla,
+       mas arriba: nombran las 4 propiedades que cambian en :hover. --- */
+
+/* Quien haya pedido menos movimiento no debería pagar ninguna de estas
+   animaciones al desplazar. */
+@media (prefers-reduced-motion: reduce) {
+    .eco-modal-panel-ecografista .eco-card,
+    .eco-modal-panel-ecografista .musculo-card,
+    .eco-modal-panel-ecografista .obstetrica-card,
+    .eco-modal-panel-ecografista .pblandas-card {
+        transition: none;
+    }
+    .eco-modal-panel-ecografista .eco-card:hover,
+    .eco-modal-panel-ecografista .musculo-card:hover,
+    .eco-modal-panel-ecografista .obstetrica-card:hover,
+    .eco-modal-panel-ecografista .pblandas-card:hover {
+        transform: none;
+    }
 }
 
 /* ---------- Impresión: detalle de informe ecografía (shell, paridad panel) ---------- */
@@ -2725,24 +3035,17 @@ button.eco-action-card:hover {
     border-color: #2b3a52;
     color: var(--text-secondary);
 }
-[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .radio-label:has(input:checked) {
+/* Mismo criterio que en claro: lo elegido va en azul, sea SI o NO. */
+[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .radio-label:has(input:checked),
+[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:has(input:checked) {
     background: rgba(2, 177, 244, 0.16);
     border-color: var(--accent);
     color: #7dd3fc;
 }
+[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .radio-label:hover,
 [data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn:hover {
     background: var(--bg-hover);
     border-color: var(--text-muted);
-}
-[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn.sinno-si:has(input:checked) {
-    background: rgba(34, 197, 94, 0.16);
-    border-color: #22c55e;
-    color: #86efac;
-}
-[data-theme="dark"] .eco-modal-panel-ecografista .modal-form-eco-body .sinno-btn.sinno-no:has(input:checked) {
-    background: rgba(239, 68, 68, 0.16);
-    border-color: #f87171;
-    color: #fca5a5;
 }
 
 /* Columnas pares (riñones, etc.) */
@@ -2906,3 +3209,245 @@ button.eco-action-card:hover {
 .eco-firma-verify { margin-left: 8px; border: 1px solid #7dd3fc; background: #fff; color: #075985; border-radius: 7px; padding: 3px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; vertical-align: middle; }
 .eco-firma-verify:hover { background: #0284c7; color: #fff; border-color: #0284c7; }
 .eco-firma-verify:disabled { opacity: .6; cursor: default; }
+
+/* =====================================================================
+   BLOQUES DE SERVICIO Y FACTURACIÓN DENTRO DE MODALES (.mcp-*)
+   Vivían en recepcion/recepcion-gestion-pacientes.css, que solo cargan
+   dos páginas. El modal "Programar cita" del ecografista viaja con
+   modal_gestionar_paciente_ecografista.php, incluido desde cinco vistas:
+   en tres de ellas el catálogo de estudios salía sin estilo. Los
+   selectores ya estaban acotados a .eco-modal, así que aquí rigen igual.
+   ===================================================================== */
+/* ── Registro de paciente: bloques de servicio y facturación ─────────
+   OJO con la especificidad: shell-modals.css declara
+   `.eco-modal .eco-field label { display: block }` (0,2,1). Las filas de
+   servicio SON <label> dentro de .eco-field, así que necesitan al menos
+   ese peso o la casilla se apila encima del texto. De ahí el
+   `label.mcp-opcion` en los selectores.                               */
+
+.eco-modal .mcp-bloque {
+    margin: 18px 0 0;
+    padding: 16px 16px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    /* Los <fieldset> no encogen por defecto y desbordarían el modal. */
+    min-width: 0;
+}
+
+.eco-modal .mcp-bloque__titulo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.eco-modal .mcp-bloque__titulo i { color: var(--accent-text); font-size: 12px; }
+
+.eco-modal .mcp-bloque__nota {
+    margin: 0 0 14px;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcp-bloque .eco-field + .eco-field { margin-top: 14px; }
+
+.eco-modal .mcp-bloque__vacio {
+    margin: 0;
+    font-size: 13px;
+    color: var(--danger);
+}
+
+.eco-modal .mcp-opcional {
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcp-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+/* ── Fila seleccionable (estudio o servicio) ────────────────────────
+   Rejilla de 3 columnas: casilla · nombre · precio. Así el precio queda
+   siempre alineado a la derecha aunque el nombre sea largo.            */
+.eco-modal .eco-field label.mcp-opcion,
+.eco-modal label.mcp-opcion {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.eco-modal label.mcp-opcion:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.eco-modal label.mcp-opcion:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Estado elegido: se ve de un vistazo qué se marcó. */
+.eco-modal label.mcp-opcion:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 600;
+}
+
+.eco-modal label.mcp-opcion input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.eco-modal .mcp-opcion__nombre {
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.eco-modal .mcp-opcion__precio {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.eco-modal label.mcp-opcion:has(input:checked) .mcp-opcion__precio {
+    color: var(--accent-text);
+}
+
+/* ── Listas ─────────────────────────────────────────────────────── */
+.eco-modal .mcp-servicios {
+    display: grid;
+    gap: 7px;
+}
+
+/* Catálogo de estudios: se despliega entero. Antes tenía scroll propio y
+   quedaban DOS barras anidadas (la del catálogo dentro de la del modal), que
+   es lo peor de navegar. La del modal (.eco-modal__main) basta. */
+.eco-modal .mcp-estudios {
+    display: grid;
+    gap: 7px;
+}
+
+/* Encabezado de categoría: separador de texto, no una barra fija. Sin scroll
+   propio no hay nada a lo que quedarse pegado. */
+.eco-modal .mcp-estudios__cat {
+    margin: 10px 0 1px;
+    padding: 0 2px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcp-estudios__cat:first-child { margin-top: 0; }
+
+/* ── Resumen de lo elegido ──────────────────────────────────────── */
+.eco-modal .mcp-resumen {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.eco-modal .mcp-resumen i { margin-top: 2px; color: var(--text-muted); font-size: 11px; }
+.eco-modal .mcp-resumen.is-vacio { color: var(--text-muted); }
+.eco-modal .mcp-resumen.is-lleno i { color: var(--accent-text); }
+
+/* ── Facturación ────────────────────────────────────────────────── */
+.eco-modal .mcp-monto-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.eco-modal .mcp-monto-row__simbolo {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcp-monto-row input {
+    font-size: 16px !important;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Total sugerido: se lee antes que la nota de ayuda. */
+.eco-modal .mcp-sugerido {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.eco-modal .mcp-sugerido strong {
+    color: var(--accent-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Resumen de la atención en el modal de éxito ─────────────────── */
+.eco-modal .mcp-exito-cita {
+    margin: 14px 0 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-muted);
+}
+
+.eco-modal .mcp-exito-cita__fila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    padding: 3px 0;
+}
+
+.eco-modal .mcp-exito-cita__fila span { color: var(--text-muted); }
+
+.eco-modal .mcp-exito-cita__fila strong {
+    color: var(--text-primary);
+    text-align: right;
+}
+
+.eco-modal .mcp-exito-cita__detalle {
+    margin: 8px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}

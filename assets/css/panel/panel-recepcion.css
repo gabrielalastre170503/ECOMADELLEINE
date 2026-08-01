@@ -206,17 +206,6 @@ a.stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .viz-col:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Valor sobre la barra: solo en el máximo, no en cada punto. */
-.viz-col__pico {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
-}
-
 /* Tooltip: acompaña, nunca es la única vía al dato (hay tabla abajo). */
 .viz-col__tip {
     position: absolute;

@@ -42,9 +42,12 @@ if ($iniciales === '') $iniciales = 'U';
     </nav>
 
     <!-- Buscador -->
-    <div class="topbar-search">
+    <div class="topbar-search" id="eco-buscador">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="search" placeholder="Buscar pacientes, citas, informes..." aria-label="Buscar">
+        <input type="search" id="eco-buscador-input" placeholder="Buscar pacientes, citas, informes..."
+               aria-label="Buscar" autocomplete="off" role="combobox"
+               aria-expanded="false" aria-controls="eco-buscador-panel" aria-autocomplete="list">
+        <div class="topbar-search__panel" id="eco-buscador-panel" role="listbox" hidden></div>
     </div>
 
     <!-- Reloj -->

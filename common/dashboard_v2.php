@@ -563,14 +563,10 @@ $rx_hoy_txt = (int)date('d') . ' de ' . $rx_meses[(int)date('n')];
         <?php else: ?>
             <div class="viz-cols" role="img"
                  aria-label="Pacientes atendidos por día en los últimos <?= $rx_dias ?> días. Total <?= $rx_sum_pac ?>. Máximo diario <?= (int)$rx_max_pac ?>.">
-                <?php $rx_pico_pac = false; foreach ($rx_serie as $p):
-                    $esPico = !$rx_pico_pac && $p['pacientes'] > 0 && (float)$p['pacientes'] === $rx_max_pac;
-                    if ($esPico) { $rx_pico_pac = true; }
-                ?>
+                <?php foreach ($rx_serie as $p): ?>
                     <div class="viz-col" tabindex="0"
                          aria-label="<?= htmlspecialchars($p['etiqueta']) ?>: <?= (int)$p['pacientes'] ?> paciente<?= $p['pacientes'] === 1 ? '' : 's' ?>">
                         <span class="viz-col__tip"><?= htmlspecialchars($p['etiqueta']) ?> · <?= (int)$p['pacientes'] ?></span>
-                        <?php if ($esPico): ?><span class="viz-col__pico"><?= (int)$p['pacientes'] ?></span><?php endif; ?>
                         <span class="viz-col__bar" style="height:<?= $rx_pct((float)$p['pacientes'], $rx_max_pac) ?>%;"></span>
                     </div>
                 <?php endforeach; ?>
@@ -605,14 +601,10 @@ $rx_hoy_txt = (int)date('d') . ' de ' . $rx_meses[(int)date('n')];
         <?php else: ?>
             <div class="viz-cols" role="img"
                  aria-label="Dinero cobrado por día en los últimos <?= $rx_dias ?> días. Total <?= htmlspecialchars(eco_money($rx_sum_cob)) ?>.">
-                <?php $rx_pico_cob = false; foreach ($rx_serie as $p):
-                    $esPico = !$rx_pico_cob && $p['cobrado'] > 0 && (float)$p['cobrado'] === $rx_max_cob;
-                    if ($esPico) { $rx_pico_cob = true; }
-                ?>
+                <?php foreach ($rx_serie as $p): ?>
                     <div class="viz-col viz-col--money" tabindex="0"
                          aria-label="<?= htmlspecialchars($p['etiqueta']) ?>: <?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?>">
                         <span class="viz-col__tip"><?= htmlspecialchars($p['etiqueta']) ?> · <?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?></span>
-                        <?php if ($esPico): ?><span class="viz-col__pico"><?= htmlspecialchars(eco_money((float)$p['cobrado'])) ?></span><?php endif; ?>
                         <span class="viz-col__bar" style="height:<?= $rx_pct((float)$p['cobrado'], $rx_max_cob) ?>%;"></span>
                     </div>
                 <?php endforeach; ?>
@@ -679,14 +671,10 @@ $rx_hoy_txt = (int)date('d') . ' de ' . $rx_meses[(int)date('n')];
             $rx_max_edad = (float)max(array_column($rx_por_edad['filas'], 'n')); ?>
             <div class="viz-cols" role="img"
                  aria-label="Pacientes por rango de edad, sobre <?= $rx_edad_total ?> con fecha registrada.">
-                <?php $rx_pico_edad = false; foreach ($rx_por_edad['filas'] as $f):
-                    $esPico = !$rx_pico_edad && $f['n'] > 0 && (float)$f['n'] === $rx_max_edad;
-                    if ($esPico) { $rx_pico_edad = true; }
-                ?>
+                <?php foreach ($rx_por_edad['filas'] as $f): ?>
                     <div class="viz-col" tabindex="0"
                          aria-label="<?= htmlspecialchars($f['rango']) ?> años: <?= (int)$f['n'] ?> paciente<?= $f['n'] === 1 ? '' : 's' ?>">
                         <span class="viz-col__tip"><?= htmlspecialchars($f['rango']) ?> años · <?= (int)$f['n'] ?></span>
-                        <?php if ($esPico): ?><span class="viz-col__pico"><?= (int)$f['n'] ?></span><?php endif; ?>
                         <span class="viz-col__bar" style="height:<?= $rx_pct((float)$f['n'], $rx_max_edad) ?>%;"></span>
                     </div>
                 <?php endforeach; ?>

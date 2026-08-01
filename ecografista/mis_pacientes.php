@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         var pw = document.getElementById('eco-exito-paciente-pass');
                         if (nm) nm.textContent = data.nombre || '';
                         if (pw) pw.textContent = data.password || '—';
+                        if (window.ecoExitoPaciente) window.ecoExitoPaciente(data);
                         if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-exito-paciente');
                     } else if (err) {
                         err.textContent = data.message || 'No se pudo crear el paciente.';

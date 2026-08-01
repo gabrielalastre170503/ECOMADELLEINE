@@ -220,10 +220,10 @@ $menu = [
             'roles' => ['recepcionista'],
         ],
         [
-            'id' => 'notas-sesion',
-            'label' => 'Notas de Sesión',
-            'icon' => 'fa-solid fa-notes-medical',
-            'href' => 'notas-sesion',
+            'id' => 'control-precios',
+            'label' => 'Control de Precios',
+            'icon' => 'fa-solid fa-tags',
+            'href' => 'control-precios',
             'roles' => ['ecografista'],
         ],
         [
@@ -350,9 +350,14 @@ foreach (explode(' ', trim($nombre_usuario)) as $p) {
     if ($p !== '' && strlen($iniciales) < 2) $iniciales .= strtoupper($p[0]);
 }
 if ($iniciales === '') $iniciales = 'U';
+
+/* El menú plegado se marca YA en el servidor. Antes lo hacía el JS al terminar
+   de cargar el DOM, así que la página se pintaba una vez con el menú entero y
+   acto seguido se encogía: ese es el parpadeo al cambiar de sección. */
+$eco_menu_plegado = (($_COOKIE['eco_sidebar'] ?? '') === 'collapsed');
 ?>
 
-<aside class="app-sidebar">
+<aside class="app-sidebar<?= $eco_menu_plegado ? ' is-collapsed' : '' ?>">
 
     <a href="<?= htmlspecialchars(eco_url('dashboard')) ?>" class="sidebar-brand">
         <div class="sidebar-brand-logo">

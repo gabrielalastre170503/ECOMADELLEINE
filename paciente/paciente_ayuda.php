@@ -56,8 +56,10 @@ ob_start();
 
 <style>
 .ah-grid-self { display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:14px; margin-bottom:20px; }
-.ah-self { display:flex; align-items:center; gap:12px; padding:16px; text-decoration:none; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-lg); transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
-.ah-self:hover { box-shadow:var(--shadow); transform:translateY(-3px); border-color:rgba(2,177,244,.3); }
+/* Mismo relieve que las tarjetas del sistema: en reposo no tenían sombra
+   ninguna —solo al apuntarlas— y por eso se veían planas. */
+.ah-self { display:flex; align-items:center; gap:12px; padding:16px; text-decoration:none; background:var(--bg-surface); border:1px solid var(--silver-edge,var(--border)); border-radius:var(--radius-lg); box-shadow:var(--eco-shadow-card,var(--shadow)); transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+.ah-self:hover { box-shadow:var(--eco-shadow-card-hover,var(--shadow-md)); transform:translateY(-3px); border-color:rgba(2,177,244,.3); }
 .ah-self__icon { width:42px; height:42px; border-radius:11px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; background:linear-gradient(135deg,var(--accent),#38bdf8); }
 .ah-self__t { min-width:0; }
 .ah-self__t strong { display:block; font-size:13.5px; font-weight:700; color:var(--text-primary); }

@@ -296,12 +296,14 @@ if ($pacientes) {
         // lectores de pantalla.
         echo '<td class="rx-td-acciones">';
         echo '<div class="acciones-wrapper">';
-        echo '<button type="button" class="rx-btn rx-btn--ico rx-btn--prim rx-js-ficha" data-rx-pid="' . $id . '"'
-            . ' title="Ver ficha" aria-label="Ver ficha de ' . $nomAttr . '"><i class="fa-solid fa-id-card" aria-hidden="true"></i></button>';
-        echo '<button type="button" class="rx-btn rx-btn--ico rx-btn--sec rx-js-prog" data-rx-pid="' . $id . '" data-rx-nom="' . $nomAttr . '"'
-            . ' title="Programar cita" aria-label="Programar cita para ' . $nomAttr . '"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i></button>';
-        echo '<button type="button" class="rx-btn rx-btn--ico rx-btn--muted rx-js-inf" data-rx-pid="' . $id . '" data-rx-nom="' . $nomAttr . '"'
-            . ' title="Ver informes" aria-label="Ver informes de ' . $nomAttr . '"><i class="fa-solid fa-file-waveform" aria-hidden="true"></i></button>';
+        // Con dos botones ya cabe la etiqueta: un icono suelto obliga a
+        // adivinar o a esperar el tooltip.
+        echo '<button type="button" class="rx-btn rx-btn--accion rx-btn--prim rx-js-ficha" data-rx-pid="' . $id . '"'
+            . ' aria-label="Ver ficha de ' . $nomAttr . '"><i class="fa-solid fa-id-card" aria-hidden="true"></i><span>Ficha</span></button>';
+        echo '<button type="button" class="rx-btn rx-btn--accion rx-btn--sec rx-js-prog" data-rx-pid="' . $id . '" data-rx-nom="' . $nomAttr . '"'
+            . ' aria-label="Programar cita para ' . $nomAttr . '"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i><span>Cita</span></button>';
+        // Los informes se consultan desde la ficha, que ya los lista con su
+        // número, fecha y estado: aquí el tercer botón solo robaba ancho.
         echo '</div>';
         echo '</td>';
         echo '</tr>';

@@ -91,6 +91,34 @@ html, body {
 }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
+
+/* Campos sin hoja propia. Varias páginas los maquetan con estilos en línea
+   —borde, relleno, radio— pero sin fondo ni color de texto, así que caían al
+   blanco por defecto del navegador y en modo oscuro salían en blanco con
+   letra negra. Van como selectores de elemento (peso 0,0,1) a propósito:
+   cualquier regla con clase de una página sigue mandando sobre estas. */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select,
+textarea {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+input::placeholder,
+textarea::placeholder { color: var(--text-muted); opacity: 1; }
+
+/* Los desplegables nativos también pintan sus opciones. */
+select option { background: var(--bg-surface); color: var(--text-primary); }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -109,9 +137,32 @@ button { font-family: inherit; cursor: pointer; }
     position: fixed;
     top: 0; left: 0; bottom: 0;
     z-index: 100;
-    transition: width .25s cubic-bezier(.4, 0, .2, 1);
+    /* El ancho NO se anima a propósito. Interpolarlo obliga a recalcular la
+       maquetación de toda la página en cada fotograma —con una tabla de
+       decenas de filas eso es lo que se siente pesado— y a volver a muestrear
+       el desenfoque del vidrio. El ancho cambia de golpe: una maquetación.
+       El movimiento lo pone el contenido del propio menú, más abajo, con
+       opacidad y transform, que no maquetan nada. */
 }
-.app-sidebar.is-collapsed { width: var(--sidebar-w-mini); }
+
+/* Asentado del menú al plegar o desplegar. La clase la pone y la quita el JS,
+   así no se repite al cargar la página con el menú ya plegado. */
+@keyframes eco-sidebar-asentar {
+    from { opacity: .35; transform: translateX(5px); }
+    to   { opacity: 1;   transform: none; }
+}
+
+.app-sidebar.is-animando .sidebar-brand,
+.app-sidebar.is-animando .sidebar-nav,
+.app-sidebar.is-animando .sidebar-footer {
+    animation: eco-sidebar-asentar .2s cubic-bezier(.4, 0, .2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar.is-animando .sidebar-brand,
+    .app-sidebar.is-animando .sidebar-nav,
+    .app-sidebar.is-animando .sidebar-footer { animation: none; }
+}
 
 .sidebar-brand {
     display: flex; align-items: center; gap: 12px;
@@ -131,8 +182,6 @@ button { font-family: inherit; cursor: pointer; }
 .sidebar-brand-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
 .sidebar-brand-text strong { font-size: 15px; color: var(--text-primary); font-weight: 700; }
 .sidebar-brand-text small { font-size: 11px; color: var(--text-secondary); font-weight: 500; letter-spacing: .3px; }
-.app-sidebar.is-collapsed .sidebar-brand-text { display: none; }
-.app-sidebar.is-collapsed .sidebar-brand { justify-content: center; padding: 18px 12px; }
 
 /* Nav */
 .sidebar-nav {
@@ -146,7 +195,6 @@ button { font-family: inherit; cursor: pointer; }
     text-transform: uppercase; letter-spacing: .8px;
     padding: 14px 14px 6px;
 }
-.app-sidebar.is-collapsed .sidebar-nav-section { display: none; }
 
 .sidebar-link {
     display: flex; align-items: center; gap: 12px;
@@ -154,7 +202,9 @@ button { font-family: inherit; cursor: pointer; }
     border-radius: var(--radius);
     color: var(--text-secondary);
     font-size: 13.5px; font-weight: 500;
-    transition: var(--transition);
+    /* Nombradas, no "all": con «all» cada enlace animaba también su relleno al
+       colapsar el menú, es decir doce animaciones de maquetación a la vez. */
+    transition: background-color .18s ease, color .18s ease;
     position: relative;
     white-space: nowrap;
 }
@@ -178,21 +228,8 @@ button { font-family: inherit; cursor: pointer; }
     border-radius: 20px;
     min-width: 22px; text-align: center;
 }
-.app-sidebar.is-collapsed .sidebar-link { justify-content: center; padding: 12px; }
-.app-sidebar.is-collapsed .sidebar-link span,
-.app-sidebar.is-collapsed .sidebar-badge { display: none; }
 
 /* Tooltip cuando está colapsado */
-.app-sidebar.is-collapsed .sidebar-link:hover::after {
-    content: attr(data-tooltip);
-    position: absolute; left: calc(100% + 12px); top: 50%;
-    transform: translateY(-50%);
-    background: var(--text-primary); color: var(--text-inverse);
-    padding: 6px 10px; border-radius: 6px; font-size: 12px;
-    white-space: nowrap;
-    box-shadow: var(--shadow);
-    z-index: 200;
-}
 
 /* Footer del sidebar (usuario) */
 .sidebar-footer {
@@ -226,18 +263,14 @@ button { font-family: inherit; cursor: pointer; }
     transition: var(--transition);
 }
 .sidebar-user-logout:hover { background: var(--bg-hover); color: var(--danger); }
-.app-sidebar.is-collapsed .sidebar-user-info { display: none; }
-.app-sidebar.is-collapsed .sidebar-footer { justify-content: center; padding: 14px 8px; }
 
 /* ── Topbar ───────────────────────────────────────────────────── */
 .app-main {
     flex: 1;
     margin-left: var(--sidebar-w);
-    transition: margin-left .25s cubic-bezier(.4, 0, .2, 1);
     display: flex; flex-direction: column;
     min-height: 100vh;
 }
-.app-sidebar.is-collapsed ~ .app-main { margin-left: var(--sidebar-w-mini); }
 
 .app-topbar {
     height: var(--topbar-h);
@@ -290,9 +323,84 @@ button { font-family: inherit; cursor: pointer; }
     background: var(--bg-surface);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.topbar-search i {
+.topbar-search > i {
     position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
     color: var(--text-muted); font-size: 13px;
+}
+
+/* Resultados del buscador */
+.topbar-search__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 120;
+    max-height: 420px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+    background: var(--eco-solid, var(--bg-surface));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+}
+
+.tbs-grupo {
+    margin: 8px 8px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.tbs-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 9px;
+    border-radius: 9px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.tbs-item:hover,
+.tbs-item.is-activo { background: var(--accent-soft); }
+
+.tbs-item__ico {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 12px;
+}
+
+.tbs-item.is-activo .tbs-item__ico,
+.tbs-item:hover .tbs-item__ico { background: var(--bg-surface); }
+
+.tbs-item__txt { min-width: 0; }
+.tbs-item__txt strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tbs-item__txt small {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.tbs-estado {
+    margin: 0;
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-muted);
 }
 
 .topbar-clock {
@@ -570,6 +678,42 @@ button { font-family: inherit; cursor: pointer; }
 [data-theme="dark"] .badge-purple  { background: rgba(139, 92, 246, .18); color: #a78bfa; }
 
 /* ── Responsive ───────────────────────────────────────────────── */
+/* ── Menú plegado — solo escritorio ─────────────────────────────────
+   La clase la pinta el servidor desde la cookie (así no hay parpadeo al
+   cambiar de sección), y el servidor no sabe el ancho de la pantalla. En
+   móvil el menú es un panel que entra y sale entero, así que el plegado
+   no debe aplicarse: se acota aquí en lugar de deshacerlo después.
+   ------------------------------------------------------------------ */
+@media (min-width: 901px) {
+    .app-sidebar.is-collapsed { width: var(--sidebar-w-mini); }
+
+    .app-sidebar.is-collapsed .sidebar-brand-text { display: none; }
+    .app-sidebar.is-collapsed .sidebar-brand { justify-content: center; padding: 18px 12px; }
+
+    .app-sidebar.is-collapsed .sidebar-nav-section { display: none; }
+
+    .app-sidebar.is-collapsed .sidebar-link { justify-content: center; padding: 12px; }
+    .app-sidebar.is-collapsed .sidebar-link span,
+    .app-sidebar.is-collapsed .sidebar-badge { display: none; }
+
+    .app-sidebar.is-collapsed .sidebar-link:hover::after {
+        content: attr(data-tooltip);
+        position: absolute; left: calc(100% + 12px); top: 50%;
+        transform: translateY(-50%);
+        background: var(--text-primary); color: var(--text-inverse);
+        padding: 6px 10px; border-radius: 6px; font-size: 12px;
+        white-space: nowrap;
+        box-shadow: var(--shadow);
+        z-index: 200;
+    }
+
+    .app-sidebar.is-collapsed .sidebar-user-info { display: none; }
+    .app-sidebar.is-collapsed .sidebar-footer { justify-content: center; padding: 14px 8px; }
+
+    .app-sidebar.is-collapsed ~ .app-main { margin-left: var(--sidebar-w-mini); }
+
+}
+
 @media (max-width: 900px) {
     .app-sidebar { transform: translateX(-100%); transition: transform .3s; }
     .app-sidebar.is-open  { transform: translateX(0); box-shadow: var(--shadow-lg); }

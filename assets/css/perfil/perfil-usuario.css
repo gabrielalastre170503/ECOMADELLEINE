@@ -41,7 +41,9 @@
     border-radius: var(--radius-lg);
     padding: 20px 24px;
     color: var(--text-primary);
-    box-shadow: inset 0 1px 0 var(--silver-top, transparent), var(--shadow-sm);
+    /* El mismo relieve que el resto de tarjetas de la página: era la única que
+       se quedaba en --shadow-sm (una línea de 1px) y por eso salía plana. */
+    box-shadow: inset 0 1px 0 var(--silver-top, transparent), var(--eco-shadow-card, var(--shadow-sm));
     -webkit-backdrop-filter: var(--eco-blur);
     backdrop-filter: var(--eco-blur);
 }

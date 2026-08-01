@@ -78,7 +78,12 @@
 
     --eco-solid:     #131c2d;
     --eco-thead:     rgba(255, 255, 255, .04);
-    --eco-thead-pac: rgba(255, 255, 255, .04);
+    /* En claro este token es opaco (#ffffff) y tapa el fondo del <thead>. En
+       oscuro estaba translúcido, así que no tapaba: se SUMABA al 4% del thead
+       y la cabecera salía a bandas —más clara sobre las celdas, más oscura en
+       las juntas—. Transparente deja una sola capa, la del thead, sin repetir
+       aquí un color compuesto que luego se desincronice. */
+    --eco-thead-pac: transparent;
     --eco-hover:     rgba(255, 255, 255, .06);
     --eco-footer:    rgba(255, 255, 255, .03);
 

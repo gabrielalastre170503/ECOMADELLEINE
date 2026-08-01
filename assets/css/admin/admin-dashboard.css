@@ -13,22 +13,26 @@
     display: block;
 }
 
+/* Mismo relieve que las tarjetas de los gráficos: estas llevaban --shadow-sm,
+   que es una línea de 1px, y al lado se veían planas. Los tokens --eco-* son
+   los que usa .card bajo el tema glass (sombra ambiental + luz interior
+   arriba); el valor de reserva cubre el caso de que el tema no esté activo. */
 .admin-dash-stat-card {
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 20px 22px;
     background: var(--bg-surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--silver-edge, var(--border));
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
+    box-shadow: var(--eco-shadow-card, var(--shadow));
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
     height: auto;
 }
 button.admin-dash-stat-link:hover .admin-dash-stat-card,
 .admin-dash-stat-link:hover .admin-dash-stat-card {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow, 0 8px 24px rgba(15, 23, 42, 0.08));
+    transform: translateY(-3px);
+    box-shadow: var(--eco-shadow-card-hover, var(--shadow-md));
     border-color: rgba(2, 177, 244, 0.25);
 }
 
