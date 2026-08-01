@@ -82,6 +82,27 @@ if ($insert->execute()) {
     $response['message']  = 'Paciente creado con exito.';
     $response['nombre']   = $nombre;
     $response['password'] = $contrasena_temporal;
+    $response['correo']   = $correo;
+
+    /* La contraseña también le llega al paciente por correo. Si el envío falla
+       —SMTP caído, buzón inexistente— la cuenta YA está creada: no se deshace
+       nada, se avisa en la respuesta para que quien la dio de alta sepa que
+       tiene que dictarla. */
+    require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
+    $errCorreo = null;
+    $cuerpo =
+        "Hola " . $nombre . ",\n\n"
+        . "Se ha creado tu cuenta en EcoMadelleine.\n\n"
+        . "Usuario (correo): " . $correo . "\n"
+        . "Contraseña temporal: " . $contrasena_temporal . "\n\n"
+        . "Entra en " . eco_base_url() . " y cámbiala en «Mi Perfil» la primera vez que inicies sesión.\n\n"
+        . "Si no esperabas este mensaje, ignóralo o avísanos.\n\n"
+        . "— Clínica de Ecografías EcoMadelleine";
+    $enviado = eco_enviar_correo($correo, 'Tu acceso a EcoMadelleine', $cuerpo, $errCorreo);
+    $response['correo_enviado'] = $enviado;
+    if (!$enviado) {
+        error_log('guardar_paciente: no se pudo enviar la clave a ' . $correo . ' — ' . (string)$errCorreo);
+    }
 
     // Recepción puede dejar asentado en el mismo paso el servicio que viene a
     // hacerse el paciente. Eso crea la cita, y la cita es lo que hace aparecer

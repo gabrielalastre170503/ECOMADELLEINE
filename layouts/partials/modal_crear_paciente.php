@@ -183,13 +183,25 @@ if ($mcp_con_servicio) {
 
 <div id="eco-modal-exito-paciente" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-modal-exito-titulo">
     <div class="eco-modal__dialog eco-modal__dialog--compact">
-        <div class="eco-modal__main" style="padding-top:28px;">
+        <div class="eco-modal__main mcx-main">
             <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
-            <div style="text-align:center;margin-bottom:16px;color:var(--success);font-size:2.5rem;"><i class="fa-solid fa-circle-check"></i></div>
-            <h3 id="eco-modal-exito-titulo" style="text-align:center;margin:0 0 8px;font-size:1.05rem;">Paciente creado</h3>
-            <p class="eco-modal__body-text" style="text-align:center;">Cuenta para <strong id="eco-exito-paciente-nombre"></strong>. Contraseña temporal:</p>
-            <div class="temp-pass-box" id="eco-exito-paciente-pass">—</div>
-            <p class="eco-modal__body-text" style="text-align:center;font-size:12px;">Anótela y entréguela al paciente.</p>
+
+            <div class="mcx-tick"><i class="fa-solid fa-check"></i></div>
+            <h3 id="eco-modal-exito-titulo" class="mcx-titulo">Paciente creado</h3>
+            <p class="mcx-sub">Cuenta de <strong id="eco-exito-paciente-nombre"></strong></p>
+
+            <div class="mcx-clave">
+                <p class="mcx-clave__rotulo"><i class="fa-solid fa-key"></i> Contraseña temporal</p>
+                <div class="temp-pass-box" id="eco-exito-paciente-pass">—</div>
+                <button type="button" class="mcx-copiar" id="eco-exito-copiar" data-copiado="Copiada">
+                    <i class="fa-regular fa-copy"></i> Copiar
+                </button>
+            </div>
+
+            <p class="mcx-envio" id="eco-exito-envio">
+                <i class="fa-regular fa-paper-plane"></i>
+                <span id="eco-exito-envio-txt">Se le envía por correo al paciente.</span>
+            </p>
             <div class="mcp-exito-cita" id="eco-exito-cita" hidden>
                 <div class="mcp-exito-cita__fila">
                     <span>Ecografista</span><strong id="eco-exito-cita-eco">—</strong>
@@ -208,3 +220,40 @@ if ($mcp_con_servicio) {
         </div>
     </div>
 </div>
+<script>
+/* Copiar la clave y decir qué ha pasado con el correo. Lo rellena quien crea
+   al paciente (recepción o ecografista) llamando a ecoExitoPaciente(). */
+(function () {
+    var btn = document.getElementById('eco-exito-copiar');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            var caja = document.getElementById('eco-exito-paciente-pass');
+            var clave = caja ? caja.textContent.trim() : '';
+            if (!clave || clave === '—' || !navigator.clipboard) { return; }
+            navigator.clipboard.writeText(clave).then(function () {
+                var original = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> ' + (btn.getAttribute('data-copiado') || 'Copiada');
+                btn.classList.add('is-ok');
+                setTimeout(function () { btn.innerHTML = original; btn.classList.remove('is-ok'); }, 1800);
+            });
+        });
+    }
+
+    /** Deja el aviso acorde a si el correo salió o no. */
+    window.ecoExitoPaciente = function (data) {
+        var caja = document.getElementById('eco-exito-envio');
+        var txt  = document.getElementById('eco-exito-envio-txt');
+        if (!caja || !txt) { return; }
+        var correo = data && data.correo ? data.correo : '';
+        if (data && data.correo_enviado) {
+            caja.classList.remove('is-fallo');
+            txt.innerHTML = 'Enviada por correo a <strong>' + correo.replace(/[<>&]/g, '') + '</strong>. '
+                + 'El paciente debe cambiarla al entrar por primera vez.';
+        } else {
+            caja.classList.add('is-fallo');
+            txt.innerHTML = 'No se pudo enviar el correo. La cuenta está creada: '
+                + '<strong>anota esta contraseña y entrégasela al paciente</strong>.';
+        }
+    };
+})();
+</script>
