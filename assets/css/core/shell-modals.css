@@ -3471,6 +3471,47 @@ button.eco-action-card:hover {
 .pcx-main { padding-bottom:0 !important; }
 .pcx-footer { position:sticky; bottom:0; z-index:2; margin:18px -22px 0; padding:14px 22px; background:var(--bg-surface); border-top:1px solid var(--border); }
 
+/* ── Campo con error ─────────────────────────────────────────────────
+   Los formularios de alta avisaban solo al enviar, con una franja al principio
+   de un formulario largo: había que volver a recorrerlo buscando el fallo.
+   Ahora el campo se marca al salir de él y lleva su mensaje debajo.        */
+.eco-modal .eco-field.is-error input,
+.eco-modal .eco-field.is-error select,
+.eco-modal .eco-field.is-error textarea {
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, .04);
+}
+
+.eco-modal .eco-field.is-error input:focus,
+.eco-modal .eco-field.is-error select:focus,
+.eco-modal .eco-field.is-error textarea:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, .18);
+}
+
+.eco-modal .eco-field.is-error > label { color: var(--danger); }
+
+.eco-field-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    font-weight: 600;
+    color: var(--danger);
+}
+
+.eco-field-error::before {
+    content: "\f06a";              /* triangulo de aviso de Font Awesome */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    flex-shrink: 0;
+    line-height: 1.35;
+}
+
+/* Con el campo marcado, la pista deja paso al mensaje de error. */
+.eco-modal .eco-field.is-error .eco-field-hint { display: none; }
+
 /* ── Resumen de la atención en el modal de éxito ─────────────────── */
 .eco-modal .mcp-exito-cita {
     margin: 14px 0 0;

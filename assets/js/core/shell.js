@@ -95,6 +95,138 @@
         return true;
     };
 
+    /* ── 0c. Filtro de un catálogo de casillas ────────────────────────
+       El mismo comportamiento en las modales que listan los 23 estudios. Una
+       casilla ya marcada NO se oculta nunca: si desapareciera del filtro se
+       guardaría una selección que el usuario no ve. Las cabeceras de categoría
+       se ocultan cuando se quedan sin filas.
+
+       cfg: { caja, buscador, contador, aviso, cat, item }  (ids y selectores)
+       Devuelve la función de refiltrado, para llamarla al abrir la modal. */
+    window.ecoFiltroCatalogo = function (cfg) {
+        var caja = document.getElementById(cfg.caja);
+        var q    = document.getElementById(cfg.buscador);
+        if (!caja || !q) { return function () {}; }
+
+        function filtrar() {
+            var texto = q.value.trim().toLowerCase();
+            var visibles = 0, total = 0;
+            var cat = null, catVisibles = 0;
+
+            Array.prototype.forEach.call(caja.children, function (el) {
+                if (el.hasAttribute(cfg.cat)) {
+                    if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+                    cat = el;
+                    catVisibles = 0;
+                    return;
+                }
+                var inp = el.querySelector('[' + cfg.item + ']');
+                var coincide = texto === ''
+                    || (el.getAttribute(cfg.busca) || '').indexOf(texto) !== -1
+                    || (inp && inp.checked);
+                el.classList.toggle('pcx-oculto', !coincide);
+                total++;
+                if (coincide) { visibles++; catVisibles++; }
+            });
+            if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+
+            var cuenta = document.getElementById(cfg.contador);
+            if (cuenta) cuenta.textContent = visibles + ' de ' + total;
+            var aviso = document.getElementById(cfg.aviso);
+            if (aviso) aviso.hidden = visibles !== 0;
+        }
+
+        q.addEventListener('input', filtrar);
+        q.addEventListener('keydown', function (e) {
+            // Enter dentro del buscador enviaría el formulario.
+            if (e.key === 'Enter') { e.preventDefault(); }
+            if (e.key === 'Escape') { q.value = ''; filtrar(); }
+        });
+        return filtrar;
+    };
+
+    /* ── 0d. Validación de un formulario, campo a campo ───────────────
+       Antes solo se sabía qué estaba mal DESPUÉS de enviar, y con un aviso
+       genérico arriba del todo. Esto marca el campo al salir de él y, al
+       enviar, lleva el foco al primero que falle.
+
+       reglas: { idCampo: function(valor, campo){ return 'mensaje' | ''; } } */
+    window.ecoValidador = function (formId, reglas) {
+        var form = document.getElementById(formId);
+        if (!form) { return null; }
+
+        function campoDe(id) { return document.getElementById(id); }
+        function contenedor(el) { return el ? el.closest('.eco-field') : null; }
+
+        function marcar(id, mensaje) {
+            var el = campoDe(id), cont = contenedor(el);
+            if (!cont) { return; }
+            var aviso = cont.querySelector('.eco-field-error');
+            if (mensaje) {
+                if (!aviso) {
+                    aviso = document.createElement('p');
+                    aviso.className = 'eco-field-error';
+                    cont.appendChild(aviso);
+                }
+                aviso.textContent = mensaje;      // textContent: el mensaje no es marcado
+                cont.classList.add('is-error');
+                if (el) el.setAttribute('aria-invalid', 'true');
+            } else {
+                if (aviso) aviso.remove();
+                cont.classList.remove('is-error');
+                if (el) el.removeAttribute('aria-invalid');
+            }
+        }
+
+        function revisar(id) {
+            var el = campoDe(id);
+            if (!el) { return ''; }
+            var msg = reglas[id](el.value.trim(), el) || '';
+            marcar(id, msg);
+            return msg;
+        }
+
+        Object.keys(reglas).forEach(function (id) {
+            var el = campoDe(id);
+            if (!el) { return; }
+            el.addEventListener('blur', function () { revisar(id); });
+            // Al corregir se quita el aviso en el momento, sin esperar al blur.
+            el.addEventListener('input', function () {
+                if (contenedor(el) && contenedor(el).classList.contains('is-error')) { revisar(id); }
+            });
+        });
+
+        return {
+            /** true si todo está bien; si no, marca y lleva al primer fallo. */
+            validar: function () {
+                var primero = null;
+                Object.keys(reglas).forEach(function (id) {
+                    if (revisar(id) && !primero) { primero = id; }
+                });
+                if (primero) { this.ir(primero); return false; }
+                return true;
+            },
+            /** Marca un campo por su name (lo usa el error que llega del servidor). */
+            marcarPorNombre: function (nombre, mensaje) {
+                var el = form.querySelector('[name="' + nombre + '"]');
+                if (!el || !el.id) { return false; }
+                marcar(el.id, mensaje);
+                this.ir(el.id);
+                return true;
+            },
+            ir: function (id) {
+                var el = campoDe(id);
+                if (!el) { return; }
+                var cont = contenedor(el) || el;
+                if (cont.scrollIntoView) { cont.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+                setTimeout(function () { el.focus({ preventScroll: true }); }, 120);
+            },
+            limpiar: function () {
+                Object.keys(reglas).forEach(function (id) { marcar(id, ''); });
+            }
+        };
+    };
+
     /* ── 1. Aplicar tema guardado lo antes posible (evita "flash") ── */
     const THEME_KEY = 'eco_theme';
     const SIDEBAR_KEY = 'eco_sidebar';

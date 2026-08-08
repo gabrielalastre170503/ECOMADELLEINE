@@ -73,6 +73,10 @@
             if (first && typeof first.focus === 'function') {
                 setTimeout(function () { try { first.focus(); } catch (e) {} }, 50);
             }
+            /* Para que un parcial pueda reaccionar a que ABREN su propio modal
+               (repintar un filtro, limpiar avisos) sin que cada pagina que lo
+               incluye tenga que acordarse de llamarlo. */
+            el.dispatchEvent(new CustomEvent('eco-modal:open', { bubbles: false }));
         },
 
         close: function (id) {
