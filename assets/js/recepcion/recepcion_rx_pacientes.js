@@ -376,12 +376,49 @@
         }
     }
 
+    /* Validacion campo a campo del alta extendida. Las mismas reglas que la
+       modal de registro normal (viven en modal_crear_paciente.php, que se
+       incluye en la misma pagina) mas las dos contrasenas. */
+    var rxExtValidador = null;
+    if (window.ecoValidador && window.ecoReglasPaciente) {
+        var R = window.ecoReglasPaciente;
+        rxExtValidador = window.ecoValidador('rx-form-crear-paciente-extendido', {
+            'rx-ext-nombre':    R.nombre,
+            'rx-ext-fnac':      R.fecha,
+            'rx-ext-doc-num':   R.cedula,
+            'rx-ext-correo':    R.correo,
+            'rx-ext-direccion': R.direccion,
+            'rx-ext-telefono':  R.telefono,
+            'rx-ext-pass': function (v) {
+                if (v === '') return 'Escribe una contraseña.';
+                if (v.length < 8) return 'Mínimo 8 caracteres.';
+                if (!/[A-ZÁÉÍÓÚÑ]/.test(v)) return 'Debe llevar al menos una mayúscula.';
+                if (!/[^A-Za-z0-9]/.test(v)) return 'Debe llevar al menos un símbolo.';
+                return '';
+            },
+            'rx-ext-pass2': function (v) {
+                var p1 = byId('rx-ext-pass');
+                if (v === '') return 'Repite la contraseña.';
+                if (p1 && v !== p1.value) return 'Las dos contraseñas no coinciden.';
+                return '';
+            }
+        });
+    }
+
+    var rxExtFiltrar = window.ecoFiltroCatalogo ? window.ecoFiltroCatalogo({
+        caja: 'rx-ext-estudios', buscador: 'rx-ext-buscar', contador: 'rx-ext-visibles',
+        aviso: 'rx-ext-sin-resultados', cat: 'data-rxe-cat', item: 'data-rxe-estudio',
+        busca: 'data-rxe-busca'
+    }) : function () {};
+
     window.rxAbrirCrearPacienteExtendido = function () {
         if (!window.EcoModal) return;
         var form = byId('rx-form-crear-paciente-extendido');
         rxSetErr('rx-ext-error', '');
         if (form) form.reset();
         rxExtAtencion.reiniciar();
+        if (rxExtValidador) rxExtValidador.limpiar();
+        rxExtFiltrar();   // form.reset() vacia el buscador; hay que repintar la lista
         destroyFp(byId('rx-ext-fnac'));
         destroyFp(byId('rx-ext-fecha-cita'));
         EcoModal.open('eco-modal-rx-crear-paciente-extendido');
@@ -508,12 +545,10 @@
             fExt.addEventListener('submit', function (e) {
                 e.preventDefault();
                 rxSetErr('rx-ext-error', '');
-                var p1 = byId('rx-ext-pass');
-                var p2 = byId('rx-ext-pass2');
-                if (p1 && p2 && p1.value !== p2.value) {
-                    rxSetErr('rx-ext-error', 'Las contraseñas no coinciden.');
-                    return;
-                }
+                /* Antes solo se comprobaba que las contrasenas coincidieran, y el
+                   aviso salia arriba del todo. Ahora se revisa todo y el fallo se
+                   marca en el campo que lo tiene. */
+                if (rxExtValidador && !rxExtValidador.validar()) { return; }
                 var btn = byId('rx-ext-submit');
                 if (btn) {
                     btn.disabled = true;
@@ -545,7 +580,11 @@
                                 window.location.reload();
                             }
                         } else {
-                            rxSetErr('rx-ext-error', data.message || 'No se pudo registrar.');
+                            // Si el servidor dice que campo fallo, se marca ahi.
+                            var puesto = data.campo && rxExtValidador
+                                ? rxExtValidador.marcarPorNombre(data.campo, data.message || 'Revisa este dato.')
+                                : false;
+                            if (!puesto) rxSetErr('rx-ext-error', data.message || 'No se pudo registrar.');
                         }
                     })
                     .catch(function () {

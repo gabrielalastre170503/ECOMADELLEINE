@@ -40,49 +40,63 @@ if ($mcp_con_servicio) {
                 <div class="eco-modal__aside-icon"><i class="fa-solid fa-user-plus"></i></div>
                 <h3 id="eco-modal-crear-paciente-title">Nuevo paciente</h3>
                 <p>Registra los datos básicos. Se generará una contraseña temporal para el primer acceso.</p>
+                <?php if ($mcp_con_servicio): ?>
+                <ol class="pcx-pasos">
+                    <li>Datos del paciente</li>
+                    <li>Servicio a realizar</li>
+                    <li>Cobro</li>
+                </ol>
+                <?php endif; ?>
                 <p class="eco-modal__hint"><i class="fa-solid fa-key" style="margin-right:4px;"></i> Entrega la contraseña al paciente de forma segura.</p>
             </div>
-            <div class="eco-modal__main">
+            <div class="eco-modal__main pcx-main">
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos del paciente</h4>
-                <div id="eco-crear-paciente-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
+                <div id="eco-crear-paciente-error" class="pcx-error" role="alert"></div>
                 <form id="form-crear-paciente-eco" action="<?= eco_url('api/guardar_paciente.php') ?>" method="post" novalidate>
                     <?= csrf_field() ?>
-                    <div class="eco-field">
-                        <label for="nombre_completo_eco">Nombre completo</label>
-                        <input type="text" name="nombre_completo" id="nombre_completo_eco" required maxlength="100" autocomplete="name" placeholder="Nombre y apellido">
-                    </div>
-                    <div class="eco-field">
-                        <label for="fecha_nacimiento_eco">Fecha de nacimiento</label>
-                        <input type="text" name="fecha_nacimiento" id="fecha_nacimiento_eco" required placeholder="Seleccionar…" autocomplete="bday">
-                    </div>
-                    <div class="eco-field">
-                        <label for="cedula_numero_eco">Identificación</label>
-                        <div class="eco-cedula-row">
-                            <select name="cedula_tipo" id="cedula_tipo_eco" aria-label="Tipo de documento">
-                                <option value="V-">V</option>
-                                <option value="E-">E</option>
-                                <option value="P-">P</option>
-                            </select>
-                            <input type="number" name="cedula_numero" id="cedula_numero_eco" required min="1000000" max="99999999" placeholder="7–8 dígitos" inputmode="numeric">
+
+                    <fieldset class="mcp-bloque pcx-bloque">
+                        <legend class="mcp-bloque__titulo">
+                            <?php if ($mcp_con_servicio): ?><span class="pcx-num">1</span><?php else: ?><i class="fa-solid fa-id-card"></i><?php endif; ?>
+                            Datos del paciente
+                        </legend>
+                        <div class="eco-field">
+                            <label for="nombre_completo_eco">Nombre completo</label>
+                            <input type="text" name="nombre_completo" id="nombre_completo_eco" required maxlength="100" autocomplete="name" placeholder="Nombre y apellido">
                         </div>
-                    </div>
-                    <div class="eco-field">
-                        <label for="correo_eco">Correo electrónico</label>
-                        <input type="email" name="correo" id="correo_eco" required maxlength="100" autocomplete="email" placeholder="correo@ejemplo.com">
-                    </div>
-                    <div class="eco-field">
-                        <label for="direccion_eco">Dirección física</label>
-                        <input type="text" name="direccion" id="direccion_eco" required maxlength="255" autocomplete="street-address" placeholder="Estado, Sector">
-                    </div>
-                    <div class="eco-field">
-                        <label for="telefono_eco">Teléfono</label>
-                        <input type="tel" name="telefono" id="telefono_eco" required maxlength="30" autocomplete="tel" placeholder="Ej: 0412-1234567">
-                    </div>
+                        <div class="eco-field">
+                            <label for="fecha_nacimiento_eco">Fecha de nacimiento</label>
+                            <input type="text" name="fecha_nacimiento" id="fecha_nacimiento_eco" required placeholder="Seleccionar…" autocomplete="bday">
+                        </div>
+                        <div class="eco-field">
+                            <label for="cedula_numero_eco">Identificación</label>
+                            <div class="eco-cedula-row">
+                                <select name="cedula_tipo" id="cedula_tipo_eco" aria-label="Tipo de documento">
+                                    <option value="V-">V</option>
+                                    <option value="E-">E</option>
+                                    <option value="P-">P</option>
+                                </select>
+                                <input type="number" name="cedula_numero" id="cedula_numero_eco" required min="1000000" max="99999999" placeholder="7–8 dígitos" inputmode="numeric">
+                            </div>
+                        </div>
+                        <div class="eco-field">
+                            <label for="correo_eco">Correo electrónico</label>
+                            <input type="email" name="correo" id="correo_eco" required maxlength="100" autocomplete="email" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="eco-field">
+                            <label for="direccion_eco">Dirección física</label>
+                            <input type="text" name="direccion" id="direccion_eco" required maxlength="255" autocomplete="street-address" placeholder="Estado, Sector">
+                        </div>
+                        <div class="eco-field">
+                            <label for="telefono_eco">Teléfono</label>
+                            <input type="tel" name="telefono" id="telefono_eco" required maxlength="30" autocomplete="tel" placeholder="Ej: 0412-1234567">
+                        </div>
+                    </fieldset>
 
                     <?php if ($mcp_con_servicio): ?>
                     <fieldset class="mcp-bloque">
-                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-stethoscope"></i> Servicio a realizar</legend>
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">2</span> Servicio a realizar</legend>
                         <p class="mcp-bloque__nota">Opcional. Si lo completas se agenda la atención y el paciente pasa a la lista del ecografista asignado.</p>
 
                         <div class="eco-field">
@@ -100,8 +114,15 @@ if ($mcp_con_servicio) {
                         </div>
 
                         <div class="eco-field">
-                            <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
-                            <div class="mcp-estudios" role="group" aria-label="Tipos de ecografía a realizar">
+                            <div class="pcx-label-fila">
+                                <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
+                                <span class="pcx-contador" id="mcp-visibles"><?= count($mcp_tipos) ?> de <?= count($mcp_tipos) ?></span>
+                            </div>
+                            <div class="pcx-buscar">
+                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                                <input type="search" id="mcp-buscar" placeholder="Filtrar por nombre o categoría…" autocomplete="off" aria-label="Filtrar tipos de ecografía">
+                            </div>
+                            <div class="mcp-estudios" id="mcp-estudios" role="group" aria-label="Tipos de ecografía a realizar">
                                 <?php
                                 $mcp_cat_previa = null;
                                 foreach ($mcp_tipos as $t):
@@ -109,9 +130,9 @@ if ($mcp_con_servicio) {
                                     if ($cat !== $mcp_cat_previa):
                                         $mcp_cat_previa = $cat;
                                         ?>
-                                        <p class="mcp-estudios__cat"><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
+                                        <p class="mcp-estudios__cat" data-mcp-cat><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
                                     <?php endif; ?>
-                                    <label class="mcp-opcion">
+                                    <label class="mcp-opcion" data-mcp-busca="<?= htmlspecialchars(mb_strtolower($t['nombre'] . ' ' . $cat, 'UTF-8')) ?>">
                                         <input type="checkbox" name="tipos_ecografia[]" value="<?= (int)$t['id'] ?>"
                                                data-precio="<?= htmlspecialchars((string)(float)$t['precio']) ?>" data-mcp-estudio>
                                         <span class="mcp-opcion__nombre"><?= htmlspecialchars($t['nombre']) ?></span>
@@ -119,6 +140,7 @@ if ($mcp_con_servicio) {
                                     </label>
                                 <?php endforeach; ?>
                             </div>
+                            <p class="pcx-sin-resultados" id="mcp-sin-resultados" hidden>Ningún estudio coincide con el filtro.</p>
                             <p class="mcp-resumen" id="mcp-estudios-resumen">Ninguna seleccionada.</p>
                         </div>
 
@@ -147,7 +169,7 @@ if ($mcp_con_servicio) {
                     </fieldset>
 
                     <fieldset class="mcp-bloque">
-                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-receipt"></i> Facturación</legend>
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">3</span> Cobro</legend>
 
                         <div class="eco-field">
                             <label for="mcp_monto">Monto a cobrar</label>
@@ -171,7 +193,7 @@ if ($mcp_con_servicio) {
                     </fieldset>
                     <?php endif; ?>
 
-                    <div class="eco-modal__footer">
+                    <div class="eco-modal__footer pcx-footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
                         <button type="submit" class="btn-primary" id="btn-submit-crear-paciente-eco"><i class="fa-solid fa-check"></i> Crear paciente</button>
                     </div>
@@ -238,6 +260,81 @@ if ($mcp_con_servicio) {
             });
         });
     }
+
+    /* ── Validación campo a campo ─────────────────────────────────────
+       Antes solo se sabía qué faltaba tras enviar, con un aviso genérico en lo
+       alto de un formulario largo. Las reglas viven aquí, junto al marcado, y
+       el ayudante compartido (shell.js) se encarga de marcar y llevar el foco.
+
+       Las mismas comprobaciones las repite el servidor: esto solo evita el
+       viaje de ida y vuelta, no sustituye la validación de verdad. */
+    var soloDigitos = function (s) { return (s || '').replace(/\D/g, ''); };
+
+    window.ecoReglasPaciente = {
+        nombre: function (v) {
+            if (v === '') return 'Escribe el nombre del paciente.';
+            if (v.length < 3) return 'El nombre parece demasiado corto.';
+            return '';
+        },
+        fecha: function (v) {
+            if (v === '') return 'Elige la fecha de nacimiento.';
+            return '';
+        },
+        cedula: function (v) {
+            if (v === '') return 'Escribe el número de documento.';
+            if (!/^\d{7,8}$/.test(v)) return 'Deben ser 7 u 8 dígitos, sin puntos ni guiones.';
+            return '';
+        },
+        correo: function (v) {
+            if (v === '') return 'Escribe el correo del paciente.';
+            // Deliberadamente laxa: la comprobación seria es que llegue el correo.
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return 'Ese correo no parece válido.';
+            return '';
+        },
+        direccion: function (v) {
+            if (v === '') return 'Escribe la dirección.';
+            return '';
+        },
+        telefono: function (v) {
+            if (v === '') return 'Escribe el teléfono.';
+            if (soloDigitos(v).length < 7) return 'El teléfono parece incompleto.';
+            return '';
+        }
+    };
+
+    /* En DOMContentLoaded y no aquí mismo: este parcial se imprime dentro del
+       contenido de la página, y shell.js —de donde salen ecoValidador y
+       ecoFiltroCatalogo— se carga al final del <body>. Montándolo al vuelo, los
+       dos ayudantes todavía no existían y el formulario se enviaba sin validar. */
+    document.addEventListener('DOMContentLoaded', function () {
+        var R = window.ecoReglasPaciente;
+        var validador = window.ecoValidador ? window.ecoValidador('form-crear-paciente-eco', {
+            nombre_completo_eco:  R.nombre,
+            fecha_nacimiento_eco: R.fecha,
+            cedula_numero_eco:    R.cedula,
+            correo_eco:           R.correo,
+            direccion_eco:        R.direccion,
+            telefono_eco:         R.telefono
+        }) : null;
+        window.ecoValidadorCrearPaciente = validador;
+
+        var refiltrar = window.ecoFiltroCatalogo ? window.ecoFiltroCatalogo({
+            caja: 'mcp-estudios', buscador: 'mcp-buscar', contador: 'mcp-visibles',
+            aviso: 'mcp-sin-resultados', cat: 'data-mcp-cat', item: 'data-mcp-estudio',
+            busca: 'data-mcp-busca'
+        }) : function () {};
+
+        /* Al abrir, el formulario ya se reseteó desde la página: hay que borrar
+           los avisos y repintar la lista, que seguiría filtrada de la vez
+           anterior. */
+        var modalCrear = document.getElementById('eco-modal-crear-paciente');
+        if (modalCrear) {
+            modalCrear.addEventListener('eco-modal:open', function () {
+                if (validador) validador.limpiar();
+                refiltrar();
+            });
+        }
+    });
 
     /** Deja el aviso acorde a si el correo salió o no. */
     window.ecoExitoPaciente = function (data) {

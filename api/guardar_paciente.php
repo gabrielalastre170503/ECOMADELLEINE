@@ -23,10 +23,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 api_require_csrf();
 
-if (empty($_POST['nombre_completo']) || empty($_POST['fecha_nacimiento']) || empty($_POST['cedula_tipo']) || empty($_POST['cedula_numero']) || empty($_POST['correo'])) {
-    $response['message'] = 'Todos los campos son obligatorios.';
-    echo json_encode($response);
-    exit();
+/* `campo` acompaña a cada error para que el formulario pueda marcar el campo
+   concreto y llevar el foco hasta él, en vez de dejar un aviso genérico arriba
+   y que el usuario busque cuál de los seis campos era. */
+foreach (['nombre_completo' => 'Falta el nombre completo.',
+          'fecha_nacimiento' => 'Falta la fecha de nacimiento.',
+          'cedula_tipo'      => 'Falta el tipo de documento.',
+          'cedula_numero'    => 'Falta el número de documento.',
+          'correo'           => 'Falta el correo electrónico.'] as $campo => $aviso) {
+    if (empty($_POST[$campo])) {
+        $response['message'] = $aviso;
+        $response['campo']   = $campo;
+        echo json_encode($response);
+        exit();
+    }
 }
 
 $nombre           = trim($_POST['nombre_completo']);
@@ -39,18 +49,28 @@ $telefono         = trim((string)($_POST['telefono'] ?? ''));
 $creado_por_id    = (int)$_SESSION['usuario_id'];
 
 if (!preg_match('/^\d{7,8}$/', $cedula_numero)) {
-    $response['message'] = 'El numero de cedula debe tener entre 7 y 8 digitos.';
+    $response['message'] = 'El número de documento debe tener entre 7 y 8 dígitos.';
+    $response['campo']   = 'cedula_numero';
     echo json_encode($response);
     exit();
 }
 
 $cedula = $cedula_tipo . $cedula_numero;
 
-$check = $conex->prepare("SELECT id FROM usuarios WHERE correo = ? OR cedula = ?");
-$check->bind_param("ss", $correo, $cedula);
+/* Se distingue cuál de los dos está repetido: "el correo o la cédula ya están
+   registrados" obliga a probar los dos a ciegas. */
+$check = $conex->prepare("SELECT correo = ? AS mismo_correo, cedula = ? AS misma_cedula
+                            FROM usuarios WHERE correo = ? OR cedula = ? LIMIT 1");
+$check->bind_param("ssss", $correo, $cedula, $correo, $cedula);
 $check->execute();
-if ($check->get_result()->num_rows > 0) {
-    $response['message'] = 'El correo electronico o la cedula ya estan registrados.';
+if ($repe = $check->get_result()->fetch_assoc()) {
+    if ((int)$repe['mismo_correo'] === 1) {
+        $response['message'] = 'Ese correo electrónico ya está registrado.';
+        $response['campo']   = 'correo';
+    } else {
+        $response['message'] = 'Ese número de documento ya está registrado.';
+        $response['campo']   = 'cedula_numero';
+    }
     $check->close();
     echo json_encode($response);
     exit();
@@ -61,7 +81,8 @@ try {
     $fecha_nac = new DateTime($fecha_nacimiento);
     $edad = (new DateTime('today'))->diff($fecha_nac)->y;
 } catch (Exception $e) {
-    $response['message'] = 'Fecha de nacimiento invalida.';
+    $response['message'] = 'La fecha de nacimiento no es válida.';
+    $response['campo']   = 'fecha_nacimiento';
     echo json_encode($response);
     exit();
 }

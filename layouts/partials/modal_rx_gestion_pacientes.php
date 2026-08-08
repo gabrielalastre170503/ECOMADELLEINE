@@ -212,57 +212,72 @@ $rx_modal_metodos   = eco_metodos_pago();
                 <div class="eco-modal__aside-icon"><i class="fa-solid fa-address-card"></i></div>
                 <h3 id="rx-ext-aside-title">Alta extendida</h3>
                 <p>Registro con contraseña definida por el paciente. Debe cumplir requisitos de seguridad.</p>
+                <ol class="pcx-pasos">
+                    <li>Datos del paciente</li>
+                    <li>Contraseña</li>
+                    <li>Servicio a realizar</li>
+                    <li>Cobro</li>
+                </ol>
                 <p class="eco-modal__hint"><i class="fa-solid fa-lock" style="margin-right:4px;"></i> Mayúscula + símbolo, mín. 8 caracteres.</p>
             </div>
-            <div class="eco-modal__main">
+            <div class="eco-modal__main pcx-main">
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos completos</h4>
-                <div id="rx-ext-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
+                <div id="rx-ext-error" class="pcx-error" role="alert"></div>
                 <form id="rx-form-crear-paciente-extendido" novalidate>
                     <?= csrf_field() ?>
-                    <div class="eco-field">
-                        <label for="rx-ext-nombre">Nombre completo</label>
-                        <input type="text" class="eco-input" name="nombre_completo" id="rx-ext-nombre" required maxlength="100" autocomplete="name" placeholder="Nombre y apellido">
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-fnac">Fecha de nacimiento</label>
-                        <input type="text" class="eco-input" name="fecha_nacimiento" id="rx-ext-fnac" required autocomplete="off" placeholder="Seleccionar…">
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-doc">Documento</label>
-                        <div class="eco-cedula-row">
-                            <select name="cedula_tipo" id="rx-ext-doc-tipo" aria-label="Tipo">
-                                <option value="V-">V</option>
-                                <option value="E-">E</option>
-                                <option value="P-">P</option>
-                            </select>
-                            <input type="number" class="eco-input" name="cedula_numero" id="rx-ext-doc-num" required min="1000000" max="99999999" placeholder="7–8 dígitos" inputmode="numeric">
+
+                    <fieldset class="mcp-bloque pcx-bloque">
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">1</span> Datos del paciente</legend>
+                        <div class="eco-field">
+                            <label for="rx-ext-nombre">Nombre completo</label>
+                            <input type="text" class="eco-input" name="nombre_completo" id="rx-ext-nombre" required maxlength="100" autocomplete="name" placeholder="Nombre y apellido">
                         </div>
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-correo">Correo</label>
-                        <input type="email" class="eco-input" name="correo" id="rx-ext-correo" required maxlength="100" autocomplete="email" placeholder="correo@ejemplo.com">
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-direccion">Dirección física</label>
-                        <input type="text" class="eco-input" name="direccion" id="rx-ext-direccion" required maxlength="255" autocomplete="street-address" placeholder="Estado, Sector">
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-telefono">Teléfono</label>
-                        <input type="tel" class="eco-input" name="telefono" id="rx-ext-telefono" required maxlength="30" autocomplete="tel" placeholder="Ej: 0412-1234567">
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-pass">Contraseña</label>
-                        <input type="password" class="eco-input" name="contrasena" id="rx-ext-pass" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
-                        <p class="eco-field-hint"><i class="fa-solid fa-circle-info"></i> Mayúscula, símbolo y mínimo 8 caracteres.</p>
-                    </div>
-                    <div class="eco-field">
-                        <label for="rx-ext-pass2">Confirmar contraseña</label>
-                        <input type="password" class="eco-input" name="confirmar_contrasena" id="rx-ext-pass2" required minlength="8" autocomplete="new-password" placeholder="Repita la contraseña">
-                    </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-fnac">Fecha de nacimiento</label>
+                            <input type="text" class="eco-input" name="fecha_nacimiento" id="rx-ext-fnac" required autocomplete="off" placeholder="Seleccionar…">
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-doc">Documento</label>
+                            <div class="eco-cedula-row">
+                                <select name="cedula_tipo" id="rx-ext-doc-tipo" aria-label="Tipo">
+                                    <option value="V-">V</option>
+                                    <option value="E-">E</option>
+                                    <option value="P-">P</option>
+                                </select>
+                                <input type="number" class="eco-input" name="cedula_numero" id="rx-ext-doc-num" required min="1000000" max="99999999" placeholder="7–8 dígitos" inputmode="numeric">
+                            </div>
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-correo">Correo</label>
+                            <input type="email" class="eco-input" name="correo" id="rx-ext-correo" required maxlength="100" autocomplete="email" placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-direccion">Dirección física</label>
+                            <input type="text" class="eco-input" name="direccion" id="rx-ext-direccion" required maxlength="255" autocomplete="street-address" placeholder="Estado, Sector">
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-telefono">Teléfono</label>
+                            <input type="tel" class="eco-input" name="telefono" id="rx-ext-telefono" required maxlength="30" autocomplete="tel" placeholder="Ej: 0412-1234567">
+                        </div>
+                    </fieldset>
 
                     <fieldset class="mcp-bloque">
-                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-stethoscope"></i> Servicio a realizar</legend>
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">2</span> Contraseña</legend>
+                        <p class="mcp-bloque__nota">La elige el paciente. Con ella entra directamente, sin clave temporal.</p>
+                        <div class="eco-field">
+                            <label for="rx-ext-pass">Contraseña</label>
+                            <input type="password" class="eco-input" name="contrasena" id="rx-ext-pass" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                            <p class="eco-field-hint"><i class="fa-solid fa-circle-info"></i> Mayúscula, símbolo y mínimo 8 caracteres.</p>
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-ext-pass2">Confirmar contraseña</label>
+                            <input type="password" class="eco-input" name="confirmar_contrasena" id="rx-ext-pass2" required minlength="8" autocomplete="new-password" placeholder="Repita la contraseña">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mcp-bloque">
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">3</span> Servicio a realizar</legend>
                         <p class="mcp-bloque__nota">Opcional. Si lo completas se agenda la atención y el paciente pasa a la lista del ecografista asignado.</p>
 
                         <div class="eco-field">
@@ -280,8 +295,15 @@ $rx_modal_metodos   = eco_metodos_pago();
                         </div>
 
                         <div class="eco-field">
-                            <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
-                            <div class="mcp-estudios" role="group" aria-label="Tipos de ecografía a realizar">
+                            <div class="pcx-label-fila">
+                                <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
+                                <span class="pcx-contador" id="rx-ext-visibles"><?= count($rx_modal_tipos) ?> de <?= count($rx_modal_tipos) ?></span>
+                            </div>
+                            <div class="pcx-buscar">
+                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                                <input type="search" id="rx-ext-buscar" placeholder="Filtrar por nombre o categoría…" autocomplete="off" aria-label="Filtrar tipos de ecografía">
+                            </div>
+                            <div class="mcp-estudios" id="rx-ext-estudios" role="group" aria-label="Tipos de ecografía a realizar">
                                 <?php
                                 $rx_ext_cat_previa = null;
                                 foreach ($rx_modal_tipos as $t):
@@ -289,15 +311,16 @@ $rx_modal_metodos   = eco_metodos_pago();
                                     if ($cat !== $rx_ext_cat_previa):
                                         $rx_ext_cat_previa = $cat;
                                         ?>
-                                        <p class="mcp-estudios__cat"><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
+                                        <p class="mcp-estudios__cat" data-rxe-cat><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
                                     <?php endif; ?>
-                                    <label class="mcp-opcion">
+                                    <label class="mcp-opcion" data-rxe-busca="<?= htmlspecialchars(mb_strtolower($t['nombre'] . ' ' . $cat, 'UTF-8')) ?>">
                                         <input type="checkbox" name="tipos_ecografia[]" value="<?= (int)$t['id'] ?>" data-rxe-estudio>
                                         <span class="mcp-opcion__nombre"><?= htmlspecialchars($t['nombre']) ?></span>
                                         <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$t['precio'])) ?></span>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
+                            <p class="pcx-sin-resultados" id="rx-ext-sin-resultados" hidden>Ningún estudio coincide con el filtro.</p>
                             <p class="mcp-resumen" id="rx-ext-estudios-resumen">Ninguna seleccionada.</p>
                         </div>
 
@@ -326,7 +349,7 @@ $rx_modal_metodos   = eco_metodos_pago();
                     </fieldset>
 
                     <fieldset class="mcp-bloque">
-                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-receipt"></i> Facturación</legend>
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">4</span> Cobro</legend>
 
                         <div class="eco-field">
                             <label for="rx-ext-monto">Monto a cobrar</label>
@@ -349,7 +372,7 @@ $rx_modal_metodos   = eco_metodos_pago();
                         </div>
                     </fieldset>
 
-                    <div class="eco-modal__footer">
+                    <div class="eco-modal__footer pcx-footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
                         <button type="submit" class="btn-primary" id="rx-ext-submit"><i class="fa-solid fa-check"></i> Registrar</button>
                     </div>

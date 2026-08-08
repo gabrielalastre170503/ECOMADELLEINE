@@ -399,7 +399,9 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             var btn = document.getElementById('btn-submit-crear-paciente-eco');
             var err = document.getElementById('eco-crear-paciente-error');
+            var val = window.ecoValidadorCrearPaciente;
             if (err) { err.style.display = 'none'; err.textContent = ''; }
+            if (val && !val.validar()) { return; }
             if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…'; }
             fetch((window.ECO_BASE || '') + 'api/guardar_paciente.php', { method: 'POST', body: new FormData(formEco) })
                 .then(function (r) { return r.json(); })
@@ -412,9 +414,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (pw) pw.textContent = data.password || '—';
                         if (window.ecoExitoPaciente) window.ecoExitoPaciente(data);
                         if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-exito-paciente');
-                    } else if (err) {
-                        err.textContent = data.message || 'No se pudo crear el paciente.';
-                        err.style.display = 'block';
+                    } else {
+                        // El servidor dice qué campo falló: se marca ahí.
+                        var puesto = data.campo && val
+                            ? val.marcarPorNombre(data.campo, data.message || 'Revisa este dato.')
+                            : false;
+                        if (!puesto && err) {
+                            err.textContent = data.message || 'No se pudo crear el paciente.';
+                            err.style.display = 'block';
+                        }
                     }
                 })
                 .catch(function () {
