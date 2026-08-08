@@ -16,57 +16,8 @@ $eco_prog_tipos_rows = eco_catalogo_tipos_activos($conex);
 $eco_prog_servicios  = eco_servicios_adicionales();
 $eco_prog_metodos    = eco_metodos_pago();
 ?>
-<style>
-/* ── Modal "Programar cita" ──────────────────────────────────────────
-   El formulario era una única columna de campos sueltos: 23 estudios, los
-   servicios, la fecha, el cobro y el motivo, todo del mismo peso visual. Se
-   agrupa en tres pasos numerados y se añade un filtro para el catálogo, que
-   es lo que obliga a desplazarse. Los estilos viven aquí, junto al marcado,
-   porque el modal viaja con el parcial a cinco vistas distintas. */
-.pcx-pasos { counter-reset:pcx; list-style:none; margin:14px 0 0; padding:0; display:grid; gap:9px; }
-.pcx-pasos li { display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--text-secondary); }
-.pcx-pasos li::before { counter-increment:pcx; content:counter(pcx); flex-shrink:0; width:21px; height:21px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--bg-surface); border:1px solid var(--border); font-size:11px; font-weight:700; color:var(--accent-text); }
-
-.pcx-error { display:none; padding:10px 12px; margin-bottom:14px; border-radius:8px; font-size:13px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.35); color:#b91c1c; }
-
-/* El número del paso, dentro de la leyenda del bloque. */
-.eco-modal .pcx-num { display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; margin-right:2px; border-radius:50%; background:var(--accent-soft); color:var(--accent-text); font-size:10.5px; font-weight:700; }
-.eco-modal .pcx-bloque:first-of-type { margin-top:0; }
-
-/* El buscador es <input type="search">, un tipo que la regla común de campos
-   del modal no cubre: salía con el ancho por defecto del navegador (unos 20
-   caracteres) y el texto de ayuda cortado. Se le da su propia forma. */
-.pcx-buscar { position:relative; margin-bottom:10px; }
-.pcx-buscar > i { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:12.5px; color:var(--text-muted); pointer-events:none; transition:color .18s ease; }
-.pcx-buscar:focus-within > i { color:var(--accent-text); }
-.eco-modal .eco-field .pcx-buscar input[type="search"] {
-    display:block; width:100%; min-height:40px; margin:0;
-    padding:9px 14px 9px 38px; box-sizing:border-box;
-    border:1px solid var(--border); border-radius:999px;
-    font-family:inherit; font-size:13px; line-height:1.4;
-    background:var(--bg-surface); color:var(--text-primary);
-    transition:border-color .18s ease, box-shadow .18s ease;
-}
-.eco-modal .eco-field .pcx-buscar input[type="search"]::placeholder { color:var(--text-muted); opacity:1; }
-.eco-modal .eco-field .pcx-buscar input[type="search"]:focus {
-    outline:none; border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-soft);
-}
-
-/* Cuántos quedan a la vista, en la misma línea del rótulo. */
-.pcx-label-fila { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
-.eco-modal .pcx-label-fila .mcp-label { margin-bottom:6px; }
-.pcx-contador { flex-shrink:0; font-size:11px; font-weight:600; color:var(--text-muted); font-variant-numeric:tabular-nums; }
-
-.pcx-oculto { display:none !important; }
-.pcx-sin-resultados { margin:8px 0 0; font-size:12px; color:var(--text-muted); text-align:center; }
-
-/* El botón de guardar no debería quedar al fondo de un formulario largo.
-   Los márgenes negativos llevan el fondo hasta los bordes del panel: si no,
-   el contenido se vería pasar por los laterales al desplazarse. */
-.pcx-main { padding-bottom:0 !important; }
-.pcx-footer { position:sticky; bottom:0; z-index:2; margin:18px -22px 0; padding:14px 22px; background:var(--bg-surface); border-top:1px solid var(--border); }
-</style>
+<?php /* Los estilos .pcx-* están en assets/css/core/shell-modals.css: los
+         comparte el modal de programar cita de recepción. */ ?>
 <div id="eco-modal-programar-cita-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-prog-aside-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide">
         <div class="eco-modal__split">

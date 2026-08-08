@@ -31,76 +31,105 @@ $rx_modal_metodos   = eco_metodos_pago();
             <div class="eco-modal__aside">
                 <div class="eco-modal__aside-icon"><i class="fa-solid fa-calendar-plus"></i></div>
                 <h3 id="rx-prog-aside-title">Programar cita</h3>
-                <p>Cita confirmada para el paciente:</p>
+                <p>Agendar estudio ecográfico para:</p>
                 <strong id="rx-prog-paciente-nombre">—</strong>
-                <p class="eco-modal__hint"><i class="fa-solid fa-user-doctor" style="margin-right:4px;"></i> Elija ecografista y tipo de estudio.</p>
+                <ol class="pcx-pasos">
+                    <li>Ecografista</li>
+                    <li>Estudios y servicios</li>
+                    <li>Fecha y antecedentes</li>
+                    <li>Cobro</li>
+                </ol>
+                <p class="eco-modal__hint"><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i> La cita queda confirmada y el paciente recibe notificación.</p>
             </div>
-            <div class="eco-modal__main">
+            <div class="eco-modal__main pcx-main">
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
-                <h4 class="eco-modal__title">Detalles</h4>
-                <div id="rx-prog-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
+                <h4 class="eco-modal__title">Detalle de la cita</h4>
+                <div id="rx-prog-error" class="pcx-error" role="alert"></div>
                 <form id="rx-form-programar-cita" novalidate>
                     <input type="hidden" name="paciente_id" id="rx-prog-paciente-id" value="">
-                    <div class="eco-field">
-                        <label for="rx-prog-ecografista">Ecografista responsable</label>
-                        <?php if (empty($rx_modal_ecografistas)): ?>
-                            <p style="margin:0;font-size:13px;color:var(--danger);">No hay ecografistas aprobados.</p>
-                        <?php else: ?>
-                            <select name="ecografista_id" id="rx-prog-ecografista" required>
-                                <option value="">Seleccionar…</option>
-                                <?php foreach ($rx_modal_ecografistas as $eco): ?>
-                                    <option value="<?= (int)$eco['id'] ?>"><?= htmlspecialchars($eco['nombre_completo']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        <?php endif; ?>
-                    </div>
-                    <div class="eco-field">
-                        <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
-                        <div class="mcp-estudios" role="group" aria-label="Tipos de ecografía a realizar">
-                            <?php
-                            $rx_cat_previa = null;
-                            foreach ($rx_modal_tipos as $t):
-                                $cat = (string)($t['categoria'] ?? '');
-                                if ($cat !== $rx_cat_previa):
-                                    $rx_cat_previa = $cat;
-                                    ?>
-                                    <p class="mcp-estudios__cat"><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
-                                <?php endif; ?>
-                                <label class="mcp-opcion">
-                                    <input type="checkbox" name="tipos_ecografia[]" value="<?= (int)$t['id'] ?>" data-rxp-estudio>
-                                    <span class="mcp-opcion__nombre"><?= htmlspecialchars($t['nombre']) ?></span>
-                                        <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$t['precio'])) ?></span>
-                                </label>
-                            <?php endforeach; ?>
+
+                    <fieldset class="mcp-bloque pcx-bloque">
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">1</span> Ecografista</legend>
+                        <div class="eco-field">
+                            <label for="rx-prog-ecografista">Ecografista responsable</label>
+                            <?php if (empty($rx_modal_ecografistas)): ?>
+                                <p class="mcp-bloque__vacio">No hay ecografistas aprobados.</p>
+                            <?php else: ?>
+                                <select name="ecografista_id" id="rx-prog-ecografista" required>
+                                    <option value="">Seleccionar…</option>
+                                    <?php foreach ($rx_modal_ecografistas as $eco): ?>
+                                        <option value="<?= (int)$eco['id'] ?>"><?= htmlspecialchars($eco['nombre_completo']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
                         </div>
-                        <p class="mcp-resumen" id="rx-prog-estudios-resumen">Ninguna seleccionada.</p>
-                    </div>
-
-                    <div class="eco-field">
-                        <span class="mcp-label">Otros servicios</span>
-                        <div class="mcp-servicios">
-                            <?php foreach ($rx_modal_servicios as $s): ?>
-                                <label class="mcp-opcion">
-                                    <input type="checkbox" name="servicios[]" value="<?= htmlspecialchars($s['key']) ?>" data-rxp-servicio>
-                                    <span class="mcp-opcion__nombre"><?= htmlspecialchars($s['label']) ?></span>
-                                        <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$s['price'])) ?></span>
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="eco-field">
-                        <label for="rx-prog-otro">Otro servicio <span class="mcp-opcional">(opcional)</span></label>
-                        <input type="text" name="otro_servicio" id="rx-prog-otro" maxlength="120" placeholder="Describe el servicio">
-                    </div>
-
-                    <div class="eco-field">
-                        <label for="rx-prog-fecha">Fecha y hora</label>
-                        <input type="text" name="fecha_cita" id="rx-prog-fecha" required autocomplete="off" placeholder="Seleccionar…">
-                    </div>
+                    </fieldset>
 
                     <fieldset class="mcp-bloque">
-                        <legend class="mcp-bloque__titulo"><i class="fa-solid fa-receipt"></i> Facturación</legend>
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">2</span> Estudios y servicios</legend>
+                        <div class="eco-field">
+                            <div class="pcx-label-fila">
+                                <span class="mcp-label">Tipos de ecografía <span class="mcp-opcional">(puedes elegir varios)</span></span>
+                                <span class="pcx-contador" id="rx-prog-visibles"><?= count($rx_modal_tipos) ?> de <?= count($rx_modal_tipos) ?></span>
+                            </div>
+                            <div class="pcx-buscar">
+                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                                <input type="search" id="rx-prog-buscar" placeholder="Filtrar por nombre o categoría…" autocomplete="off" aria-label="Filtrar tipos de ecografía">
+                            </div>
+                            <div class="mcp-estudios" id="rx-prog-estudios" role="group" aria-label="Tipos de ecografía a realizar">
+                                <?php
+                                $rx_cat_previa = null;
+                                foreach ($rx_modal_tipos as $t):
+                                    $cat = (string)($t['categoria'] ?? '');
+                                    if ($cat !== $rx_cat_previa):
+                                        $rx_cat_previa = $cat;
+                                        ?>
+                                        <p class="mcp-estudios__cat" data-rxp-cat><?= htmlspecialchars($cat !== '' ? $cat : 'Otros') ?></p>
+                                    <?php endif; ?>
+                                    <label class="mcp-opcion" data-rxp-busca="<?= htmlspecialchars(mb_strtolower($t['nombre'] . ' ' . $cat, 'UTF-8')) ?>">
+                                        <input type="checkbox" name="tipos_ecografia[]" value="<?= (int)$t['id'] ?>" data-rxp-estudio>
+                                        <span class="mcp-opcion__nombre"><?= htmlspecialchars($t['nombre']) ?></span>
+                                            <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$t['precio'])) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="pcx-sin-resultados" id="rx-prog-sin-resultados" hidden>Ningún estudio coincide con el filtro.</p>
+                            <p class="mcp-resumen" id="rx-prog-estudios-resumen">Ninguna seleccionada.</p>
+                        </div>
+
+                        <div class="eco-field">
+                            <span class="mcp-label">Otros servicios</span>
+                            <div class="mcp-servicios">
+                                <?php foreach ($rx_modal_servicios as $s): ?>
+                                    <label class="mcp-opcion">
+                                        <input type="checkbox" name="servicios[]" value="<?= htmlspecialchars($s['key']) ?>" data-rxp-servicio>
+                                        <span class="mcp-opcion__nombre"><?= htmlspecialchars($s['label']) ?></span>
+                                            <span class="mcp-opcion__precio"><?= htmlspecialchars(eco_money((float)$s['price'])) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <div class="eco-field">
+                            <label for="rx-prog-otro">Otro servicio <span class="mcp-opcional">(opcional)</span></label>
+                            <input type="text" name="otro_servicio" id="rx-prog-otro" maxlength="120" placeholder="Describe el servicio">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mcp-bloque">
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">3</span> Fecha y antecedentes</legend>
+                        <div class="eco-field">
+                            <label for="rx-prog-fecha">Fecha y hora</label>
+                            <input type="text" name="fecha_cita" id="rx-prog-fecha" required autocomplete="off" placeholder="Seleccionar…">
+                        </div>
+                        <div class="eco-field">
+                            <label for="rx-prog-motivo">Antecedentes médicos y detalles <span class="mcp-opcional">(opcional)</span></label>
+                            <textarea name="motivo_consulta" id="rx-prog-motivo" rows="3" placeholder="Antecedentes médicos y detalles"></textarea>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mcp-bloque">
+                        <legend class="mcp-bloque__titulo"><span class="pcx-num">4</span> Cobro</legend>
                         <div class="eco-field">
                             <label for="rx-prog-monto">Monto a cobrar</label>
                             <div class="mcp-monto-row">
@@ -121,11 +150,7 @@ $rx_modal_metodos   = eco_metodos_pago();
                         </div>
                     </fieldset>
 
-                    <div class="eco-field">
-                        <label for="rx-prog-motivo">Antecedentes médicos y detalles <span class="mcp-opcional">(opcional)</span></label>
-                        <textarea name="motivo_consulta" id="rx-prog-motivo" rows="3" placeholder="Antecedentes médicos y detalles"></textarea>
-                    </div>
-                    <div class="eco-modal__footer">
+                    <div class="eco-modal__footer pcx-footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
                         <button type="submit" class="btn-primary" id="rx-prog-submit" <?= (empty($rx_modal_ecografistas) || empty($rx_modal_tipos)) ? 'disabled' : '' ?>><i class="fa-solid fa-check"></i> Guardar cita</button>
                     </div>

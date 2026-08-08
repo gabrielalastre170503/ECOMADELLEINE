@@ -45,6 +45,52 @@
         });
     }
 
+    /* Filtro del catalogo de estudios. Un estudio ya marcado no se oculta
+       nunca: si desapareciera del filtro se guardaria una seleccion que no
+       se ve. Las cabeceras de categoria se ocultan si se quedan sin filas. */
+    function rxProgFiltrar() {
+        var caja = byId('rx-prog-estudios');
+        var q = byId('rx-prog-buscar');
+        if (!caja || !q) return;
+
+        var texto = q.value.trim().toLowerCase();
+        var visibles = 0, total = 0;
+        var cat = null, catVisibles = 0;
+
+        Array.prototype.forEach.call(caja.children, function (el) {
+            if (el.hasAttribute('data-rxp-cat')) {
+                if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+                cat = el;
+                catVisibles = 0;
+                return;
+            }
+            var inp = el.querySelector('[data-rxp-estudio]');
+            var coincide = texto === ''
+                || (el.getAttribute('data-rxp-busca') || '').indexOf(texto) !== -1
+                || (inp && inp.checked);
+            el.classList.toggle('pcx-oculto', !coincide);
+            total++;
+            if (coincide) { visibles++; catVisibles++; }
+        });
+        if (cat) cat.classList.toggle('pcx-oculto', catVisibles === 0);
+
+        var cuenta = byId('rx-prog-visibles');
+        if (cuenta) cuenta.textContent = visibles + ' de ' + total;
+
+        var aviso = byId('rx-prog-sin-resultados');
+        if (aviso) aviso.hidden = visibles !== 0;
+    }
+
+    var _rxProgBuscar = byId('rx-prog-buscar');
+    if (_rxProgBuscar) {
+        _rxProgBuscar.addEventListener('input', rxProgFiltrar);
+        /* Enter dentro del buscador enviaria el formulario. */
+        _rxProgBuscar.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); }
+            if (e.key === 'Escape') { _rxProgBuscar.value = ''; rxProgFiltrar(); }
+        });
+    }
+
     window.rxAbrirProgramarCita = function (pacienteId, pacienteNombre) {
         var modal = byId('eco-modal-rx-programar-cita');
         var pidIn = byId('rx-prog-paciente-id');
@@ -57,6 +103,7 @@
         pidIn.value = pacienteId;
         nameEl.textContent = pacienteNombre || '—';
         rxProgAtencion.reiniciar();
+        rxProgFiltrar();   // form.reset() vacia el buscador; hay que repintar la lista
 
         EcoModal.open('eco-modal-rx-programar-cita');
         setTimeout(initRxProgFp, 0);
