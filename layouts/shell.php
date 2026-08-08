@@ -228,8 +228,12 @@ $body_class = trim($body_class . ' ' . $role_class . ' eco-glass');
     </div>
     <?php endif; ?>
 
-    <script src="assets/js/core/shell.js"></script>
-    <script src="assets/js/core/shell-modals.js"></script>
+    <?php /* Con ?v= como el resto: eran los dos únicos que iban sin él, y el
+             navegador seguía sirviendo la copia vieja tras cada despliegue. Se
+             notó al añadir ayudantes a shell.js que otras pantallas usan: sin
+             recargarlos, esas pantallas fallan en silencio. */ ?>
+    <script src="assets/js/core/shell.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/shell.js') ?: '1' ?>"></script>
+    <script src="assets/js/core/shell-modals.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/shell-modals.js') ?: '1' ?>"></script>
     <script src="assets/js/core/notificaciones.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/notificaciones.js') ?: '1' ?>"></script>
     <script src="assets/js/core/topbar-search.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/topbar-search.js') ?: '1' ?>"></script>
     <?= $page_scripts_extra ?>
