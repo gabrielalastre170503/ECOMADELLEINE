@@ -57,6 +57,12 @@ $accion_label = [
     // viaja en la columna "detalle". Es la línea que hay que mirar primero.
     'acceso_excepcional_concedido' => ['ACCESO EXCEPCIONAL', '#b91c1c'],
     'acceso_informe_denegado'      => ['Acceso denegado',    '#b91c1c'],
+    // Cambiar de tarifa mueve todos los precios de una vez: se distingue del
+    // cambio de un precio suelto.
+    'lista_precios_aplicada'  => ['CAMBIÓ DE TARIFA',     '#b45309'],
+    'lista_precios_creada'    => ['Guardó una tarifa',    '#0f766e'],
+    'lista_precios_eliminada' => ['Borró una tarifa',     '#64748b'],
+    'precio_actualizado'      => ['Cambió un precio',     '#b45309'],
     'acceso_historia_clinica' => ['Vio historia clínica', '#7c3aed'],
     'acceso_informe'          => ['Vio informe',          '#0284c7'],
     'acceso_ficha_paciente'   => ['Vio ficha de paciente','#0f766e'],

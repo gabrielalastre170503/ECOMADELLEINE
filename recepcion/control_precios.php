@@ -12,6 +12,7 @@
 session_start();
 include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/facturacion/facturacion.php';
+require_once __DIR__ . '/../lib/facturacion/listas_precios.php';
 require_once __DIR__ . '/../lib/informes/catalogo.php';
 
 if (!isset($_SESSION['usuario_id'])) {
@@ -43,6 +44,13 @@ $cp_precios_eco = array_map(static fn($t) => (float)$t['precio'], $cp_estudios);
 $cp_min = $cp_precios_eco ? min($cp_precios_eco) : 0.0;
 $cp_max = $cp_precios_eco ? max($cp_precios_eco) : 0.0;
 
+$cp_hay_listas = eco_listas_precios_disponibles($conex);
+$cp_listas     = $cp_hay_listas ? eco_listas_precios($conex) : [];
+$cp_activa     = null;
+foreach ($cp_listas as $l) {
+    if ($l['es_activa']) { $cp_activa = $l; break; }
+}
+
 $page_title     = 'Control de precios';
 $page_subtitle   = 'Tarifas de ecografías, servicios y promociones';
 $active_section = 'control-precios';
@@ -51,6 +59,105 @@ $page_head_extra = '<link rel="stylesheet" href="assets/css/recepcion/control-pr
 
 ob_start();
 ?>
+
+<?php if (!$cp_hay_listas): ?>
+    <section class="card cp-seccion">
+        <p class="cp-vacio">
+            <i class="fa-solid fa-database"></i>
+            Para guardar tarifas alternas falta correr la migración
+            <code>database/migrations/2026_listas_precios.sql</code>.
+            Mientras tanto los precios se editan uno a uno, como hasta ahora.
+        </p>
+    </section>
+<?php else: ?>
+<section class="card cp-seccion cp-tarifas">
+    <div class="cp-seccion__head">
+        <h3 class="cp-seccion__title"><i class="fa-solid fa-layer-group"></i> Tarifas guardadas</h3>
+        <button type="button" class="btn-secondary cp-tarifas__nueva" id="cp-btn-nueva">
+            <i class="fa-solid fa-plus"></i> Guardar la tarifa actual
+        </button>
+    </div>
+    <p class="cp-seccion__note">
+        Cada tarifa guarda el precio de todos los estudios y servicios. Al activar una,
+        los precios de abajo se sustituyen de golpe; <strong>los precios que edites abajo
+        se guardan siempre en la tarifa en uso</strong>, así que puedes ir y volver sin perder nada.
+        Las citas ya cobradas mantienen el importe con el que se cobraron.
+    </p>
+
+    <form class="cp-tarifas__form" id="cp-form-nueva" hidden>
+        <div class="cp-tarifas__campos">
+            <label>
+                <span>Nombre</span>
+                <input type="text" id="cp-nueva-nombre" maxlength="80" required
+                       placeholder="Ej.: Promoción Yumare" autocomplete="off">
+            </label>
+            <label>
+                <span>Descripción <em>(opcional)</em></span>
+                <input type="text" id="cp-nueva-desc" maxlength="255"
+                       placeholder="Ej.: Jornada fuera de sede" autocomplete="off">
+            </label>
+        </div>
+        <p class="cp-tarifas__ayuda">
+            <i class="fa-solid fa-circle-info"></i>
+            Se guardan los precios que hay puestos ahora mismo. Después edítalos abajo
+            estando esa tarifa activa.
+        </p>
+        <div class="cp-tarifas__acciones">
+            <button type="button" class="btn-secondary" id="cp-btn-cancelar">Cancelar</button>
+            <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Guardar tarifa</button>
+        </div>
+    </form>
+
+    <?php if (count($cp_listas) < 2): ?>
+        <?php /* Con una sola tarifa el botón no dice para qué sirve todavía. */ ?>
+        <ol class="cp-tarifas__pasos">
+            <li>Pulsa <strong>Guardar la tarifa actual</strong> y ponle nombre (por ejemplo «Promoción Yumare»).</li>
+            <li><strong>Actívala.</strong> Todavía tiene los mismos precios: aún no cambia nada.</li>
+            <li>Edita abajo los precios de la promoción. Quedan guardados en esa tarifa.</li>
+            <li>Listo: desde ahora cambias de una a otra con un clic, sin volver a escribirlos.</li>
+        </ol>
+    <?php endif; ?>
+
+    <ul class="cp-tarifas__lista">
+        <?php foreach ($cp_listas as $l): ?>
+            <li class="cp-tarifa<?= $l['es_activa'] ? ' is-activa' : '' ?>">
+                <div class="cp-tarifa__head">
+                    <span class="cp-tarifa__nombre"><?= htmlspecialchars($l['nombre']) ?></span>
+                    <?php if ($l['es_activa']): ?>
+                        <span class="cp-tarifa__badge"><i class="fa-solid fa-circle-check"></i> En uso</span>
+                    <?php endif; ?>
+                </div>
+                <?php if ($l['descripcion'] !== ''): ?>
+                    <p class="cp-tarifa__desc"><?= htmlspecialchars($l['descripcion']) ?></p>
+                <?php endif; ?>
+                <p class="cp-tarifa__meta">
+                    <?= (int)$l['estudios'] ?> estudios · <?= (int)$l['servicios'] ?> servicios
+                    <?php if ($l['aplicada_en']): ?>
+                        · usada el <?= htmlspecialchars(date('d/m/Y', strtotime($l['aplicada_en']))) ?>
+                    <?php endif; ?>
+                </p>
+                <div class="cp-tarifa__acciones">
+                    <?php if ($l['es_activa']): ?>
+                        <span class="cp-tarifa__nota">Es la tarifa que se está cobrando.</span>
+                    <?php else: ?>
+                        <button type="button" class="btn-primary cp-tarifa__aplicar"
+                                data-cp-lista="<?= (int)$l['id'] ?>"
+                                data-cp-nombre="<?= htmlspecialchars($l['nombre']) ?>">
+                            <i class="fa-solid fa-arrows-rotate"></i> Activar
+                        </button>
+                        <button type="button" class="btn-secondary cp-tarifa__borrar"
+                                data-cp-lista="<?= (int)$l['id'] ?>"
+                                data-cp-nombre="<?= htmlspecialchars($l['nombre']) ?>"
+                                title="Eliminar tarifa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+</section>
+<?php endif; ?>
 
 <div class="cp-resumen">
     <div class="stat-card">
@@ -180,6 +287,27 @@ ob_start();
     <?php endif; ?>
 </section>
 
+<?php /* Confirmación de activar/eliminar tarifa. Un solo modal para las dos:
+         cambian el icono, el texto y el botón, no la estructura. */ ?>
+<div id="cp-modal-confirmar" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="cp-confirm-titulo">
+    <div class="eco-modal__dialog eco-modal__dialog--sm">
+        <div class="eco-modal__main cp-confirm">
+            <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="cp-confirm__icono" id="cp-confirm-icono" aria-hidden="true">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </div>
+            <h4 class="eco-modal__title" id="cp-confirm-titulo">Cambiar de tarifa</h4>
+            <div class="cp-confirm__cuerpo" id="cp-confirm-cuerpo"></div>
+            <div class="cp-confirm__pie">
+                <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
+                <button type="button" class="btn-primary" id="cp-confirm-ok">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="cp-toast" id="cp-toast" role="status" aria-live="polite"></div>
 
 <?php
@@ -258,6 +386,163 @@ $page_scripts_extra = <<<'HTML'
                     marcar(fila, 'is-error', '<i class="fa-solid fa-triangle-exclamation"></i>');
                     avisar('Error de red. El precio no se guardó.', true);
                 });
+        });
+    });
+
+    /* ── Tarifas guardadas ────────────────────────────────────────────
+       Las tres acciones recargan al terminar: cambian los precios de toda la
+       página, y repintarlos a mano dejaría la pantalla diciendo una cosa y la
+       base de datos otra. */
+    function pedirTarifa(campos, alTerminar) {
+        var fd = new FormData();
+        Object.keys(campos).forEach(function (k) { fd.append(k, campos[k]); });
+        return fetch((window.ECO_BASE || '') + 'api/listas_precios.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res && res.success) {
+                    avisar(res.message || 'Listo.', false);
+                    setTimeout(function () { window.location.reload(); }, 700);
+                } else {
+                    avisar((res && res.message) || 'No se pudo completar la acción.', true);
+                    if (alTerminar) alTerminar();
+                }
+            })
+            .catch(function () {
+                avisar('Error de red. No se cambió nada.', true);
+                if (alTerminar) alTerminar();
+            });
+    }
+
+    /* Confirmación en modal, no window.confirm(): el aviso del navegador sale
+       sin estilo, no deja resaltar el nombre de la tarifa y bloquea la página.
+       Los párrafos se montan con textContent, así un nombre de tarifa con < o &
+       no puede inyectar marcado. */
+    var confirmAlAceptar = null;
+    var confirmEls = {
+        modal:  document.getElementById('cp-modal-confirmar'),
+        icono:  document.getElementById('cp-confirm-icono'),
+        titulo: document.getElementById('cp-confirm-titulo'),
+        cuerpo: document.getElementById('cp-confirm-cuerpo'),
+        ok:     document.getElementById('cp-confirm-ok')
+    };
+
+    /**
+     * @param {{icono:string, titulo:string, parrafos:Array, textoOk:string,
+     *          iconoOk:string, peligro:boolean}} cfg
+     *   Cada párrafo es un array de trozos: 'texto' o ['texto', 'fuerte'].
+     */
+    function confirmar(cfg, alAceptar) {
+        if (!confirmEls.modal || !window.EcoModal) {   // sin modal, el flujo sigue
+            if (window.confirm(cfg.titulo + '. ¿Continuar?')) alAceptar();
+            return;
+        }
+        confirmEls.icono.innerHTML = '<i class="' + cfg.icono + '"></i>';
+        confirmEls.icono.classList.toggle('is-peligro', !!cfg.peligro);
+        confirmEls.titulo.textContent = cfg.titulo;
+
+        confirmEls.cuerpo.textContent = '';
+        cfg.parrafos.forEach(function (trozos) {
+            var p = document.createElement('p');
+            trozos.forEach(function (t) {
+                if (Array.isArray(t)) {
+                    var s = document.createElement('strong');
+                    s.textContent = t[0];
+                    p.appendChild(s);
+                } else {
+                    p.appendChild(document.createTextNode(t));
+                }
+            });
+            confirmEls.cuerpo.appendChild(p);
+        });
+
+        confirmEls.ok.innerHTML = '<i class="' + cfg.iconoOk + '"></i> ';
+        confirmEls.ok.appendChild(document.createTextNode(cfg.textoOk));
+        confirmEls.ok.classList.toggle('cp-confirm__ok--peligro', !!cfg.peligro);
+        confirmEls.ok.disabled = false;
+
+        confirmAlAceptar = alAceptar;
+        EcoModal.open('cp-modal-confirmar');
+        setTimeout(function () { confirmEls.ok.focus(); }, 60);
+    }
+
+    if (confirmEls.ok) {
+        confirmEls.ok.addEventListener('click', function () {
+            var fn = confirmAlAceptar;
+            confirmAlAceptar = null;
+            EcoModal.close('cp-modal-confirmar');
+            if (typeof fn === 'function') fn();
+        });
+    }
+
+    var formNueva = document.getElementById('cp-form-nueva');
+    var btnNueva  = document.getElementById('cp-btn-nueva');
+    if (btnNueva && formNueva) {
+        btnNueva.addEventListener('click', function () {
+            formNueva.hidden = !formNueva.hidden;
+            if (!formNueva.hidden) document.getElementById('cp-nueva-nombre').focus();
+        });
+        var btnCancelar = document.getElementById('cp-btn-cancelar');
+        if (btnCancelar) {
+            btnCancelar.addEventListener('click', function () { formNueva.hidden = true; });
+        }
+        formNueva.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var nombre = document.getElementById('cp-nueva-nombre').value.trim();
+            if (nombre === '') { avisar('Ponle un nombre a la tarifa.', true); return; }
+            var btn = formNueva.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            pedirTarifa({
+                accion: 'crear',
+                nombre: nombre,
+                descripcion: document.getElementById('cp-nueva-desc').value.trim()
+            }, function () { if (btn) btn.disabled = false; });
+        });
+    }
+
+    document.querySelectorAll('.cp-tarifa__aplicar').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var nombre = btn.getAttribute('data-cp-nombre') || 'esta tarifa';
+            confirmar({
+                icono: 'fa-solid fa-arrows-rotate',
+                titulo: 'Cambiar de tarifa',
+                parrafos: [
+                    ['Se van a cambiar ', ['todos los precios'], ' a los de ', ['«' + nombre + '»'], '.'],
+                    ['Los precios que están puestos ahora quedan guardados en la tarifa en uso, '
+                     + 'así que puedes volver cuando quieras.'],
+                    ['Las citas ya cobradas mantienen el importe con el que se cobraron.']
+                ],
+                textoOk: 'Sí, cambiar la tarifa',
+                iconoOk: 'fa-solid fa-arrows-rotate'
+            }, function () {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aplicando…';
+                pedirTarifa({ accion: 'aplicar', lista_id: btn.getAttribute('data-cp-lista') }, function () {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Activar';
+                });
+            });
+        });
+    });
+
+    document.querySelectorAll('.cp-tarifa__borrar').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var nombre = btn.getAttribute('data-cp-nombre') || 'esta tarifa';
+            confirmar({
+                icono: 'fa-solid fa-trash',
+                titulo: 'Eliminar tarifa',
+                peligro: true,
+                parrafos: [
+                    ['Se borran los precios guardados en ', ['«' + nombre + '»'], '.'],
+                    ['Los precios que se están cobrando ahora no cambian.']
+                ],
+                textoOk: 'Eliminar',
+                iconoOk: 'fa-solid fa-trash'
+            }, function () {
+                btn.disabled = true;
+                pedirTarifa({ accion: 'eliminar', lista_id: btn.getAttribute('data-cp-lista') }, function () {
+                    btn.disabled = false;
+                });
+            });
         });
     });
 
